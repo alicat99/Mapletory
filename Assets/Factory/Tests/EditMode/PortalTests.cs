@@ -135,7 +135,7 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
-        public void PortalsShareSmoothedRateBySelectedMaterial()
+        public void PortalsShareFiveSecondIntervalRateBySelectedMaterial()
         {
             var economy = new PortalEconomy();
             var first = new PortalState(Vector2Int.zero, economy);
@@ -143,20 +143,38 @@ namespace Maptory.Factory.Tests
             first.SelectMaterial(RawMaterialType.MonsterMushroomGreen);
             second.SelectMaterial(RawMaterialType.MonsterMushroomGreen);
             first.AddInput(RawMaterialType.MonsterMushroomGreen);
+            economy.Update(1f);
+            second.AddInput(RawMaterialType.MonsterMushroomGreen);
+            economy.Update(1f);
+            first.AddInput(RawMaterialType.MonsterMushroomGreen);
+            economy.Update(1f);
             second.AddInput(RawMaterialType.MonsterMushroomGreen);
 
+            var dense_rate = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
+            Assert.That(dense_rate, Is.EqualTo(60f).Within(0.001f));
+            Assert.That(dense_rate * PortalEconomy.MESO_PER_ITEM,
+                Is.EqualTo(90f).Within(0.001f));
+
+            economy.Update(6f);
+
+            var decayed_rate = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
+            Assert.That(decayed_rate, Is.EqualTo(30f).Within(0.001f));
+
+            first.AddInput(RawMaterialType.MonsterMushroomGreen);
             economy.Update(1f);
+            second.AddInput(RawMaterialType.MonsterMushroomGreen);
+            economy.Update(1f);
+            first.AddInput(RawMaterialType.MonsterMushroomGreen);
 
-            var first_sample = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
-            Assert.That(first_sample, Is.EqualTo(120f).Within(0.001f));
-            Assert.That(first_sample * PortalEconomy.MESO_PER_ITEM,
-                Is.EqualTo(180f).Within(0.001f));
+            var sparse_rate = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
+            Assert.That(sparse_rate, Is.GreaterThan(decayed_rate));
+            Assert.That(sparse_rate, Is.LessThan(60f));
 
             economy.Update(1f);
+            second.AddInput(RawMaterialType.MonsterMushroomGreen);
 
-            var smoothed_sample = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
-            Assert.That(smoothed_sample, Is.GreaterThan(0f));
-            Assert.That(smoothed_sample, Is.LessThan(first_sample));
+            var replaced_rate = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
+            Assert.That(replaced_rate, Is.EqualTo(60f).Within(0.001f));
         }
 
         [Test]

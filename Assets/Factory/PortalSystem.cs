@@ -42,11 +42,11 @@ namespace Maptory.Factory
     {
         public const float MESO_PER_ITEM = 1.5f;
 
-        private const float SAMPLE_INTERVAL = 1f;
+        private const float MEASUREMENT_WINDOW = 5f;
         private const float EMA_HALF_LIFE = 6f;
 
         private readonly Dictionary<RawMaterialType, SupplyMeter> meters = new();
-        private float sample_elapsed;
+        private float elapsed_time;
         private int pending_meso_halves;
 
         public long TotalMeso { get; private set; }
@@ -59,36 +59,22 @@ namespace Maptory.Factory
                 meters.Add(material, meter);
             }
 
-            meter.WindowItems++;
+            meter.InputTimes.Enqueue(elapsed_time);
             meter.TotalItems++;
             pending_meso_halves += 3;
             TotalMeso += pending_meso_halves / 2;
             pending_meso_halves %= 2;
+
+            RefreshMeter(meter, 0f);
         }
 
         public void Update(float delta_time)
         {
-            sample_elapsed += delta_time;
-            if (sample_elapsed < SAMPLE_INTERVAL) return;
-
-            var alpha = 1f - Mathf.Exp(-Mathf.Log(2f) * sample_elapsed / EMA_HALF_LIFE);
+            elapsed_time += delta_time;
             foreach (var meter in meters.Values)
             {
-                var sample = meter.WindowItems * 60f / sample_elapsed;
-                if (!meter.Initialized && sample > 0f)
-                {
-                    meter.ItemsPerMinute = sample;
-                    meter.Initialized = true;
-                }
-                else if (meter.Initialized)
-                {
-                    meter.ItemsPerMinute = Mathf.Lerp(meter.ItemsPerMinute, sample, alpha);
-                }
-
-                meter.WindowItems = 0;
+                RefreshMeter(meter, delta_time);
             }
-
-            sample_elapsed = 0f;
         }
 
         public float GetItemsPerMinute(RawMaterialType material)
@@ -101,12 +87,41 @@ namespace Maptory.Factory
             return meters.TryGetValue(material, out var meter) ? meter.TotalItems : 0L;
         }
 
+        private void RefreshMeter(SupplyMeter meter, float delta_time)
+        {
+            while (meter.InputTimes.Count > 0
+                && elapsed_time - meter.InputTimes.Peek() > MEASUREMENT_WINDOW)
+            {
+                meter.InputTimes.Dequeue();
+            }
+
+            var raw_rate = CalculateRate(meter.InputTimes);
+            if (meter.InputTimes.Count >= 4)
+            {
+                meter.ItemsPerMinute = raw_rate;
+                return;
+            }
+
+            var alpha = 1f - Mathf.Exp(-Mathf.Log(2f) * delta_time / EMA_HALF_LIFE);
+            meter.ItemsPerMinute = Mathf.Lerp(meter.ItemsPerMinute, raw_rate, alpha);
+        }
+
+        private static float CalculateRate(Queue<float> input_times)
+        {
+            if (input_times.Count < 2) return 0f;
+
+            var times = input_times.ToArray();
+            var mean_interval = (times[^1] - times[0]) / (times.Length - 1);
+            if (mean_interval <= 0f) return 0f;
+
+            return 60f / mean_interval;
+        }
+
         private sealed class SupplyMeter
         {
-            public int WindowItems;
+            public readonly Queue<float> InputTimes = new();
             public long TotalItems;
             public float ItemsPerMinute;
-            public bool Initialized;
         }
     }
 
