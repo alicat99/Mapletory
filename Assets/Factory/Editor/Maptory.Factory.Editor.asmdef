@@ -1,0 +1,11 @@
+{
+  "name": "Maptory.Factory.Editor",
+  "rootNamespace": "Maptory.Factory.Editor",
+  "references": [
+    "Maptory.Factory"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": true
+}

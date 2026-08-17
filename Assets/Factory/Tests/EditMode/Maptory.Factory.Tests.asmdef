@@ -1,0 +1,14 @@
+{
+  "name": "Maptory.Factory.Tests",
+  "rootNamespace": "Maptory.Factory.Tests",
+  "references": [
+    "Maptory.Factory"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false
+}

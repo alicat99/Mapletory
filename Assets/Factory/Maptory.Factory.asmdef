@@ -1,0 +1,9 @@
+{
+  "name": "Maptory.Factory",
+  "rootNamespace": "Maptory.Factory",
+  "references": [
+    "Unity.InputSystem",
+    "Unity.ugui"
+  ],
+  "autoReferenced": true
+}
