@@ -110,6 +110,31 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
+        public void ErdaInjectorOutputsDirectlyIntoAdjacentPortal()
+        {
+            var conveyors = new ConveyorNetwork();
+            var network = new ExtractionNetwork(new RawMaterialDeposit[0], conveyors);
+            var injector = network.PlaceErdaInjector(new Vector2Int(10, 10), GridDirection.Up);
+            var portal = network.PlacePortal(injector.OutputConveyorPosition);
+            portal.SelectMaterial(RawMaterialType.MonsterSnailRed);
+            injector.AddInput(RawMaterialType.SnailRed);
+            var transport = new FactoryItemTransport(conveyors, network);
+
+            transport.Step();
+
+            Assert.That(transport.Items.Count, Is.EqualTo(1));
+            Assert.That(transport.Items[0].Position, Is.EqualTo(injector.Center));
+            Assert.That(transport.Items[0].TargetPosition, Is.EqualTo(portal.Anchor));
+            Assert.That(transport.Items[0].ScaleAnimation,
+                Is.EqualTo(ItemScaleAnimation.Despawning));
+
+            transport.Step();
+
+            Assert.That(transport.Items, Is.Empty);
+            Assert.That(network.PortalEconomy.TotalMeso, Is.EqualTo(1));
+        }
+
+        [Test]
         public void PortalsShareSmoothedRateBySelectedMaterial()
         {
             var economy = new PortalEconomy();

@@ -355,7 +355,7 @@ namespace Maptory.Factory
         {
             if (IsOccupied(source_port) || IsOccupied(destination_port)) return false;
 
-            var consumer = FindDirectConsumer(material, destination_port, forward);
+            var consumer = FindDirectConsumer(material, source_port, destination_port, forward);
             if (consumer == null) return false;
 
             var item = new FactoryItemState(next_item_id++, material, source_port)
@@ -370,6 +370,7 @@ namespace Maptory.Factory
 
         private IItemConsumer FindDirectConsumer(
             RawMaterialType material,
+            Vector2Int source_port,
             Vector2Int destination_port,
             Vector2Int forward)
         {
@@ -388,6 +389,18 @@ namespace Maptory.Factory
                 if (injector.Forward == forward
                     && injector.Center == destination_port
                     && injector.CanAccept(material)) return injector;
+            }
+
+            foreach (var portal in extraction_network.Portals.Values)
+            {
+                if (!portal.CanAccept(material)) continue;
+
+                foreach (var port in portal.InputPorts)
+                {
+                    if (port.ConveyorPosition == source_port
+                        && port.PortalPosition == destination_port
+                        && port.Direction.ToOffset() == forward) return portal;
+                }
             }
 
             return null;
