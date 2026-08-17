@@ -12,14 +12,14 @@ Play Mode가 시작되면 다음을 확인한다.
 4. 잔디 위에서 마우스 왼쪽 버튼을 누른 채 드래그하면 더 긴 축을 기준으로 수평 또는 수직 직선 미리보기만 표시된다. 버튼을 놓으면 컨베이어가 설치된다.
 5. 이미 설치된 칸을 반대 방향으로 다시 드래그하면 해당 칸의 방향과 이미지가 새 방향으로 교체된다.
 6. 출력 방향 바로 앞에 다른 컨베이어가 있으면 대상 컨베이어의 방향과 관계없이 연결된 출력 이미지를 사용한다. 따라서 U 방향 출력이 다른 컨베이어로 이어지면 `ConveyorUX`가 아니라 `ConveyorUU`가 표시된다. 연결되지 않은 끝은 `Conveyor?X`, 한 칸에서 바깥으로 향하는 이웃이 둘 이상이면 `Conveyor?A` 이미지가 표시된다. 현재 칸을 향하는 이웃이 정확히 하나라면 그 입력 방향과 출력 방향을 조합해 `ConveyorUR` 같은 회전 이미지를 사용한다. 여러 이웃이 한 칸으로 들어오는 합류는 도착 컨베이어 이미지를 바꾸지 않는다.
-7. 컨베이어의 화면 방향은 `U=우측 상단`, `R=우측 하단`, `D=좌측 하단`, `L=좌측 상단`이다. 낮은 월드 y좌표의 컨베이어가 높은 y좌표의 컨베이어보다 앞에 그려진다.
-8. 건설 모드가 아닐 때 좌클릭 드래그로 카메라를 패닝한다. `WASD` 또는 방향키로도 이동하며 마우스 휠로 확대/축소할 수 있다. `Esc`를 누르면 건설 모드가 해제된다.
+7. 컨베이어의 화면 방향은 `U=우측 상단`, `R=우측 하단`, `D=좌측 하단`, `L=좌측 상단`이다. 낮은 월드 y좌표의 컨베이어가 높은 y좌표의 컨베이어보다 앞에 그려진다. 같은 y좌표에서는 x좌표로 순서를 고정하므로 설치 순서나 재설치 횟수에 따라 겹침 순서가 바뀌지 않는다.
+8. 건설 모드 여부와 관계없이 우클릭 드래그로 카메라를 패닝한다. `WASD` 또는 방향키로도 이동하며 마우스 휠로 확대/축소할 수 있다. `Esc`를 누르면 건설 모드가 해제된다.
 
 Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 등각 화면 방향 매핑, 직선 배치와 끝 이미지, 출력 방향의 회전 컨베이어 연결, 대각선 거부, 기존 방향 덮어쓰기, 단일 입력의 회전 이미지, 다중 출력의 A 이미지, 다중 입력의 무변형, 출력 라운드로빈 분배, 입력 반대 방향으로의 역류 방지를 검증한다.
 
 ## 2. 기능 사용법
 
-`FactoryGame`은 맵 표현과 입력/UI 조립을 담당하는 Scene 진입점이다. Main Camera가 `MainCamera` 태그를 가지고 있어야 한다. 카메라는 y축 기반 투명 정렬을 사용한다. 잔디와 컨베이어 Sprite는 `Art/Resources/Factory` 아래에서 이름으로 로드되며, `FactorySpriteImporter`가 Point 필터, 16 PPU와 컨베이어용 피벗을 적용한다.
+`FactoryGame`은 맵 표현과 입력/UI 조립을 담당하는 Scene 진입점이다. Main Camera가 `MainCamera` 태그를 가지고 있어야 한다. 잔디와 컨베이어 Sprite는 `Art/Resources/Factory` 아래에서 이름으로 로드되며, `FactorySpriteImporter`가 Point 필터, 16 PPU와 컨베이어용 피벗을 적용한다. 컨베이어 표현은 셀마다 독립된 `SpriteRenderer`를 사용하고 낮은 y좌표일수록 큰 정렬 순서를 부여한다.
 
 다른 시뮬레이션 기능은 Unity 표현 계층 대신 `ConveyorNetwork`를 사용한다. `GridDirection`은 각 컨베이어가 아이템을 받아 이동시키는 기본 방향이다. 현재 칸의 출력 후보는 인접 칸 중 현재 칸에서 바깥을 향하는 컨베이어이며, 입력의 반대 방향은 후보에서 제외된다.
 
@@ -42,16 +42,16 @@ if (network.TrySelectNextOutput(new Vector2Int(4, 4), out var output_direction))
 
 | 파일 | 책임 |
 | --- | --- |
-| `FactoryGame.cs` | 50×50 잔디 Tilemap을 만들고 컨베이어 표현, 핫바, 카메라를 조립하는 Scene 진입점 |
+| `FactoryGame.cs` | 50×50 잔디 Tilemap을 만들고 컨베이어 표현 루트, 핫바, 카메라를 조립하는 Scene 진입점 |
 | `GridDirection.cs` | 4방향 값과 격자 오프셋, Sprite 코드, 반대 방향 변환 정의 |
 | `ConveyorNetwork.cs` | 컨베이어 방향 상태, 직선 배치/덮어쓰기, 연결 분석, Sprite 이름과 출력 분배 순서 소유 |
-| `FactoryTileCatalog.cs` | Resources의 잔디/컨베이어 Sprite를 런타임 Tile로 변환하고 조회 |
-| `ConveyorBuilder.cs` | 핫바가 켠 건설 모드에서 포인터를 격자에 투영하고 직선 미리보기와 배치 수행 |
+| `FactoryTileCatalog.cs` | Resources의 잔디/컨베이어 Sprite를 로드하고 미리보기용 런타임 Tile과 실제 표현용 Sprite 조회 제공 |
+| `ConveyorBuilder.cs` | 핫바가 켠 건설 모드에서 포인터를 격자에 투영하고 직선 미리보기와 배치를 수행하며 셀별 컨베이어 SpriteRenderer를 갱신 |
 | `FactoryHotbar.cs` | 화면 하단 10슬롯 UI, 첫 슬롯 선택 상태와 건설 클릭 이벤트 제공 |
-| `FactoryCameraController.cs` | 키보드 이동, 비건설 모드 좌클릭 패닝, 휠 확대/축소와 맵 범위 제한 담당 |
+| `FactoryCameraController.cs` | 키보드 이동, 우클릭 패닝, 휠 확대/축소와 맵 범위 제한 담당 |
 | `Editor/FactorySpriteImporter.cs` | 기능 전용 픽셀 아트의 Sprite import 설정 고정 |
 | `Tests/EditMode/ConveyorNetworkTests.cs` | 컨베이어 연결 및 분배 규칙의 Edit Mode 회귀 테스트 |
 
-`ConveyorNetwork`가 정식 시뮬레이션 상태를 소유하고 `ConveyorBuilder`가 명령을 전달한다. `FactoryGame`은 상태를 Tilemap으로 표현하며 UI는 네트워크 내부를 직접 참조하지 않는다. 향후 아이템 운송은 `TrySelectNextOutput`을 통해 네트워크에 의존하고, 네트워크는 아이템이나 Unity UI에 의존하지 않는다.
+`ConveyorNetwork`가 정식 시뮬레이션 상태를 소유하고 `ConveyorBuilder`가 명령을 전달한다. `ConveyorBuilder`는 네트워크 상태를 셀별 `SpriteRenderer`로 표현하며 UI는 네트워크 내부를 직접 참조하지 않는다. 향후 아이템 운송은 `TrySelectNextOutput`을 통해 네트워크에 의존하고, 네트워크는 아이템이나 Unity UI에 의존하지 않는다.
 
 현재 컨베이어 위의 아이템 이동 애니메이션, 다른 건물 연결, 저장은 구현되어 있지 않다. 건물 연결이 추가되면 건물을 출력 후보로 제공하되, 막힌 끝의 X 규칙과 컨베이어 간 A 분배 규칙은 `ConveyorNetwork` 경계 안에 유지한다.

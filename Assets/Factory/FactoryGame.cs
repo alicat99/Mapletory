@@ -12,7 +12,7 @@ namespace Maptory.Factory
 
         private Grid grid;
         private Tilemap ground_tilemap;
-        private Tilemap conveyor_tilemap;
+        private Transform conveyor_root;
         private Tilemap preview_tilemap;
         private ConveyorNetwork conveyor_network;
         private FactoryTileCatalog tile_catalog;
@@ -24,8 +24,8 @@ namespace Maptory.Factory
 
             CreateMap();
             FillGround();
-            var builder = CreateConstructionControls();
-            ConfigureCamera(builder);
+            CreateConstructionControls();
+            ConfigureCamera();
         }
 
         private void CreateMap()
@@ -37,8 +37,10 @@ namespace Maptory.Factory
             grid.cellSize = new Vector3(1f, 0.5f, 1f);
 
             ground_tilemap = CreateTilemap("Grass", 0, TilemapRenderer.Mode.Chunk);
-            conveyor_tilemap = CreateTilemap("Conveyors", 10, TilemapRenderer.Mode.Individual);
-            preview_tilemap = CreateTilemap("Construction Preview", 20, TilemapRenderer.Mode.Individual);
+            var conveyor_object = new GameObject("Conveyors");
+            conveyor_object.transform.SetParent(grid.transform, false);
+            conveyor_root = conveyor_object.transform;
+            preview_tilemap = CreateTilemap("Construction Preview", 10000, TilemapRenderer.Mode.Individual);
             preview_tilemap.color = new Color(1f, 1f, 1f, 0.65f);
         }
 
@@ -58,13 +60,13 @@ namespace Maptory.Factory
             ground_tilemap.CompressBounds();
         }
 
-        private ConveyorBuilder CreateConstructionControls()
+        private void CreateConstructionControls()
         {
             var builder = gameObject.AddComponent<ConveyorBuilder>();
             builder.Initialize(
                 Camera.main,
                 grid,
-                conveyor_tilemap,
+                conveyor_root,
                 preview_tilemap,
                 conveyor_network,
                 tile_catalog,
@@ -73,10 +75,9 @@ namespace Maptory.Factory
             var hotbar = FactoryHotbar.Create(transform, tile_catalog.ConveyorIcon);
             hotbar.ConveyorClicked += builder.ToggleBuildMode;
             builder.BuildModeChanged += hotbar.SetConveyorSelected;
-            return builder;
         }
 
-        private void ConfigureCamera(ConveyorBuilder builder)
+        private void ConfigureCamera()
         {
             var main_camera = Camera.main;
             main_camera.backgroundColor = new Color(0.075f, 0.12f, 0.08f);
@@ -91,7 +92,7 @@ namespace Maptory.Factory
             main_camera.orthographicSize = 7.5f;
 
             var controller = main_camera.gameObject.AddComponent<FactoryCameraController>();
-            controller.Initialize(ground_tilemap.GetComponent<Renderer>(), builder);
+            controller.Initialize(ground_tilemap.GetComponent<Renderer>());
         }
 
         private Tilemap CreateTilemap(string object_name, int sorting_order, TilemapRenderer.Mode mode)

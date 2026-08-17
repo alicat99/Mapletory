@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -14,10 +15,11 @@ namespace Maptory.Factory
 
         private Camera main_camera;
         private Grid grid;
-        private Tilemap conveyor_tilemap;
+        private Transform conveyor_root;
         private Tilemap preview_tilemap;
         private ConveyorNetwork conveyor_network;
         private FactoryTileCatalog tile_catalog;
+        private readonly Dictionary<Vector2Int, SpriteRenderer> conveyor_renderers = new();
         private Vector2Int map_size;
         private Vector2Int drag_start;
         private Vector2Int drag_end;
@@ -26,7 +28,7 @@ namespace Maptory.Factory
         public void Initialize(
             Camera camera,
             Grid map_grid,
-            Tilemap conveyors,
+            Transform conveyors,
             Tilemap preview,
             ConveyorNetwork network,
             FactoryTileCatalog catalog,
@@ -34,7 +36,7 @@ namespace Maptory.Factory
         {
             main_camera = camera;
             grid = map_grid;
-            conveyor_tilemap = conveyors;
+            conveyor_root = conveyors;
             preview_tilemap = preview;
             conveyor_network = network;
             tile_catalog = catalog;
@@ -137,13 +139,36 @@ namespace Maptory.Factory
 
         private void DrawConveyors()
         {
-            conveyor_tilemap.ClearAllTiles();
-
             foreach (var pair in conveyor_network.Conveyors)
             {
+                if (!conveyor_renderers.TryGetValue(pair.Key, out var renderer))
+                {
+                    renderer = CreateConveyorRenderer(pair.Key);
+                    conveyor_renderers.Add(pair.Key, renderer);
+                }
+
                 var sprite_name = conveyor_network.GetSpriteName(pair.Key);
-                conveyor_tilemap.SetTile((Vector3Int)pair.Key, tile_catalog.GetConveyorTile(sprite_name));
+                renderer.sprite = tile_catalog.GetConveyorSprite(sprite_name);
             }
+        }
+
+        private SpriteRenderer CreateConveyorRenderer(Vector2Int position)
+        {
+            var conveyor_object = new GameObject($"Conveyor ({position.x}, {position.y})");
+            conveyor_object.transform.SetParent(conveyor_root, false);
+            conveyor_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)position);
+
+            var renderer = conveyor_object.AddComponent<SpriteRenderer>();
+            renderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            renderer.sortingOrder = GetSortingOrder(position);
+            return renderer;
+        }
+
+        private int GetSortingOrder(Vector2Int position)
+        {
+            var depth_stride = map_size.x + 1;
+            return (map_size.x + map_size.y - position.x - position.y) * depth_stride
+                + position.x + 10;
         }
 
         private Vector2Int GetPointerCell()
@@ -165,6 +190,5 @@ namespace Maptory.Factory
         {
             return cell.x >= 0 && cell.x < map_size.x && cell.y >= 0 && cell.y < map_size.y;
         }
-
     }
 }

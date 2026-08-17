@@ -12,16 +12,14 @@ namespace Maptory.Factory
         [SerializeField] private float maximum_zoom = 14f;
 
         private Camera controlled_camera;
-        private ConveyorBuilder conveyor_builder;
         private Renderer ground_renderer;
         private bool is_panning;
         private bool is_pan_blocked;
         private Vector2 last_pointer_position;
 
-        public void Initialize(Renderer ground_renderer, ConveyorBuilder builder)
+        public void Initialize(Renderer ground_renderer)
         {
             controlled_camera = GetComponent<Camera>();
-            conveyor_builder = builder;
             this.ground_renderer = ground_renderer;
         }
 
@@ -64,17 +62,10 @@ namespace Maptory.Factory
 
         private void PanCamera()
         {
-            if (!Mouse.current.leftButton.isPressed)
+            if (!Mouse.current.rightButton.isPressed)
             {
                 is_panning = false;
                 is_pan_blocked = false;
-                return;
-            }
-
-            if (conveyor_builder.IsBuildMode)
-            {
-                is_panning = false;
-                is_pan_blocked = true;
                 return;
             }
 

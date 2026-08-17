@@ -30,6 +30,11 @@ namespace Maptory.Factory
             return conveyor_tiles[sprite_name];
         }
 
+        public Sprite GetConveyorSprite(string sprite_name)
+        {
+            return conveyor_tiles[sprite_name].sprite;
+        }
+
         private static Tile CreateTile(Sprite sprite)
         {
             var tile = ScriptableObject.CreateInstance<Tile>();
