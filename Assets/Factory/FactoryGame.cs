@@ -78,6 +78,11 @@ namespace Maptory.Factory
         {
             var map_size = new Vector2Int(map_width, map_height);
             var build_mode = gameObject.AddComponent<FactoryBuildMode>();
+            var grid_overlay_object = new GameObject("Construction Grid Overlay");
+            grid_overlay_object.transform.SetParent(grid.transform, false);
+            var grid_overlay = grid_overlay_object.AddComponent<ConstructionGridOverlay>();
+            grid_overlay.Initialize(grid, build_mode, map_size);
+
             conveyor_builder = gameObject.AddComponent<ConveyorBuilder>();
             conveyor_builder.Initialize(
                 Camera.main,
