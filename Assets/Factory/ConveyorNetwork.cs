@@ -86,7 +86,7 @@ namespace Maptory.Factory
 
                 var neighbor_position = position + direction.ToOffset();
                 if (conveyors.TryGetValue(neighbor_position, out var neighbor)
-                    && neighbor.Direction == direction)
+                    && (direction == conveyor.Direction || neighbor.Direction == direction))
                 {
                     outputs.Add(direction);
                 }
@@ -143,6 +143,5 @@ namespace Maptory.Factory
 
             return input_count == 1 ? input_direction : conveyor.Direction;
         }
-
     }
 }
