@@ -70,11 +70,11 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
-        public void ErdaInjectorUsesOneCellAndProducesAllSevenMonsters()
+        public void ErdaInjectorUsesOneCellAndProducesAllSevenTransportItems()
         {
-            Assert.That(FactoryMonsterRecipes.All.Count, Is.EqualTo(7));
+            Assert.That(ErdaInjectionRecipes.All.Count, Is.EqualTo(7));
 
-            foreach (var recipe in FactoryMonsterRecipes.All)
+            foreach (var recipe in ErdaInjectionRecipes.All)
             {
                 var conveyors = new ConveyorNetwork();
                 var network = new ExtractionNetwork(new RawMaterialDeposit[0], conveyors);
@@ -83,19 +83,73 @@ namespace Maptory.Factory.Tests
                     GridDirection.Up);
                 var direction = GridDirectionExtensions.FromDelta(injector.Forward);
                 conveyors.SetConveyor(injector.InputConveyorPosition, direction);
+                conveyors.SetConveyor(injector.OutputConveyorPosition, direction);
+                conveyors.SetConveyor(injector.OutputConveyorPosition + injector.Forward, direction);
                 var transport = new FactoryItemTransport(conveyors, network);
                 transport.SpawnItem(recipe.Key, injector.InputConveyorPosition);
 
                 transport.Step();
                 transport.Step();
 
-                Assert.That(transport.Items, Is.Empty);
-                Assert.That(transport.Monsters.Count, Is.EqualTo(1));
-                Assert.That(transport.Monsters[0].Type, Is.EqualTo(recipe.Value));
-                Assert.That(transport.Monsters[0].Position, Is.EqualTo(injector.OutputPosition));
+                Assert.That(transport.Items.Count, Is.EqualTo(1));
+                Assert.That(transport.Items[0].Material, Is.EqualTo(recipe.Value));
+                Assert.That(transport.Items[0].Position, Is.EqualTo(injector.OutputConveyorPosition));
+                Assert.That(transport.Items[0].ScaleAnimation, Is.EqualTo(ItemScaleAnimation.Spawning));
+
+                transport.Step();
+
+                Assert.That(transport.Items[0].TargetPosition,
+                    Is.EqualTo(injector.OutputConveyorPosition + injector.Forward));
                 Assert.That(network.IsBuildingOccupied(injector.Center), Is.True);
                 Assert.That(network.IsBuildingOccupied(injector.Center + Vector2Int.up), Is.False);
             }
+        }
+
+        [Test]
+        public void ErdaInjectorWaitsForClearOutputConveyor()
+        {
+            var conveyors = new ConveyorNetwork();
+            var network = new ExtractionNetwork(new RawMaterialDeposit[0], conveyors);
+            var injector = network.PlaceErdaInjector(new Vector2Int(10, 10), GridDirection.Up);
+            var direction = GridDirectionExtensions.FromDelta(injector.Forward);
+            conveyors.SetConveyor(injector.InputConveyorPosition, direction);
+            var transport = new FactoryItemTransport(conveyors, network);
+            transport.SpawnItem(RawMaterialType.SnailRed, injector.InputConveyorPosition);
+
+            transport.Step();
+            transport.Step();
+
+            Assert.That(transport.Items, Is.Empty);
+            Assert.That(injector.CanProduce, Is.True);
+
+            conveyors.SetConveyor(injector.OutputConveyorPosition, direction);
+            transport.Step();
+
+            Assert.That(transport.Items.Count, Is.EqualTo(1));
+            Assert.That(transport.Items[0].Material, Is.EqualTo(RawMaterialType.MonsterSnailRed));
+            Assert.That(injector.CanProduce, Is.False);
+        }
+
+        [Test]
+        public void ErdaInjectorDoesNotOverlapOccupiedOutput()
+        {
+            var conveyors = new ConveyorNetwork();
+            var network = new ExtractionNetwork(new RawMaterialDeposit[0], conveyors);
+            var injector = network.PlaceErdaInjector(new Vector2Int(10, 10), GridDirection.Up);
+            var direction = GridDirectionExtensions.FromDelta(injector.Forward);
+            conveyors.SetConveyor(injector.InputConveyorPosition, direction);
+            conveyors.SetConveyor(injector.OutputConveyorPosition, direction);
+            var transport = new FactoryItemTransport(conveyors, network);
+            transport.SpawnItem(RawMaterialType.DyeRed, injector.OutputConveyorPosition);
+            transport.SpawnItem(RawMaterialType.SnailRed, injector.InputConveyorPosition);
+
+            transport.Step();
+            transport.Step();
+
+            Assert.That(transport.Items.Count, Is.EqualTo(1));
+            Assert.That(transport.Items[0].Material, Is.EqualTo(RawMaterialType.DyeRed));
+            Assert.That(transport.Items[0].Position, Is.EqualTo(injector.OutputConveyorPosition));
+            Assert.That(injector.CanProduce, Is.True);
         }
 
         [Test]
@@ -120,11 +174,10 @@ namespace Maptory.Factory.Tests
 
             Assert.That(transport.Items.Count, Is.EqualTo(1));
             Assert.That(transport.Items[0].Position, Is.EqualTo(injector.InputConveyorPosition));
-            Assert.That(transport.Monsters, Is.Empty);
         }
 
         [Test]
-        public void NewBuildingsAndMonstersHaveRuntimeSprites()
+        public void NewBuildingsAndErdaOutputsHaveRuntimeSprites()
         {
             var catalog = new FactoryTileCatalog();
 
@@ -142,9 +195,12 @@ namespace Maptory.Factory.Tests
                 Assert.That(catalog.GetErdaInjectorUpperSprite(direction), Is.Not.Null);
             }
 
-            foreach (var monster in FactoryMonsterRecipes.All.Values)
+            foreach (var output in ErdaInjectionRecipes.All.Values)
             {
-                Assert.That(catalog.GetMonsterSprite(monster), Is.Not.Null);
+                var sprite = catalog.GetItemSprite(output);
+                Assert.That(sprite, Is.Not.Null);
+                Assert.That(sprite.pivot.x / sprite.rect.width, Is.EqualTo(0.5f).Within(0.001f));
+                Assert.That(sprite.pivot.y / sprite.rect.height, Is.EqualTo(0.25f).Within(0.001f));
             }
         }
 

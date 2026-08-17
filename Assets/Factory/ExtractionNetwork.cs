@@ -11,7 +11,10 @@ namespace Maptory.Factory
         SnailRed, SnailBlue,
         MushroomBlue, MushroomOrange, MushroomGreen,
         SpikeMushroom, SpikeMushroomBlue, SpikeMushroomOrange, SpikeMushroomGreen,
-        SpikeMushroomGray
+        SpikeMushroomGray,
+        MonsterMushroomBlue, MonsterMushroomGreen, MonsterMushroomOrange,
+        MonsterSnailBlue, MonsterSnailGreen, MonsterSnailRed,
+        MonsterSpikeMushroomGray
     }
 
     public static class RawMaterialTypeExtensions
@@ -48,6 +51,13 @@ namespace Maptory.Factory
                 RawMaterialType.SpikeMushroomOrange => "주황 뿔버섯 갓",
                 RawMaterialType.SpikeMushroomGreen => "초록 뿔버섯 갓",
                 RawMaterialType.SpikeMushroomGray => "회색 뿔버섯 갓",
+                RawMaterialType.MonsterMushroomBlue => "파란 버섯 몬스터",
+                RawMaterialType.MonsterMushroomGreen => "초록 버섯 몬스터",
+                RawMaterialType.MonsterMushroomOrange => "주황 버섯 몬스터",
+                RawMaterialType.MonsterSnailBlue => "파란 달팽이 몬스터",
+                RawMaterialType.MonsterSnailGreen => "초록 달팽이 몬스터",
+                RawMaterialType.MonsterSnailRed => "빨간 달팽이 몬스터",
+                RawMaterialType.MonsterSpikeMushroomGray => "회색 뿔버섯 몬스터",
                 _ => throw new ArgumentOutOfRangeException(nameof(material))
             };
         }
@@ -379,7 +389,7 @@ namespace Maptory.Factory
         public GridDirection Direction { get; }
         public Vector2Int Forward => Direction.ToOffset();
         public Vector2Int InputConveyorPosition => Center - Forward;
-        public Vector2Int OutputPosition => Center + Forward;
+        public Vector2Int OutputConveyorPosition => Center + Forward;
         public bool CanProduce => stored_material.HasValue;
 
         public ErdaInjectorState(Vector2Int center, GridDirection direction)
@@ -390,7 +400,7 @@ namespace Maptory.Factory
 
         public bool CanAccept(RawMaterialType material)
         {
-            return !stored_material.HasValue && FactoryMonsterRecipes.Contains(material);
+            return !stored_material.HasValue && ErdaInjectionRecipes.Contains(material);
         }
 
         public void AddInput(RawMaterialType material)
@@ -403,16 +413,16 @@ namespace Maptory.Factory
             stored_material = material;
         }
 
-        public FactoryMonsterType Produce()
+        public RawMaterialType Produce()
         {
             if (!stored_material.HasValue)
             {
                 throw new InvalidOperationException("The Erda injector has no material.");
             }
 
-            var monster = FactoryMonsterRecipes.GetMonster(stored_material.Value);
+            var result = ErdaInjectionRecipes.GetResult(stored_material.Value);
             stored_material = null;
-            return monster;
+            return result;
         }
     }
 

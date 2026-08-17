@@ -15,7 +15,6 @@ namespace Maptory.Factory
         private Transform world_root;
         private Transform conveyor_root;
         private Transform item_root;
-        private Transform monster_root;
         private Tilemap preview_tilemap;
         private ConveyorNetwork conveyor_network;
         private ExtractionNetwork extraction_network;
@@ -53,9 +52,6 @@ namespace Maptory.Factory
             var item_object = new GameObject("Items");
             item_object.transform.SetParent(world_root, false);
             item_root = item_object.transform;
-            var monster_object = new GameObject("Monsters");
-            monster_object.transform.SetParent(world_root, false);
-            monster_root = monster_object.transform;
             preview_tilemap = CreateTilemap("Construction Preview", 30000, TilemapRenderer.Mode.Individual);
             preview_tilemap.color = new Color(1f, 1f, 1f, 0.65f);
             preview_tilemap.GetComponent<TilemapRenderer>().sortingLayerName =
@@ -149,8 +145,6 @@ namespace Maptory.Factory
             var item_transport = new FactoryItemTransport(conveyor_network, extraction_network);
             var item_view = gameObject.AddComponent<FactoryItemTransportView>();
             item_view.Initialize(item_transport, tile_catalog, grid, item_root, map_size);
-            var monster_view = gameObject.AddComponent<FactoryMonsterView>();
-            monster_view.Initialize(item_transport, tile_catalog, grid, monster_root, map_size);
 
             var hotbar = FactoryHotbar.Create(
                 transform,
@@ -191,6 +185,7 @@ namespace Maptory.Factory
         private void OnErdaInjectorPlaced(ErdaInjectorState injector)
         {
             var direction = GridDirectionExtensions.FromDelta(injector.Forward);
+            conveyor_network.AddExternalInput(injector.OutputConveyorPosition, direction);
             conveyor_network.AddExternalOutput(injector.InputConveyorPosition, direction);
             conveyor_builder.RefreshConveyors();
         }

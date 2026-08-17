@@ -11,7 +11,6 @@ namespace Maptory.Factory
         private readonly Dictionary<string, Sprite> raw_material_sprites = new();
         private readonly Dictionary<string, Sprite> building_sprites = new();
         private readonly Dictionary<string, Sprite> item_sprites = new();
-        private readonly Dictionary<string, Sprite> monster_sprites = new();
 
         public Tile Grass01 { get; }
         public Tile Grass02 { get; }
@@ -36,7 +35,7 @@ namespace Maptory.Factory
             AddSprites("Factory/RawMaterials", raw_material_sprites);
             AddSprites("Factory/Buildings", building_sprites);
             AddSprites("Factory/Items", item_sprites);
-            AddSprites("Factory/Monsters", monster_sprites);
+            AddSprites("Factory/Monsters", item_sprites);
 
             ConveyorIcon = conveyor_tiles["ConveyorUU"].sprite;
             ExtractorIcon = building_sprites["ExtractorU"];
@@ -126,11 +125,6 @@ namespace Maptory.Factory
         public Sprite GetItemSprite(RawMaterialType material)
         {
             return item_sprites[material.ToItemSpriteName()];
-        }
-
-        public Sprite GetMonsterSprite(FactoryMonsterType monster)
-        {
-            return monster_sprites[monster.ToSpriteName()];
         }
 
         private static void AddSprites(string resource_path, IDictionary<string, Sprite> sprites)

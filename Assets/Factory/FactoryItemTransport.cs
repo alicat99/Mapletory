@@ -58,13 +58,10 @@ namespace Maptory.Factory
         private readonly FairMergeSelector merge_selector = new();
         private readonly Dictionary<Vector2Int, int> production_steps = new();
         private readonly List<FactoryItemState> items = new();
-        private readonly List<FactoryMonsterState> monsters = new();
         private float elapsed_step_time;
         private int next_item_id;
-        private int next_monster_id;
 
         public IReadOnlyList<FactoryItemState> Items => items;
-        public IReadOnlyList<FactoryMonsterState> Monsters => monsters;
         public float StepProgress => elapsed_step_time / STEP_DURATION;
         public float ScaleAnimationProgress => Mathf.Clamp01(elapsed_step_time / SCALE_ANIMATION_DURATION);
 
@@ -241,7 +238,7 @@ namespace Maptory.Factory
             ProduceExtractorItems();
             ProduceRecipeMachineItems(extraction_network.DyeingMachines.Values);
             ProduceRecipeMachineItems(extraction_network.Combiners.Values);
-            ProduceMonsters();
+            ProduceErdaInjectorItems();
         }
 
         private void ProduceRecipeMachineItems(IEnumerable<IRecipeMachine> machines)
@@ -256,15 +253,15 @@ namespace Maptory.Factory
             }
         }
 
-        private void ProduceMonsters()
+        private void ProduceErdaInjectorItems()
         {
             foreach (var injector in extraction_network.ErdaInjectors.Values)
             {
-                if (!injector.CanProduce) continue;
-                monsters.Add(new FactoryMonsterState(
-                    next_monster_id++,
-                    injector.Produce(),
-                    injector.OutputPosition));
+                if (!injector.CanProduce
+                    || !conveyor_network.Conveyors.ContainsKey(injector.OutputConveyorPosition)
+                    || IsOccupied(injector.OutputConveyorPosition)) continue;
+
+                SpawnItem(injector.Produce(), injector.OutputConveyorPosition);
             }
         }
 
