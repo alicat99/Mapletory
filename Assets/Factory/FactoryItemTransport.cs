@@ -276,8 +276,20 @@ namespace Maptory.Factory
         {
             foreach (var machine in machines)
             {
-                if (!machine.CanCraft
-                    || !conveyor_network.Conveyors.ContainsKey(machine.OutputConveyorPosition)
+                if (!machine.CanCraft) continue;
+
+                var output_material = machine.SelectedRecipe.Result;
+                if (TryTransferDirectly(
+                    output_material,
+                    machine.Center + machine.Forward,
+                    machine.OutputConveyorPosition,
+                    machine.Forward))
+                {
+                    machine.Craft();
+                    continue;
+                }
+
+                if (!conveyor_network.Conveyors.ContainsKey(machine.OutputConveyorPosition)
                     || IsOccupied(machine.OutputConveyorPosition)) continue;
 
                 SpawnItem(machine.Craft(), machine.OutputConveyorPosition);
@@ -288,8 +300,19 @@ namespace Maptory.Factory
         {
             foreach (var injector in extraction_network.ErdaInjectors.Values)
             {
-                if (!injector.CanProduce
-                    || !conveyor_network.Conveyors.ContainsKey(injector.OutputConveyorPosition)
+                if (!injector.CanProduce) continue;
+
+                if (TryTransferDirectly(
+                    injector.OutputMaterial,
+                    injector.Center,
+                    injector.OutputConveyorPosition,
+                    injector.Forward))
+                {
+                    injector.Produce();
+                    continue;
+                }
+
+                if (!conveyor_network.Conveyors.ContainsKey(injector.OutputConveyorPosition)
                     || IsOccupied(injector.OutputConveyorPosition)) continue;
 
                 SpawnItem(injector.Produce(), injector.OutputConveyorPosition);
@@ -303,13 +326,79 @@ namespace Maptory.Factory
                 production_steps.TryGetValue(extractor.Center, out var steps);
                 steps++;
                 production_steps[extractor.Center] = steps;
-                if (steps < PRODUCTION_STEP_INTERVAL
-                    || !conveyor_network.Conveyors.ContainsKey(extractor.OutputPosition)
+                if (steps < PRODUCTION_STEP_INTERVAL) continue;
+
+                var forward = extractor.Direction.ToOffset();
+                if (TryTransferDirectly(
+                    extractor.Material,
+                    extractor.Center + forward,
+                    extractor.OutputPosition,
+                    forward))
+                {
+                    production_steps[extractor.Center] = 0;
+                    continue;
+                }
+
+                if (!conveyor_network.Conveyors.ContainsKey(extractor.OutputPosition)
                     || IsOccupied(extractor.OutputPosition)) continue;
 
                 SpawnItem(extractor.Material, extractor.OutputPosition);
                 production_steps[extractor.Center] = 0;
             }
+        }
+
+        private bool TryTransferDirectly(
+            RawMaterialType material,
+            Vector2Int source_port,
+            Vector2Int destination_port,
+            Vector2Int forward)
+        {
+            if (IsOccupied(source_port) || IsOccupied(destination_port)) return false;
+
+            var consumer = FindDirectConsumer(material, destination_port, forward);
+            if (consumer == null) return false;
+
+            var item = new FactoryItemState(next_item_id++, material, source_port)
+            {
+                TargetPosition = destination_port,
+                ScaleAnimation = ItemScaleAnimation.Despawning,
+                DestinationConsumer = consumer
+            };
+            items.Add(item);
+            return true;
+        }
+
+        private IItemConsumer FindDirectConsumer(
+            RawMaterialType material,
+            Vector2Int destination_port,
+            Vector2Int forward)
+        {
+            foreach (var machine in GetRecipeMachines())
+            {
+                if (machine.Forward != forward || !machine.CanAccept(material)) continue;
+
+                for (var input = 0; input < machine.InputCount; input++)
+                {
+                    if (machine.GetInputPort(input) == destination_port) return machine;
+                }
+            }
+
+            foreach (var injector in extraction_network.ErdaInjectors.Values)
+            {
+                if (injector.Forward == forward
+                    && injector.Center == destination_port
+                    && injector.CanAccept(material)) return injector;
+            }
+
+            return null;
+        }
+
+        private IEnumerable<IRecipeMachine> GetRecipeMachines()
+        {
+            return extraction_network.DyeingMachines.Values
+                .Cast<IRecipeMachine>()
+                .Concat(extraction_network.Combiners.Values)
+                .Concat(extraction_network.ProcessingMachines.Values);
         }
 
         private bool IsOccupied(Vector2Int position)

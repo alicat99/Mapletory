@@ -502,6 +502,7 @@ namespace Maptory.Factory
         public Vector2Int InputConveyorPosition => Center - Forward;
         public Vector2Int OutputConveyorPosition => Center + Forward;
         public bool CanProduce => stored_material.HasValue;
+        public RawMaterialType OutputMaterial => ErdaInjectionRecipes.GetResult(stored_material.Value);
 
         public ErdaInjectorState(Vector2Int center, GridDirection direction)
         {
