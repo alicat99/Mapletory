@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -13,18 +14,27 @@ namespace Maptory.Factory
 
         private Camera controlled_camera;
         private Renderer ground_renderer;
+        private Func<bool> is_input_blocked;
         private bool is_panning;
         private bool is_pan_blocked;
         private Vector2 last_pointer_position;
 
-        public void Initialize(Renderer ground_renderer)
+        public void Initialize(Renderer ground_renderer, Func<bool> input_blocker = null)
         {
             controlled_camera = GetComponent<Camera>();
             this.ground_renderer = ground_renderer;
+            is_input_blocked = input_blocker;
         }
 
         private void Update()
         {
+            if (is_input_blocked != null && is_input_blocked())
+            {
+                is_panning = false;
+                is_pan_blocked = false;
+                return;
+            }
+
             if (Keyboard.current != null)
             {
                 MoveCamera();

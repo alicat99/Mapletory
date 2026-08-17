@@ -20,6 +20,7 @@ namespace Maptory.Factory
         private ExtractionNetwork extraction_network;
         private FactoryTileCatalog tile_catalog;
         private ConveyorBuilder conveyor_builder;
+        private DyeingRecipePanel recipe_panel;
 
         private void Awake()
         {
@@ -101,7 +102,7 @@ namespace Maptory.Factory
                 tile_catalog,
                 map_size);
 
-            var recipe_panel = DyeingRecipePanel.Create(transform, tile_catalog);
+            recipe_panel = DyeingRecipePanel.Create(transform, tile_catalog);
             var dyeing_builder = gameObject.AddComponent<DyeingMachineBuilder>();
             dyeing_builder.Initialize(
                 Camera.main,
@@ -169,7 +170,9 @@ namespace Maptory.Factory
             main_camera.orthographicSize = 7.5f;
 
             var controller = main_camera.gameObject.AddComponent<FactoryCameraController>();
-            controller.Initialize(ground_tilemap.GetComponent<Renderer>());
+            controller.Initialize(
+                ground_tilemap.GetComponent<Renderer>(),
+                () => recipe_panel != null && recipe_panel.IsOpen);
         }
 
         private Tilemap CreateTilemap(string object_name, int sorting_order, TilemapRenderer.Mode mode)

@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace Maptory.Factory
 {
@@ -11,7 +12,7 @@ namespace Maptory.Factory
         private static readonly Color VALID_GHOST_COLOR = new(1f, 1f, 1f, 0.6f);
         private static readonly Color INVALID_GHOST_COLOR = new(1f, 0.35f, 0.35f, 0.45f);
 
-        private readonly Dictionary<DyeingMachineState, TextMeshPro> tooltips = new();
+        private readonly Dictionary<DyeingMachineState, GameObject> tooltips = new();
 
         private Camera main_camera;
         private Grid grid;
@@ -111,20 +112,48 @@ namespace Maptory.Factory
 
         private void CreateTooltip(DyeingMachineState machine, Transform parent, Vector2Int center)
         {
-            var tooltip_object = new GameObject("Recipe Tooltip");
+            var tooltip_object = new GameObject(
+                "Recipe Tooltip",
+                typeof(RectTransform),
+                typeof(Canvas));
             tooltip_object.transform.SetParent(parent, false);
-            tooltip_object.transform.localPosition = new Vector3(0f, 0.85f, -0.1f);
-            tooltip_object.transform.localScale = Vector3.one * 0.08f;
-            var tooltip = tooltip_object.AddComponent<TextMeshPro>();
+            tooltip_object.transform.localPosition = new Vector3(0f, 3.35f, -0.1f);
+            tooltip_object.transform.localScale = Vector3.one * 0.015f;
+            var tooltip_rect = tooltip_object.GetComponent<RectTransform>();
+            tooltip_rect.sizeDelta = new Vector2(240f, 42f);
+
+            var canvas = tooltip_object.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            canvas.overrideSorting = true;
+            canvas.sortingLayerName = FactorySorting.ITEM_SORTING_LAYER;
+            canvas.sortingOrder = FactorySorting.GetOrder(
+                center,
+                map_size,
+                FactorySorting.ITEM_LAYER) + 10;
+
+            var background_object = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            background_object.transform.SetParent(tooltip_object.transform, false);
+            var background_rect = background_object.GetComponent<RectTransform>();
+            Stretch(background_rect);
+            var background = background_object.GetComponent<Image>();
+            background.sprite = tile_catalog.RoundedRectangle;
+            background.type = Image.Type.Sliced;
+            background.pixelsPerUnitMultiplier = 5f;
+            background.color = new Color(0.02f, 0.025f, 0.02f, 0.94f);
+
+            var text_object = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+            text_object.transform.SetParent(tooltip_object.transform, false);
+            var text_rect = text_object.GetComponent<RectTransform>();
+            Stretch(text_rect);
+            var tooltip = text_object.GetComponent<TextMeshProUGUI>();
             tooltip.font = tile_catalog.UiFont;
             tooltip.text = "(레시피 선택)";
-            tooltip.fontSize = 4f;
+            tooltip.fontSize = 24f;
             tooltip.alignment = TextAlignmentOptions.Center;
             tooltip.color = Color.white;
-            tooltip.rectTransform.sizeDelta = new Vector2(12f, 2f);
-            tooltip.renderer.sortingLayerName = FactorySorting.ITEM_SORTING_LAYER;
-            tooltip.renderer.sortingOrder = FactorySorting.GetOrder(center, map_size, FactorySorting.ITEM_LAYER) + 1;
-            tooltips.Add(machine, tooltip);
+            tooltip.raycastTarget = false;
+            tooltip.overflowMode = TextOverflowModes.Overflow;
+            tooltips.Add(machine, tooltip_object);
         }
 
         private void CreateGhost()
@@ -173,7 +202,15 @@ namespace Maptory.Factory
 
         private void OnRecipeSelected(DyeingMachineState machine)
         {
-            tooltips[machine].gameObject.SetActive(false);
+            tooltips[machine].SetActive(false);
+        }
+
+        private static void Stretch(RectTransform rect)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
         }
     }
 }

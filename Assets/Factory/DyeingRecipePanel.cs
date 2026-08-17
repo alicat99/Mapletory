@@ -8,25 +8,29 @@ namespace Maptory.Factory
 {
     public sealed class DyeingRecipePanel : MonoBehaviour
     {
-        private static readonly Color PANEL_COLOR = new(0.07f, 0.09f, 0.07f, 0.97f);
+        private static readonly Color PANEL_COLOR = new(0.035f, 0.045f, 0.035f, 0.98f);
+        private static readonly Color DETAILS_COLOR = new(0.018f, 0.024f, 0.018f, 0.99f);
         private static readonly Color CARD_COLOR = new(0.16f, 0.18f, 0.16f, 1f);
-        private static readonly Color SELECTED_COLOR = new(0.42f, 0.46f, 0.40f, 1f);
+        private static readonly Color SELECTION_COLOR = new(0.88f, 0.9f, 0.86f, 1f);
+        private static readonly Color FOOTER_COLOR = new(0.34f, 0.36f, 0.33f, 1f);
 
-        private readonly Dictionary<DyeingRecipe, Image> recipe_cards = new();
+        private readonly Dictionary<DyeingRecipe, GameObject> recipe_selections = new();
 
         private FactoryTileCatalog catalog;
         private DyeingMachineState machine;
         private DyeingRecipe pending_recipe;
         private GameObject blocker;
-        private Transform recipe_grid;
+        private GameObject base_row;
+        private GameObject dye_row;
         private Image base_icon;
         private Image dye_icon;
-        private Image result_icon;
+        private Image selected_result_icon;
         private TMP_Text base_name;
         private TMP_Text dye_name;
-        private TMP_Text result_name;
+        private TMP_Text selected_name;
 
         public event Action<DyeingMachineState> RecipeSelected;
+        public bool IsOpen => blocker != null && blocker.activeSelf;
 
         public static DyeingRecipePanel Create(Transform parent, FactoryTileCatalog catalog)
         {
@@ -40,6 +44,7 @@ namespace Maptory.Factory
             var canvas = canvas_object.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 200;
+
             var scaler = canvas_object.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280f, 720f);
@@ -63,85 +68,128 @@ namespace Maptory.Factory
         {
             blocker = CreateObject("Blocker", transform);
             Stretch(blocker.GetComponent<RectTransform>());
-            blocker.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.5f);
+            blocker.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.58f);
 
             var panel = CreateRounded("Panel", blocker.transform, PANEL_COLOR, 2f);
             var panel_rect = panel.GetComponent<RectTransform>();
             panel_rect.anchorMin = panel_rect.anchorMax = new Vector2(0.5f, 0.5f);
-            panel_rect.sizeDelta = new Vector2(900f, 560f);
+            panel_rect.pivot = new Vector2(0.5f, 0.5f);
+            panel_rect.anchoredPosition = Vector2.zero;
+            panel_rect.sizeDelta = new Vector2(720f, 480f);
 
-            CreateText("염색기", panel.transform, 34f, TextAlignmentOptions.Left,
-                new Vector2(28f, -22f), new Vector2(760f, 52f));
-            var close = CreateButton("닫기", panel.transform, "×", 40f);
-            SetRect(close.GetComponent<RectTransform>(), new Vector2(842f, -18f), new Vector2(40f, 40f));
-            close.GetComponent<Button>().onClick.AddListener(Close);
+            CreateText("염색기", panel.transform, 30f, TextAlignmentOptions.Left,
+                new Vector2(22f, -14f), new Vector2(600f, 44f));
+            var close = CreateButton("Close", panel.transform, "×", 38f);
+            SetRect(close.GetComponent<RectTransform>(), new Vector2(662f, -12f), new Vector2(40f, 40f));
+            close.GetComponent<Image>().color = Color.clear;
+            close.onClick.AddListener(Close);
+            CreateLine(panel.transform, new Vector2(0f, -62f), new Vector2(720f, 1f));
 
-            var left = CreateRounded("Recipes", panel.transform, new Color(0.09f, 0.11f, 0.09f, 1f), 2.5f);
-            SetRect(left.GetComponent<RectTransform>(), new Vector2(24f, -88f), new Vector2(548f, 380f));
-            recipe_grid = left.transform;
-
-            CreateRecipeCategory("달팽이", -10f);
-            CreateRecipeCard(DyeingRecipe.All[DyeingRecipeId.SnailRed], 0, -46f);
-            CreateRecipeCard(DyeingRecipe.All[DyeingRecipeId.SnailBlue], 1, -46f);
-
-            CreateRecipeCategory("버섯", -126f);
-            CreateRecipeCard(DyeingRecipe.All[DyeingRecipeId.MushroomBlue], 0, -162f);
-            CreateRecipeCard(DyeingRecipe.All[DyeingRecipeId.MushroomOrange], 1, -162f);
-            CreateRecipeCard(DyeingRecipe.All[DyeingRecipeId.MushroomGreen], 2, -162f);
-
-            CreateRecipeCategory("뿔버섯", -242f);
-            CreateRecipeCard(DyeingRecipe.All[DyeingRecipeId.SpikeMushroomBlue], 0, -278f);
-            CreateRecipeCard(DyeingRecipe.All[DyeingRecipeId.SpikeMushroomOrange], 1, -278f);
-            CreateRecipeCard(DyeingRecipe.All[DyeingRecipeId.SpikeMushroomGreen], 2, -278f);
-
-            var details = CreateRounded("Details", panel.transform, new Color(0.09f, 0.11f, 0.09f, 1f), 2.5f);
-            SetRect(details.GetComponent<RectTransform>(), new Vector2(592f, -88f), new Vector2(284f, 380f));
-            CreateText("필요 재료", details.transform, 22f, TextAlignmentOptions.Left,
-                new Vector2(18f, -16f), new Vector2(200f, 34f));
-            base_icon = CreateItemRow(details.transform, 64f, out base_name);
-            dye_icon = CreateItemRow(details.transform, 152f, out dye_name);
-            result_icon = CreateItemRow(details.transform, 258f, out result_name);
-
-            var confirm = CreateButton("Confirm", panel.transform, "확인", 25f);
-            SetRect(confirm.GetComponent<RectTransform>(), new Vector2(592f, -488f), new Vector2(284f, 48f));
-            confirm.GetComponent<Button>().onClick.AddListener(Confirm);
+            BuildRecipeList(panel.transform);
+            BuildDetails(panel.transform);
+            BuildFooter(panel.transform);
             blocker.SetActive(false);
         }
 
-        private void CreateRecipeCategory(string label, float y)
+        private void BuildRecipeList(Transform panel)
         {
-            CreateText(label, recipe_grid, 20f, TextAlignmentOptions.Left,
-                new Vector2(14f, y), new Vector2(220f, 30f));
+            var recipes = CreateObject("Recipes", panel);
+            SetRect(recipes.GetComponent<RectTransform>(), new Vector2(20f, -76f), new Vector2(390f, 294f));
+
+            CreateRecipeCategory(recipes.transform, "달팽이", 0f);
+            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.SnailRed], 0, 28f);
+            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.SnailBlue], 1, 28f);
+
+            CreateRecipeCategory(recipes.transform, "버섯", 94f);
+            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.MushroomBlue], 0, 122f);
+            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.MushroomOrange], 1, 122f);
+            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.MushroomGreen], 2, 122f);
+
+            CreateRecipeCategory(recipes.transform, "뿔버섯", 188f);
+            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.SpikeMushroomBlue], 0, 216f);
+            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.SpikeMushroomOrange], 1, 216f);
+            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.SpikeMushroomGreen], 2, 216f);
         }
 
-        private void CreateRecipeCard(DyeingRecipe recipe, int column, float y)
+        private void BuildDetails(Transform panel)
         {
-            var card = CreateRounded(recipe.DisplayName, recipe_grid, CARD_COLOR, 4f);
-            var x = 14f + column * 174f;
-            SetRect(card.GetComponent<RectTransform>(), new Vector2(x, y), new Vector2(164f, 64f));
-            recipe_cards.Add(recipe, card.GetComponent<Image>());
+            var details = CreateRounded("Details", panel, DETAILS_COLOR, 3f);
+            SetRect(details.GetComponent<RectTransform>(), new Vector2(426f, -76f), new Vector2(274f, 294f));
+            CreateText("필요 재료", details.transform, 20f, TextAlignmentOptions.Left,
+                new Vector2(16f, -14f), new Vector2(220f, 30f));
+
+            base_row = CreateItemRow(details.transform, 50f, out base_icon, out base_name);
+            dye_row = CreateItemRow(details.transform, 126f, out dye_icon, out dye_name);
+            CreateLine(details.transform, new Vector2(16f, -226f), new Vector2(242f, 1f));
+            CreateText("소요 시간", details.transform, 18f, TextAlignmentOptions.Left,
+                new Vector2(16f, -238f), new Vector2(140f, 32f));
+            CreateText("1.0초", details.transform, 18f, TextAlignmentOptions.Right,
+                new Vector2(164f, -238f), new Vector2(94f, 32f));
+        }
+
+        private void BuildFooter(Transform panel)
+        {
+            var footer = CreateRounded("Selected Recipe", panel, FOOTER_COLOR, 4f);
+            SetRect(footer.GetComponent<RectTransform>(), new Vector2(20f, -392f), new Vector2(680f, 68f));
+
+            selected_name = CreateText("(레시피 선택)", footer.transform, 22f,
+                TextAlignmentOptions.MidlineLeft, new Vector2(18f, -8f), new Vector2(410f, 52f));
+            selected_result_icon = CreateObject("Result Icon", footer.transform).AddComponent<Image>();
+            selected_result_icon.preserveAspect = true;
+            selected_result_icon.raycastTarget = false;
+            SetRect(selected_result_icon.rectTransform, new Vector2(456f, -6f), new Vector2(56f, 56f));
+
+            var confirm = CreateButton("Confirm", footer.transform, "확인", 23f);
+            SetRect(confirm.GetComponent<RectTransform>(), new Vector2(530f, -8f), new Vector2(132f, 52f));
+            confirm.onClick.AddListener(Confirm);
+        }
+
+        private void CreateRecipeCategory(Transform parent, string label, float y)
+        {
+            CreateText(label, parent, 19f, TextAlignmentOptions.Left,
+                new Vector2(6f, -y), new Vector2(160f, 26f));
+        }
+
+        private void CreateRecipeCard(Transform parent, DyeingRecipe recipe, int column, float y)
+        {
+            var card = CreateObject(recipe.DisplayName, parent);
+            SetRect(card.GetComponent<RectTransform>(), new Vector2(6f + column * 82f, -y), new Vector2(70f, 62f));
+
+            var selection = CreateRounded("Selection", card.transform, SELECTION_COLOR, 5f);
+            Stretch(selection.GetComponent<RectTransform>());
+            var selection_inner = CreateRounded("Inner", selection.transform, PANEL_COLOR, 5f);
+            var inner_rect = selection_inner.GetComponent<RectTransform>();
+            Stretch(inner_rect);
+            inner_rect.offsetMin = new Vector2(2f, 2f);
+            inner_rect.offsetMax = new Vector2(-2f, -2f);
+            selection.SetActive(false);
+            recipe_selections.Add(recipe, selection);
 
             var icon = CreateObject("Icon", card.transform).AddComponent<Image>();
             icon.sprite = catalog.GetItemSprite(recipe.Result);
             icon.preserveAspect = true;
-            icon.raycastTarget = false;
-            SetRect(icon.rectTransform, new Vector2(8f, -8f), new Vector2(48f, 48f));
-            CreateText(recipe.DisplayName, card.transform, 15f, TextAlignmentOptions.MidlineLeft,
-                new Vector2(62f, -8f), new Vector2(94f, 48f));
-            card.AddComponent<Button>().onClick.AddListener(() => Select(recipe));
+            icon.raycastTarget = true;
+            SetRect(icon.rectTransform, new Vector2(7f, -3f), new Vector2(56f, 56f));
+            var button = card.AddComponent<Button>();
+            button.targetGraphic = icon;
+            button.onClick.AddListener(() => Select(recipe));
         }
 
-        private Image CreateItemRow(Transform parent, float y, out TMP_Text label)
+        private GameObject CreateItemRow(
+            Transform parent,
+            float y,
+            out Image icon,
+            out TMP_Text label)
         {
-            var row = CreateRounded("Item", parent, CARD_COLOR, 4f);
-            SetRect(row.GetComponent<RectTransform>(), new Vector2(14f, -y), new Vector2(256f, 78f));
-            var icon = CreateObject("Icon", row.transform).AddComponent<Image>();
+            var row = CreateRounded("Ingredient", parent, CARD_COLOR, 4f);
+            SetRect(row.GetComponent<RectTransform>(), new Vector2(16f, -y), new Vector2(242f, 66f));
+            icon = CreateObject("Icon", row.transform).AddComponent<Image>();
             icon.preserveAspect = true;
             icon.raycastTarget = false;
-            SetRect(icon.rectTransform, new Vector2(10f, -10f), new Vector2(58f, 58f));
+            SetRect(icon.rectTransform, new Vector2(10f, -8f), new Vector2(50f, 50f));
             label = CreateText("-", row.transform, 18f, TextAlignmentOptions.MidlineLeft,
-                new Vector2(78f, -10f), new Vector2(168f, 58f));
-            return icon;
+                new Vector2(72f, -8f), new Vector2(156f, 50f));
+            return row;
         }
 
         private void Select(DyeingRecipe recipe)
@@ -152,21 +200,29 @@ namespace Maptory.Factory
 
         private void RefreshSelection()
         {
-            foreach (var pair in recipe_cards)
+            foreach (var pair in recipe_selections)
             {
-                pair.Value.color = pair.Key == pending_recipe ? SELECTED_COLOR : CARD_COLOR;
+                pair.Value.SetActive(pair.Key == pending_recipe);
             }
 
             if (pending_recipe == null)
             {
-                base_icon.enabled = dye_icon.enabled = result_icon.enabled = false;
-                base_name.text = dye_name.text = result_name.text = "레시피를 선택하세요";
+                base_row.SetActive(true);
+                dye_row.SetActive(false);
+                base_icon.enabled = false;
+                base_name.text = "레시피를 선택하세요";
+                selected_name.text = "(레시피 선택)";
+                selected_result_icon.enabled = false;
                 return;
             }
 
+            base_row.SetActive(true);
+            dye_row.SetActive(true);
             SetItem(base_icon, base_name, pending_recipe.BaseMaterial);
             SetItem(dye_icon, dye_name, pending_recipe.Dye);
-            SetItem(result_icon, result_name, pending_recipe.Result);
+            selected_name.text = pending_recipe.DisplayName;
+            selected_result_icon.enabled = true;
+            selected_result_icon.sprite = catalog.GetItemSprite(pending_recipe.Result);
         }
 
         private void SetItem(Image icon, TMP_Text label, RawMaterialType material)
@@ -178,7 +234,11 @@ namespace Maptory.Factory
 
         private void Confirm()
         {
-            if (pending_recipe == null) return;
+            if (pending_recipe == null)
+            {
+                return;
+            }
+
             machine.SelectRecipe(pending_recipe);
             RecipeSelected?.Invoke(machine);
             Close();
@@ -202,13 +262,20 @@ namespace Maptory.Factory
 
         private Button CreateButton(string name, Transform parent, string label, float size)
         {
-            var game_object = CreateRounded(name, parent, new Color(0.13f, 0.14f, 0.13f, 1f), 3.5f);
+            var game_object = CreateRounded(name, parent, new Color(0.13f, 0.14f, 0.13f, 1f), 4f);
             var button = game_object.AddComponent<Button>();
             button.targetGraphic = game_object.GetComponent<Image>();
             var text = CreateText(label, game_object.transform, size, TextAlignmentOptions.Center,
                 Vector2.zero, Vector2.zero);
             Stretch(text.rectTransform);
             return button;
+        }
+
+        private void CreateLine(Transform parent, Vector2 position, Vector2 size)
+        {
+            var line = CreateObject("Divider", parent);
+            SetRect(line.GetComponent<RectTransform>(), position, size);
+            line.AddComponent<Image>().color = new Color(0.55f, 0.57f, 0.53f, 0.28f);
         }
 
         private TMP_Text CreateText(
