@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: e96bb6289bbc44c448581e878cb88470
+guid: 78e7a0984ed632a42bb918d2301555a7
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2166870974441393170
-    second: SpikeMushroomGray_0
+      213: -8625194609328289673
+    second: MonsterSpikeMushroomBlue_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SpikeMushroomGray_0
+      name: MonsterSpikeMushroomBlue_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 16
-        height: 15
+        height: 16
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ee3f05e445abde1e0800000000000000
-      internalID: -2166870974441393170
+      spriteID: 7788f5873372d4880800000000000000
+      internalID: -8625194609328289673
       vertices: []
       indices:
       edges: []

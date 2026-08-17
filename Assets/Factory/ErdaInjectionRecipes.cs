@@ -12,7 +12,7 @@ namespace Maptory.Factory
             { RawMaterialType.SnailBlue, RawMaterialType.MonsterSnailBlue },
             { RawMaterialType.Snail, RawMaterialType.MonsterSnailGreen },
             { RawMaterialType.SnailRed, RawMaterialType.MonsterSnailRed },
-            { RawMaterialType.SpikeMushroomGray, RawMaterialType.MonsterSpikeMushroomGray }
+            { RawMaterialType.SpikeMushroomBlue, RawMaterialType.MonsterSpikeMushroomBlue }
         };
 
         public static IReadOnlyDictionary<RawMaterialType, RawMaterialType> All => RECIPES;

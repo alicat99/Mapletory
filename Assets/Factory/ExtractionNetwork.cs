@@ -11,10 +11,10 @@ namespace Maptory.Factory
         SnailRed, SnailBlue,
         MushroomBlue, MushroomOrange, MushroomGreen,
         SpikeMushroom, SpikeMushroomBlue, SpikeMushroomOrange, SpikeMushroomGreen,
-        SpikeMushroomGray, Horn,
+        Horn,
         MonsterMushroomBlue, MonsterMushroomGreen, MonsterMushroomOrange,
         MonsterSnailBlue, MonsterSnailGreen, MonsterSnailRed,
-        MonsterSpikeMushroomGray
+        MonsterSpikeMushroomBlue
     }
 
     public static class RawMaterialTypeExtensions
@@ -50,7 +50,6 @@ namespace Maptory.Factory
                 RawMaterialType.SpikeMushroomBlue => "파란 뿔버섯 갓",
                 RawMaterialType.SpikeMushroomOrange => "주황 뿔버섯 갓",
                 RawMaterialType.SpikeMushroomGreen => "초록 뿔버섯 갓",
-                RawMaterialType.SpikeMushroomGray => "회색 뿔버섯 갓",
                 RawMaterialType.Horn => "뿔",
                 RawMaterialType.MonsterMushroomBlue => "파란 버섯 몬스터",
                 RawMaterialType.MonsterMushroomGreen => "초록 버섯 몬스터",
@@ -58,7 +57,7 @@ namespace Maptory.Factory
                 RawMaterialType.MonsterSnailBlue => "파란 달팽이 몬스터",
                 RawMaterialType.MonsterSnailGreen => "초록 달팽이 몬스터",
                 RawMaterialType.MonsterSnailRed => "빨간 달팽이 몬스터",
-                RawMaterialType.MonsterSpikeMushroomGray => "회색 뿔버섯 몬스터",
+                RawMaterialType.MonsterSpikeMushroomBlue => "파란 뿔버섯 몬스터",
                 _ => throw new ArgumentOutOfRangeException(nameof(material))
             };
         }
