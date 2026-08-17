@@ -42,7 +42,7 @@ namespace Maptory.Factory
     {
         public const float MESO_PER_ITEM = 1.5f;
 
-        private const float MEASUREMENT_WINDOW = 5f;
+        private const float MEASUREMENT_WINDOW = 10f;
         private const float EMA_HALF_LIFE = 6f;
 
         private readonly Dictionary<RawMaterialType, SupplyMeter> meters = new();

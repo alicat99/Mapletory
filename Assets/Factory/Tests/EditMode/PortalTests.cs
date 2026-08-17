@@ -135,7 +135,7 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
-        public void PortalsShareFiveSecondIntervalRateBySelectedMaterial()
+        public void PortalsShareTenSecondIntervalRateBySelectedMaterial()
         {
             var economy = new PortalEconomy();
             var first = new PortalState(Vector2Int.zero, economy);
@@ -155,10 +155,11 @@ namespace Maptory.Factory.Tests
             Assert.That(dense_rate * PortalEconomy.MESO_PER_ITEM,
                 Is.EqualTo(90f).Within(0.001f));
 
-            economy.Update(6f);
+            economy.Update(11f);
 
             var decayed_rate = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
-            Assert.That(decayed_rate, Is.EqualTo(30f).Within(0.001f));
+            var expected_decay = dense_rate * Mathf.Pow(0.5f, 11f / 6f);
+            Assert.That(decayed_rate, Is.EqualTo(expected_decay).Within(0.001f));
 
             first.AddInput(RawMaterialType.MonsterMushroomGreen);
             economy.Update(1f);
