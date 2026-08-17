@@ -7,20 +7,22 @@ namespace Maptory.Factory
     public sealed class FactoryCameraController : MonoBehaviour
     {
         [SerializeField] private float movement_speed = 8f;
-        [SerializeField] private float zoom_speed = 0.15f;
+        [SerializeField] private float zoom_speed = 0.3f;
         [SerializeField] private float minimum_zoom = 3f;
         [SerializeField] private float maximum_zoom = 14f;
 
         private Camera controlled_camera;
         private ConveyorBuilder conveyor_builder;
-        private Bounds map_bounds;
+        private Renderer ground_renderer;
         private bool is_panning;
+        private bool is_pan_blocked;
+        private Vector2 last_pointer_position;
 
         public void Initialize(Renderer ground_renderer, ConveyorBuilder builder)
         {
             controlled_camera = GetComponent<Camera>();
             conveyor_builder = builder;
-            map_bounds = ground_renderer.bounds;
+            this.ground_renderer = ground_renderer;
         }
 
         private void Update()
@@ -62,30 +64,37 @@ namespace Maptory.Factory
 
         private void PanCamera()
         {
-            if (conveyor_builder.IsBuildMode)
-            {
-                is_panning = false;
-                return;
-            }
-
-            if (Mouse.current.leftButton.wasPressedThisFrame)
-            {
-                is_panning = EventSystem.current == null
-                    || !EventSystem.current.IsPointerOverGameObject();
-            }
-
             if (!Mouse.current.leftButton.isPressed)
             {
                 is_panning = false;
+                is_pan_blocked = false;
+                return;
+            }
+
+            if (conveyor_builder.IsBuildMode)
+            {
+                is_panning = false;
+                is_pan_blocked = true;
                 return;
             }
 
             if (!is_panning)
             {
+                if (is_pan_blocked)
+                {
+                    return;
+                }
+
+                is_pan_blocked = EventSystem.current != null
+                    && EventSystem.current.IsPointerOverGameObject();
+                last_pointer_position = Mouse.current.position.ReadValue();
+                is_panning = !is_pan_blocked;
                 return;
             }
 
-            var screen_delta = Mouse.current.delta.ReadValue();
+            var pointer_position = Mouse.current.position.ReadValue();
+            var screen_delta = pointer_position - last_pointer_position;
+            last_pointer_position = pointer_position;
             var world_units_per_pixel = controlled_camera.orthographicSize * 2f / Screen.height;
             transform.position -= new Vector3(screen_delta.x, screen_delta.y) * world_units_per_pixel;
         }
@@ -94,6 +103,7 @@ namespace Maptory.Factory
         {
             var camera_height = controlled_camera.orthographicSize;
             var camera_width = camera_height * controlled_camera.aspect;
+            var map_bounds = ground_renderer.bounds;
             var position = transform.position;
 
             var min_x = map_bounds.min.x + Mathf.Min(camera_width, map_bounds.extents.x);

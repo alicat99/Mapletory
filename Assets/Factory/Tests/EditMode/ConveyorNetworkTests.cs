@@ -61,6 +61,17 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
+        public void SingleIncomingConveyorCreatesTurnSprite()
+        {
+            var network = new ConveyorNetwork();
+            network.SetConveyor(Vector2Int.left, GridDirection.Up);
+            network.SetConveyor(Vector2Int.zero, GridDirection.Right);
+            network.SetConveyor(Vector2Int.down, GridDirection.Right);
+
+            Assert.That(network.GetSpriteName(Vector2Int.zero), Is.EqualTo("ConveyorUR"));
+        }
+
+        [Test]
         public void MultipleIncomingConveyorsDoNotChangeDestinationSprite()
         {
             var network = new ConveyorNetwork();

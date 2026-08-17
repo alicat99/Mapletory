@@ -98,6 +98,7 @@ namespace Maptory.Factory
         public string GetSpriteName(Vector2Int position)
         {
             var conveyor = conveyors[position];
+            var input_direction = GetInputDirection(position, conveyor);
             var outputs = GetOutputDirections(position);
             var output_code = outputs.Count switch
             {
@@ -106,7 +107,7 @@ namespace Maptory.Factory
                 _ => 'A'
             };
 
-            return $"Conveyor{conveyor.Direction.ToSpriteCode()}{output_code}";
+            return $"Conveyor{input_direction.ToSpriteCode()}{output_code}";
         }
 
         public bool TrySelectNextOutput(Vector2Int position, out GridDirection output)
@@ -120,6 +121,27 @@ namespace Maptory.Factory
 
             output = conveyors[position].SelectNextOutput(outputs);
             return true;
+        }
+
+        private GridDirection GetInputDirection(Vector2Int position, ConveyorTile conveyor)
+        {
+            var input_direction = conveyor.Direction;
+            var input_count = 0;
+
+            foreach (var direction in DIRECTIONS)
+            {
+                var neighbor_position = position - direction.ToOffset();
+                if (!conveyors.TryGetValue(neighbor_position, out var neighbor)
+                    || neighbor.Direction != direction)
+                {
+                    continue;
+                }
+
+                input_direction = direction;
+                input_count++;
+            }
+
+            return input_count == 1 ? input_direction : conveyor.Direction;
         }
 
     }

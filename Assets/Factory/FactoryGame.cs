@@ -102,6 +102,7 @@ namespace Maptory.Factory
             var renderer = tilemap_object.AddComponent<TilemapRenderer>();
             renderer.sortingOrder = sorting_order;
             renderer.mode = mode;
+            renderer.sortOrder = TilemapRenderer.SortOrder.TopRight;
             return tilemap;
         }
     }
