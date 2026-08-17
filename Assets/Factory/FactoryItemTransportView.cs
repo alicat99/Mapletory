@@ -5,6 +5,8 @@ namespace Maptory.Factory
 {
     public sealed class FactoryItemTransportView : MonoBehaviour
     {
+        private static readonly Vector3 ITEM_SURFACE_OFFSET = new(0f, 0.5f, 0f);
+
         private readonly Dictionary<int, SpriteRenderer> item_renderers = new();
 
         private FactoryItemTransport transport;
@@ -47,7 +49,8 @@ namespace Maptory.Factory
 
                 var from = grid.GetCellCenterLocal((Vector3Int)item.Position);
                 var target = grid.GetCellCenterLocal((Vector3Int)item.TargetPosition);
-                renderer.transform.localPosition = Vector3.Lerp(from, target, progress);
+                renderer.transform.localPosition = Vector3.Lerp(from, target, progress)
+                    + ITEM_SURFACE_OFFSET;
                 var from_order = FactorySorting.GetOrder(
                     item.Position,
                     map_size,
