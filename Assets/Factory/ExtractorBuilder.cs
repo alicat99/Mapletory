@@ -117,6 +117,7 @@ namespace Maptory.Factory
             var extractor_object = new GameObject($"Extractor ({center.x}, {center.y})");
             extractor_object.transform.SetParent(world_root, false);
             extractor_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
+            FactoryBuildingView.Attach(extractor_object, extractor);
             CreateExtractorPart(
                 extractor_object.transform,
                 "Lower",

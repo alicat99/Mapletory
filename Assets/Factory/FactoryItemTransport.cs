@@ -69,6 +69,12 @@ namespace Maptory.Factory
         {
             this.conveyor_network = conveyor_network;
             this.extraction_network = extraction_network;
+            extraction_network.BuildingRemoved += OnBuildingRemoved;
+        }
+
+        public void RemoveItemsAt(Vector2Int position)
+        {
+            items.RemoveAll(item => item.Position == position || item.TargetPosition == position);
         }
 
         public FactoryItemState SpawnItem(RawMaterialType material, Vector2Int conveyor_position)
@@ -417,6 +423,17 @@ namespace Maptory.Factory
         private bool IsOccupied(Vector2Int position)
         {
             return items.Any(item => item.Position == position || item.TargetPosition == position);
+        }
+
+        private void OnBuildingRemoved(object building)
+        {
+            if (building is ExtractorState extractor)
+            {
+                production_steps.Remove(extractor.Center);
+            }
+
+            if (building is not IItemConsumer consumer) return;
+            items.RemoveAll(item => ReferenceEquals(item.DestinationConsumer, consumer));
         }
 
         private readonly struct MoveProposal

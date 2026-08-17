@@ -27,8 +27,9 @@ namespace Maptory.Factory
             grid_renderer.sharedMaterial = grid_material;
             grid_renderer.sortingLayerName = "Default";
             grid_renderer.sortingOrder = 1;
-            grid_renderer.enabled = build_mode.ActiveTool != FactoryBuildTool.None;
+            grid_renderer.enabled = IsInteractionModeActive();
             build_mode.Changed += OnBuildToolChanged;
+            build_mode.DemolitionChanged += OnDemolitionChanged;
         }
 
         private void OnDestroy()
@@ -36,6 +37,7 @@ namespace Maptory.Factory
             if (build_mode != null)
             {
                 build_mode.Changed -= OnBuildToolChanged;
+                build_mode.DemolitionChanged -= OnDemolitionChanged;
             }
 
             if (Application.isPlaying)
@@ -51,7 +53,17 @@ namespace Maptory.Factory
 
         private void OnBuildToolChanged(FactoryBuildTool tool)
         {
-            grid_renderer.enabled = tool != FactoryBuildTool.None;
+            grid_renderer.enabled = IsInteractionModeActive();
+        }
+
+        private void OnDemolitionChanged(bool active)
+        {
+            grid_renderer.enabled = IsInteractionModeActive();
+        }
+
+        private bool IsInteractionModeActive()
+        {
+            return build_mode.ActiveTool != FactoryBuildTool.None || build_mode.IsDemolitionMode;
         }
 
         private static Mesh CreateMesh(Grid map_grid, Vector2Int map_size)

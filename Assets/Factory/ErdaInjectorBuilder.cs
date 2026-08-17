@@ -76,10 +76,11 @@ namespace Maptory.Factory
 
         private void Place(Vector2Int center)
         {
-            extraction_network.PlaceErdaInjector(center, direction);
+            var injector = extraction_network.PlaceErdaInjector(center, direction);
             var injector_object = new GameObject($"Erda Injector ({center.x}, {center.y})");
             injector_object.transform.SetParent(world_root, false);
             injector_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
+            FactoryBuildingView.Attach(injector_object, injector);
             CreatePart(injector_object.transform, "Lower",
                 tile_catalog.GetErdaInjectorLowerSprite(direction),
                 FactorySorting.CONVEYOR_SORTING_LAYER, center);

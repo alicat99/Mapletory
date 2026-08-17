@@ -152,6 +152,14 @@ namespace Maptory.Factory
 
         private void DrawConveyors()
         {
+            foreach (var pair in new List<KeyValuePair<Vector2Int, SpriteRenderer>>(conveyor_renderers))
+            {
+                if (conveyor_network.Conveyors.ContainsKey(pair.Key)) continue;
+
+                Destroy(pair.Value.gameObject);
+                conveyor_renderers.Remove(pair.Key);
+            }
+
             foreach (var pair in conveyor_network.Conveyors)
             {
                 if (!conveyor_renderers.TryGetValue(pair.Key, out var renderer))

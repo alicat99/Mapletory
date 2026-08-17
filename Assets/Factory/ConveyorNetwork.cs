@@ -74,6 +74,11 @@ namespace Maptory.Factory
             conveyors.Add(position, new ConveyorTile(direction));
         }
 
+        public bool RemoveConveyor(Vector2Int position)
+        {
+            return conveyors.Remove(position);
+        }
+
         public void AddExternalInput(Vector2Int position, GridDirection direction)
         {
             if (!external_inputs.TryGetValue(position, out var inputs))
@@ -94,6 +99,16 @@ namespace Maptory.Factory
             }
 
             outputs.Add(direction);
+        }
+
+        public void RemoveExternalInput(Vector2Int position, GridDirection direction)
+        {
+            RemoveExternalConnection(external_inputs, position, direction);
+        }
+
+        public void RemoveExternalOutput(Vector2Int position, GridDirection direction)
+        {
+            RemoveExternalConnection(external_outputs, position, direction);
         }
 
         public List<GridDirection> GetOutputDirections(Vector2Int position)
@@ -187,6 +202,17 @@ namespace Maptory.Factory
             }
 
             return input_count == 1 ? input_direction : conveyor.Direction;
+        }
+
+        private static void RemoveExternalConnection(
+            IDictionary<Vector2Int, List<GridDirection>> connections,
+            Vector2Int position,
+            GridDirection direction)
+        {
+            if (!connections.TryGetValue(position, out var directions)) return;
+
+            directions.Remove(direction);
+            if (directions.Count == 0) connections.Remove(position);
         }
     }
 }

@@ -563,6 +563,7 @@ namespace Maptory.Factory
         public event Action<ProcessingMachineState> ProcessingMachinePlaced;
         public event Action<ErdaInjectorState> ErdaInjectorPlaced;
         public event Action<PortalState> PortalPlaced;
+        public event Action<object> BuildingRemoved;
 
         public ExtractionNetwork(IEnumerable<RawMaterialDeposit> fixed_deposits, ConveyorNetwork conveyors)
         {
@@ -760,6 +761,62 @@ namespace Maptory.Factory
             var portal = new PortalState(anchor, PortalEconomy);
             portals.Add(anchor, portal);
             PortalPlaced?.Invoke(portal);
+            return portal;
+        }
+
+        public object RemoveBuilding(Vector2Int position)
+        {
+            foreach (var extractor in extractors.Values)
+            {
+                if (IsInsideFootprint(position, extractor.Center))
+                {
+                    extractors.Remove(extractor.Center);
+                    BuildingRemoved?.Invoke(extractor);
+                    return extractor;
+                }
+            }
+
+            foreach (var machine in dyeing_machines.Values)
+            {
+                if (IsInsideFootprint(position, machine.Center))
+                {
+                    dyeing_machines.Remove(machine.Center);
+                    BuildingRemoved?.Invoke(machine);
+                    return machine;
+                }
+            }
+
+            foreach (var machine in combiners.Values)
+            {
+                if (IsInsideFootprint(position, machine.Center))
+                {
+                    combiners.Remove(machine.Center);
+                    BuildingRemoved?.Invoke(machine);
+                    return machine;
+                }
+            }
+
+            foreach (var machine in processing_machines.Values)
+            {
+                if (IsInsideFootprint(position, machine.Center))
+                {
+                    processing_machines.Remove(machine.Center);
+                    BuildingRemoved?.Invoke(machine);
+                    return machine;
+                }
+            }
+
+            if (erda_injectors.Remove(position, out var injector))
+            {
+                BuildingRemoved?.Invoke(injector);
+                return injector;
+            }
+
+            var portal = FindPortal(position);
+            if (portal == null) return null;
+
+            portals.Remove(portal.Anchor);
+            BuildingRemoved?.Invoke(portal);
             return portal;
         }
 

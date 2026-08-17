@@ -44,8 +44,9 @@ Play Mode가 시작되면 다음을 확인한다.
 36. 선택 후 월드 툴팁은 `<아이템> x.x/분 | x.x메소/분`으로 바뀐다. 품목별 공급량은 1초 표본과 6초 반감기의 지수이동평균으로 계산하므로 공급이 멈춰도 부드럽게 감소한다. 같은 품목을 선택한 모든 포탈은 `PortalEconomy`의 같은 통계를 조회하여 합산된 분당 공급량과 메소 생산량을 공유한다.
 37. 포탈은 `BuildingLowerMaskPortal.png` 전용 마스크로 Lower/Upper Sprite를 만들며 기존 건물과 같은 `ConveyorLevel`/`ItemLevel`, `(0.5, 0.25)` 피벗 및 Y 기반 정렬 규칙을 사용한다.
 38. 추출기·염색기·조합기·가공기계·에르다 주입기의 출력 방향에 다음 공장이나 포탈의 입력 포트가 바로 닿아 있으면 중간 컨베이어 없이 생산물이 빠른 이동·스케일 아웃으로 전달된다. 공장끼리는 진행 방향이 같아야 하며, 포탈은 맞닿은 면의 모든 방향 입력을 사용한다. 다음 목적지가 해당 아이템을 받을 수 없으면 생산물은 이전 공장에 대기한다.
+39. `X`를 누르면 현재 건설 도구가 해제되고 철거 모드가 켜진다. 철거 중에는 하단 핫바 전체가 어두워지고 입력을 받지 않으며 격자선이 유지된다. 컨베이어를 좌클릭하면 해당 칸과 그 위의 운송 아이템이 제거되고, 건물의 점유 칸 중 어느 곳이든 좌클릭하면 건물 전체·미선택 툴팁·입출력 연결과 해당 건물로 이동 중인 아이템이 제거된다. `X`를 다시 누르거나 `Esc`를 누르면 철거 모드가 끝난다.
 
-Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 맵 크기와 무관한 격자 메시, 염색기와 조합기의 포트·점유·레시피·생산, 가공기계의 중앙 1입력·1출력과 뿔 생산, 조합기의 뿔버섯 생산, 에르다 주입기의 1×1 점유와 7종 운송 아이템 변환·출력 대기·후속 이동, 포탈의 2×2 점유·8방향 입력·선택 품목 필터·메소·공유 EMA, 세 마스크로 생성한 Lower/Upper Sprite 및 런타임 에셋을 검증한다.
+Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 맵 크기와 무관한 격자 메시, 염색기와 조합기의 포트·점유·레시피·생산, 가공기계의 중앙 1입력·1출력과 뿔 생산, 조합기의 뿔버섯 생산, 에르다 주입기의 1×1 점유와 7종 운송 아이템 변환·출력 대기·후속 이동, 포탈의 2×2 점유·8방향 입력·선택 품목 필터·메소·공유 EMA, 철거 모드 상태 전환·건물 발자국 제거·컨베이어 및 외부 연결 제거·이동 중 아이템 취소, 세 마스크로 생성한 Lower/Upper Sprite 및 런타임 에셋을 검증한다.
 
 ## 2. 기능 사용법
 
@@ -75,6 +76,8 @@ if (network.TrySelectNextOutput(new Vector2Int(4, 4), out var output_direction))
 채굴과 운송은 `ExtractionNetwork`와 `FactoryItemTransport`가 소유한다. 채굴기는 반드시 등록된 원재료 중심에만 배치하며 출력 셀은 중심에서 방향 오프셋의 두 배만큼 떨어져 있다.
 
 공장 출력 위치가 다음 공장이나 포탈의 입력 포트와 바로 맞닿으면 `FactoryItemTransport`가 컨베이어 대신 해당 소비자를 목적지로 예약한다. 아이템은 생산 공장의 출력 포트에서 목적지 입력 포트로 이동하며, 목적지가 받을 수 있을 때만 생산 측 재료를 소비한다.
+
+철거 입력은 `FactoryBuildMode.IsDemolitionMode`가 소유한다. 코드에서 모드를 바꾸려면 `ToggleDemolitionMode` 또는 `SetDemolitionMode`를 사용한다. `ExtractionNetwork.RemoveBuilding`은 클릭 셀이 속한 건물 상태를 반환하고 `BuildingRemoved`를 발행하며, `ConveyorNetwork.RemoveConveyor`는 단일 컨베이어 상태를 제거한다. 런타임 화면 제거와 운송 취소는 `FactoryDemolitionController`가 조립한다.
 
 ```csharp
 var conveyors = new ConveyorNetwork();
@@ -160,7 +163,8 @@ extraction.PortalEconomy.Update(1f);
 | `PortalSystem.cs` | 7종 몬스터 공급 선택 항목, 2×2 포탈 상태와 입력 포트, 메소 지갑 및 품목별 공유 EMA 통계 소유 |
 | `ErdaInjectionRecipes.cs` | 에르다 주입기가 받는 7종 재료와 대응하는 몬스터 운송 아이템 정의 |
 | `FactorySorting.cs` | 컨베이어·아이템 레벨 Sorting Layer 이름, 결정적 Y/X 정렬 순서와 높이 Z를 포함한 투명 정렬 축 정의 |
-| `FactoryBuildMode.cs` | 핫바 도구 선택과 `Esc` 해제를 단일 상태로 관리 |
+| `FactoryBuildMode.cs` | 핫바 건설 도구, `X` 철거 모드와 `Esc` 해제를 단일 상태로 관리 |
+| `FactoryDemolitionController.cs` | `X` 철거 입력, 클릭 셀의 컨베이어·건물 뷰 제거와 상태 시스템 연결 |
 | `ConstructionGridOverlay.cs` | 건설 모드 동안 맵 크기와 무관한 단일 메시와 화면 픽셀 굵기 셰이더로 아이소메트릭 격자선을 표시 |
 | `Art/Resources/Factory/Construction/ConstructionGridOverlay.shader` | 단일 메시의 보간된 격자 좌표로 셀 경계와 화면상 일정한 선 굵기를 계산 |
 | `FactoryTileCatalog.cs` | 잔디, 컨베이어, 원재료, 건물 원본·Lower·Upper, 일반·몬스터 아이템·UI Sprite와 런타임 TMP 폰트 조회 제공 |
@@ -187,6 +191,7 @@ extraction.PortalEconomy.Update(1f);
 | `Tests/EditMode/CombinerAndErdaInjectorTests.cs` | 3종 염료 조합, 3×3/1×1 점유, 7종 몬스터 아이템 변환·출력 대기·이동과 신규 런타임 Sprite 검증 |
 | `Tests/EditMode/ProcessingMachineTests.cs` | 가공기계 중앙 포트·뿔 생산, 조합기 뿔버섯 레시피와 신규 Sprite 검증 |
 | `Tests/EditMode/PortalTests.cs` | 포탈 2×2 점유·8개 입력·운송 소비·품목 필터·메소·공유 EMA·Sprite 검증 |
+| `Tests/EditMode/DemolitionTests.cs` | 철거 모드 상태, 건물 발자국 제거, 컨베이어 연결 제거와 이동 중 아이템 취소 검증 |
 
 `ConveyorNetwork`와 `ExtractionNetwork`가 영속 가능한 게임 상태를 소유한다. `FactoryItemTransport`는 두 네트워크만 참조하고 Unity UI나 Renderer에 의존하지 않는다. 건설 Builder와 `FactoryItemTransportView`가 입력과 표현을 담당하며 레시피 UI는 선택 결과만 `DyeingMachineState`에 전달한다.
 

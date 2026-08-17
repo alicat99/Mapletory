@@ -101,6 +101,7 @@ namespace Maptory.Factory
             extraction_network.ProcessingMachinePlaced += OnProcessingMachinePlaced;
             extraction_network.ErdaInjectorPlaced += OnErdaInjectorPlaced;
             extraction_network.PortalPlaced += OnPortalPlaced;
+            extraction_network.BuildingRemoved += OnBuildingRemoved;
 
             var extractor_builder = gameObject.AddComponent<ExtractorBuilder>();
             extractor_builder.Initialize(
@@ -172,6 +173,17 @@ namespace Maptory.Factory
             var item_view = gameObject.AddComponent<FactoryItemTransportView>();
             item_view.Initialize(item_transport, tile_catalog, grid, item_root, map_size);
 
+            var demolition = gameObject.AddComponent<FactoryDemolitionController>();
+            demolition.Initialize(
+                Camera.main,
+                grid,
+                world_root,
+                build_mode,
+                conveyor_network,
+                extraction_network,
+                conveyor_builder,
+                item_transport);
+
             var hotbar = FactoryHotbar.Create(
                 transform,
                 tile_catalog.ConveyorIcon,
@@ -183,6 +195,7 @@ namespace Maptory.Factory
                 tile_catalog.PortalIcon);
             hotbar.ToolClicked += build_mode.Toggle;
             build_mode.Changed += hotbar.SetSelectedTool;
+            build_mode.DemolitionChanged += hotbar.SetDemolitionMode;
             MesoHud.Create(transform, tile_catalog, extraction_network.PortalEconomy);
         }
 
@@ -233,6 +246,46 @@ namespace Maptory.Factory
                 conveyor_network.AddExternalOutput(port.ConveyorPosition, port.Direction);
             }
             conveyor_builder.RefreshConveyors();
+        }
+
+        private void OnBuildingRemoved(object building)
+        {
+            switch (building)
+            {
+                case ExtractorState extractor:
+                    conveyor_network.RemoveExternalInput(extractor.OutputPosition, extractor.Direction);
+                    break;
+                case IRecipeMachine machine:
+                    DisconnectRecipeMachine(machine);
+                    break;
+                case ErdaInjectorState injector:
+                    var injector_direction = GridDirectionExtensions.FromDelta(injector.Forward);
+                    conveyor_network.RemoveExternalInput(
+                        injector.OutputConveyorPosition,
+                        injector_direction);
+                    conveyor_network.RemoveExternalOutput(
+                        injector.InputConveyorPosition,
+                        injector_direction);
+                    break;
+                case PortalState portal:
+                    foreach (var port in portal.InputPorts)
+                    {
+                        conveyor_network.RemoveExternalOutput(port.ConveyorPosition, port.Direction);
+                    }
+                    break;
+            }
+
+            conveyor_builder.RefreshConveyors();
+        }
+
+        private void DisconnectRecipeMachine(IRecipeMachine machine)
+        {
+            var direction = GridDirectionExtensions.FromDelta(machine.Forward);
+            conveyor_network.RemoveExternalInput(machine.OutputConveyorPosition, direction);
+            for (var input = 0; input < machine.InputCount; input++)
+            {
+                conveyor_network.RemoveExternalOutput(machine.GetInputConveyorPosition(input), direction);
+            }
         }
 
         private ExtractionNetwork CreateExtractionNetwork()

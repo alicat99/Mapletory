@@ -11,10 +11,12 @@ namespace Maptory.Factory
     {
         private static readonly Color SLOT_COLOR = new(0.16f, 0.17f, 0.18f, 0.96f);
         private static readonly Color SELECTED_COLOR = new(0.94f, 0.83f, 0.32f, 1f);
+        private const float DEMOLITION_ALPHA = 0.35f;
 
         public event Action<FactoryBuildTool> ToolClicked;
 
         private readonly Dictionary<FactoryBuildTool, Image> tool_slots = new();
+        private CanvasGroup canvas_group;
 
         public static FactoryHotbar Create(
             Transform parent,
@@ -46,6 +48,7 @@ namespace Maptory.Factory
             scaler.matchWidthOrHeight = 1f;
 
             var hotbar = canvas_object.AddComponent<FactoryHotbar>();
+            hotbar.canvas_group = canvas_object.AddComponent<CanvasGroup>();
             hotbar.Build(
                 conveyor_icon,
                 extractor_icon,
@@ -63,6 +66,13 @@ namespace Maptory.Factory
             {
                 pair.Value.color = tool == pair.Key ? SELECTED_COLOR : SLOT_COLOR;
             }
+        }
+
+        public void SetDemolitionMode(bool active)
+        {
+            canvas_group.alpha = active ? DEMOLITION_ALPHA : 1f;
+            canvas_group.interactable = !active;
+            canvas_group.blocksRaycasts = !active;
         }
 
         private void Build(

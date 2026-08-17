@@ -44,6 +44,7 @@ namespace Maptory.Factory
             CreateGhost();
             build_mode.Changed += OnBuildToolChanged;
             recipe_panel.RecipeSelected += OnRecipeSelected;
+            extraction_network.BuildingRemoved += OnBuildingRemoved;
         }
 
         private void Update()
@@ -58,6 +59,7 @@ namespace Maptory.Factory
 
             ghost_renderer.enabled = false;
             if (build_mode.ActiveTool == FactoryBuildTool.None
+                && !build_mode.IsDemolitionMode
                 && Mouse.current.leftButton.wasPressedThisFrame
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
@@ -104,6 +106,7 @@ namespace Maptory.Factory
             var machine_object = new GameObject($"Combiner ({center.x}, {center.y})");
             machine_object.transform.SetParent(world_root, false);
             machine_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
+            FactoryBuildingView.Attach(machine_object, machine);
             CreatePart(machine_object.transform, "Lower",
                 tile_catalog.GetCombinerLowerSprite(direction),
                 FactorySorting.CONVEYOR_SORTING_LAYER, center);
@@ -165,10 +168,16 @@ namespace Maptory.Factory
 
         private void OnRecipeSelected(IRecipeMachine machine)
         {
-            if (machine is CombinerState combiner)
+            if (machine is CombinerState combiner
+                && tooltips.TryGetValue(combiner, out var tooltip))
             {
-                tooltips[combiner].SetActive(false);
+                tooltip.SetActive(false);
             }
+        }
+
+        private void OnBuildingRemoved(object building)
+        {
+            if (building is CombinerState machine) tooltips.Remove(machine);
         }
     }
 }

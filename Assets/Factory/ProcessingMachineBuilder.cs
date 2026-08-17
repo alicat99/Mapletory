@@ -44,6 +44,7 @@ namespace Maptory.Factory
             CreateGhost();
             build_mode.Changed += OnBuildToolChanged;
             recipe_panel.RecipeSelected += OnRecipeSelected;
+            extraction_network.BuildingRemoved += OnBuildingRemoved;
         }
 
         private void Update()
@@ -58,6 +59,7 @@ namespace Maptory.Factory
 
             ghost_renderer.enabled = false;
             if (build_mode.ActiveTool == FactoryBuildTool.None
+                && !build_mode.IsDemolitionMode
                 && Mouse.current.leftButton.wasPressedThisFrame
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
@@ -104,6 +106,7 @@ namespace Maptory.Factory
             var machine_object = new GameObject($"Processing Machine ({center.x}, {center.y})");
             machine_object.transform.SetParent(world_root, false);
             machine_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
+            FactoryBuildingView.Attach(machine_object, machine);
             CreatePart(
                 machine_object.transform,
                 "Lower",
@@ -171,10 +174,16 @@ namespace Maptory.Factory
 
         private void OnRecipeSelected(IRecipeMachine machine)
         {
-            if (machine is ProcessingMachineState processing_machine)
+            if (machine is ProcessingMachineState processing_machine
+                && tooltips.TryGetValue(processing_machine, out var tooltip))
             {
-                tooltips[processing_machine].SetActive(false);
+                tooltip.SetActive(false);
             }
+        }
+
+        private void OnBuildingRemoved(object building)
+        {
+            if (building is ProcessingMachineState machine) tooltips.Remove(machine);
         }
     }
 }

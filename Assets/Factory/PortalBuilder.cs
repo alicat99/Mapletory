@@ -53,6 +53,7 @@ namespace Maptory.Factory
 
             ghost_renderer.enabled = false;
             if (build_mode.ActiveTool == FactoryBuildTool.None
+                && !build_mode.IsDemolitionMode
                 && Mouse.current.leftButton.wasPressedThisFrame
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
@@ -93,6 +94,7 @@ namespace Maptory.Factory
             var portal_object = new GameObject($"Portal ({anchor.x}, {anchor.y})");
             portal_object.transform.SetParent(world_root, false);
             portal_object.transform.localPosition = GetVisualCenter(anchor);
+            FactoryBuildingView.Attach(portal_object, portal);
             CreatePart(
                 portal_object.transform,
                 "Lower",
