@@ -1,4 +1,4 @@
-# Factory Map, Extraction, and Conveyors
+# Factory Map, Extraction, Conveyors, and Dyeing
 
 ## 1. 기능 검증 방법
 
@@ -7,7 +7,7 @@
 Play Mode가 시작되면 다음을 확인한다.
 
 1. 16×8 픽셀 잔디 두 종류가 무작위로 섞인 50×50 등각 Tilemap이 표시된다. 각 셀의 월드 크기는 1×0.5이므로 타일의 세로:가로 비율은 1:2이다.
-2. 화면 아래에 10칸 핫바가 있고 첫 슬롯에는 컨베이어, 두 번째 슬롯에는 채굴기 아이콘이 표시된다.
+2. 화면 아래에 10칸 핫바가 있고 첫 슬롯에는 컨베이어, 두 번째 슬롯에는 채굴기, 세 번째 슬롯에는 염색기 아이콘이 표시된다.
 3. 첫 슬롯을 클릭하면 테두리가 노란색으로 바뀌며 건설 모드가 된다.
 4. 잔디 위에서 마우스 왼쪽 버튼을 누른 채 드래그하면 더 긴 축을 기준으로 수평 또는 수직 직선 미리보기만 표시된다. 버튼을 놓으면 컨베이어가 설치된다.
 5. 이미 설치된 칸을 반대 방향으로 다시 드래그하면 해당 칸의 방향과 이미지가 새 방향으로 교체된다.
@@ -23,8 +23,13 @@ Play Mode가 시작되면 다음을 확인한다.
 15. 채굴기 출구가 향하는 첫 컨베이어는 출구 방향을 외부 입력으로 판정한다. 따라서 U 방향 채굴기에서 나온 첫 컨베이어가 R 방향으로 꺾이면 `ConveyorUR`이 표시된다. 실제 컨베이어 입력까지 여러 개가 합류하면 기존 규칙대로 별도 합류 이미지를 사용하지 않는다.
 16. 컨베이어와 건물의 마스크 하단은 `ConveyorLevel`, 아이템과 건물 상단은 `ItemLevel` Sorting Layer를 사용한다. `ItemLevel`은 항상 `ConveyorLevel` 위에 그려진다. 채굴기는 `BuildingLowerMask.png`의 알파와 겹치는 부분만 Lower SpriteRenderer로, 나머지를 Upper SpriteRenderer로 표시하며 두 조각의 합은 원본과 같다.
 17. 같은 Sorting Layer 안에서는 원재료, 채굴기 조각, 컨베이어와 이동 아이템이 Y 기반 정렬 규칙을 사용한다. 아이템은 매 프레임 보간된 격자 좌표와 `(0.5, 0.25)` Sprite 피벗을 정렬 기준으로 사용한다.
+18. 세 번째 슬롯을 선택하면 3×3 염색기 고스트가 표시된다. `R`은 채굴기와 동일하게 출력 방향을 반시계 회전하며, 원재료·건물·컨베이어와 3×3 점유 영역이 겹치면 설치할 수 없다.
+19. U 방향 염색기의 중심이 `(0, 0)`일 때 내부 입력 포트는 `(-1, -1)`, `(1, -1)`, 내부 출력 포트는 `(0, 1)`이다. 연결 컨베이어는 각각 `(-1, -2)`, `(1, -2)`, `(0, 2)`에 둔다. R/D/L은 이 배치를 방향에 맞게 회전한다.
+20. 새 염색기 위에는 `(레시피 선택)` 툴팁이 표시된다. 건설 도구를 해제한 뒤 건물을 좌클릭하면 Cafe24PROSlimFit TMP 폰트와 `RoundedRectangle.png` 9-slice로 만든 레시피 창이 열린다. 레시피는 참조 UI처럼 `달팽이`, `버섯`, `뿔버섯` 대분류 아래에 묶여 있으며, 8개 결과 중 하나를 선택하고 `확인`을 누르면 툴팁이 사라진다.
+21. 레시피는 빨강·파랑 달팽이 껍질, 파랑·주황·초록 버섯 갓, 파랑·주황·초록 뿔버섯 갓이다. 뿔버섯 원재료 생산자는 아직 없지만 레시피와 결과 아이템은 등록되어 있다.
+22. 선택한 레시피의 바탕 재료와 염료를 두 입력 컨베이어로 공급하면 각 아이템은 내부 포트로 빠르게 이동하면서 0.12초 스케일 아웃되고, 두 재료가 모이면 결과가 출력 컨베이어 위에 0.12초 스케일 인으로 생성된다. 그 뒤의 컨베이어 이동 속도는 기존과 같이 셀당 0.45초이다.
 
-Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어 규칙과 함께 채굴기 3×3 점유, 건물·컨베이어 중첩 방지, 반시계 회전, 출력 위치, 원재료별 Sprite 매핑, Lower/Upper 생성 Sprite, Sorting Layer 순서, 출력 컨베이어 대기, 첫 컨베이어 생성과 이동, 선형 진행률, 채굴기 출구 입력 Sprite, 공정 합류 선택, Y 정렬 우선순위를 검증한다.
+Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 염색기 포트 좌표, 3×3 중첩 방지, 초기 미선택 상태, 8개 레시피, 입력 소비와 결과 생성, 빠른 스케일 애니메이션, Lower/Upper 생성 Sprite를 검증한다.
 
 ## 2. 기능 사용법
 
@@ -67,28 +72,41 @@ var transport = new FactoryItemTransport(conveyors, extraction);
 transport.Update(Time.deltaTime);
 ```
 
+염색기는 `ExtractionNetwork.PlaceDyeingMachine`으로 설치하고 `DyeingRecipe.All`의 정식 레시피 객체를 선택한다. 입력 컨베이어는 `GetInputConveyorPosition(0/1)`, 출력은 `OutputConveyorPosition`으로 조회한다.
+
+```csharp
+var machine = extraction.PlaceDyeingMachine(new Vector2Int(20, 20), GridDirection.Up);
+machine.SelectRecipe(DyeingRecipe.All[DyeingRecipeId.MushroomBlue]);
+
+var first_input = machine.GetInputConveyorPosition(0);
+var second_input = machine.GetInputConveyorPosition(1);
+var output = machine.OutputConveyorPosition;
+```
+
 ## 3. 코드 구조와 책임
 
 | 파일 | 책임 |
 | --- | --- |
-| `FactoryGame.cs` | 맵, 5종 고정 원재료, 건설 도구, 채굴·운송 시스템, UI와 카메라를 조립하는 Scene 진입점 |
+| `FactoryGame.cs` | 맵, 5종 고정 원재료, 건설 도구, 채굴·염색·운송 시스템, UI와 카메라를 조립하는 Scene 진입점 |
 | `GridDirection.cs` | 4방향 값과 격자 오프셋, Sprite 코드, 반대 방향 및 반시계 회전 정의 |
-| `ConveyorNetwork.cs` | 컨베이어 방향 상태, 직선 배치/덮어쓰기, 채굴기 출구를 포함한 연결 분석, Sprite 이름과 출력 분배 순서 소유 |
-| `ExtractionNetwork.cs` | 원재료 종류·고정 중심, 채굴기 3×3 점유와 중첩 검증, 설치 상태·출력 위치와 설치 이벤트 소유 |
-| `FactoryItemTransport.cs` | 채굴 생산 주기, 컨베이어 이동, 역압, 공정 합류와 분배 시뮬레이션 소유 |
+| `ConveyorNetwork.cs` | 컨베이어 방향 상태, 직선 배치/덮어쓰기, 건물 입출력을 포함한 연결 분석, Sprite 이름과 출력 분배 순서 소유 |
+| `ExtractionNetwork.cs` | 아이템·레시피 정의, 원재료와 채굴기·염색기 상태, 3×3 점유와 포트 좌표, 설치 이벤트 소유 |
+| `FactoryItemTransport.cs` | 채굴 생산, 염색기 입력 소비·가공 출력, 빠른 스케일 단계, 컨베이어 이동·역압·합류·분배 시뮬레이션 소유 |
 | `FactorySorting.cs` | 컨베이어·아이템 레벨 Sorting Layer 이름, 결정적 Y/X 정렬 순서와 높이 Z를 포함한 투명 정렬 축 정의 |
 | `FactoryBuildMode.cs` | 핫바 도구 선택과 `Esc` 해제를 단일 상태로 관리 |
-| `FactoryTileCatalog.cs` | 잔디, 컨베이어, 원재료, 채굴기 원본·Lower·Upper, 아이템 Sprite와 미리보기 Tile 조회 제공 |
+| `FactoryTileCatalog.cs` | 잔디, 컨베이어, 원재료, 건물 원본·Lower·Upper, 아이템·UI Sprite와 런타임 TMP 폰트 조회 제공 |
 | `ConveyorBuilder.cs` | 핫바가 켠 건설 모드에서 포인터를 격자에 투영하고 건물 점유를 검증한 직선 미리보기·배치를 수행하며 셀별 컨베이어 SpriteRenderer를 갱신 |
 | `ExtractorBuilder.cs` | 원재료 표현, 방향 고스트, 중심 일치 검증과 채굴기 Lower/Upper SpriteRenderer 생성 |
-| `FactoryItemTransportView.cs` | 운송 상태를 선형 보간해 아이템 SpriteRenderer 위치·생성 스케일·실시간 깊이를 갱신 |
-| `FactoryHotbar.cs` | 화면 하단 10슬롯 UI, 컨베이어·채굴기 선택 상태와 도구 클릭 이벤트 제공 |
+| `DyeingMachineBuilder.cs` | 염색기 방향 고스트·설치·클릭, Lower/Upper 렌더러와 미선택 툴팁 생성 |
+| `DyeingRecipePanel.cs` | TMP 기반 8개 레시피 선택 모달, 9-slice 카드와 필요 재료·결과 표시 및 확정 처리 |
+| `FactoryItemTransportView.cs` | 운송 상태를 선형 보간해 아이템 위치·빠른 입출력 스케일·실시간 깊이를 갱신하고 소비된 렌더러 제거 |
+| `FactoryHotbar.cs` | 화면 하단 10슬롯 UI, 컨베이어·채굴기·염색기 선택 상태와 도구 클릭 이벤트 제공 |
 | `FactoryCameraController.cs` | 키보드 이동, 우클릭 패닝, 휠 확대/축소와 맵 범위 제한 담당 |
 | `Editor/FactorySpriteImporter.cs` | 기능 전용 픽셀 아트의 Sprite import 설정 고정 |
 | `Editor/BuildingSpriteLayerGenerator.cs` | 하단 마스크 알파를 이용해 건물 원본을 Lower/Upper PNG로 전처리하고 변경 시 재생성 |
 | `Tests/EditMode/ConveyorNetworkTests.cs` | 컨베이어 연결 및 분배 규칙의 Edit Mode 회귀 테스트 |
 | `Tests/EditMode/ExtractionAndTransportTests.cs` | 채굴기 배치·회전·생산, 운송·합류 및 정렬 규칙 회귀 테스트 |
 
-`ConveyorNetwork`와 `ExtractionNetwork`가 영속 가능한 게임 상태를 소유한다. `FactoryItemTransport`는 두 네트워크만 참조하고 Unity UI나 Renderer에 의존하지 않는다. `ConveyorBuilder`, `ExtractorBuilder`, `FactoryItemTransportView`가 입력과 표현을 담당하며 UI는 `FactoryBuildMode`만 변경한다.
+`ConveyorNetwork`와 `ExtractionNetwork`가 영속 가능한 게임 상태를 소유한다. `FactoryItemTransport`는 두 네트워크만 참조하고 Unity UI나 Renderer에 의존하지 않는다. 건설 Builder와 `FactoryItemTransportView`가 입력과 표현을 담당하며 레시피 UI는 선택 결과만 `DyeingMachineState`에 전달한다.
 
-현재 채굴기 외의 건물, 아이템 소비·가공, 컨베이어 및 건물 철거, 저장은 구현되어 있지 않다. 후속 건물은 출력 후보와 아이템 목적지를 제공하되, 막힌 끝의 X 규칙과 라운드로빈 합류·분배는 현재 시뮬레이션 경계 안에 유지한다.
+현재 뿔버섯 원재료 생산자, 컨베이어 및 건물 철거, 저장은 구현되어 있지 않다. 후속 건물은 출력 후보와 아이템 목적지를 제공하되, 막힌 끝의 X 규칙과 라운드로빈 합류·분배는 현재 시뮬레이션 경계 안에 유지한다.

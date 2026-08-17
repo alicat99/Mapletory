@@ -49,6 +49,18 @@ namespace Maptory.Factory
             };
         }
 
+        public static Vector2Int ToCardinalOffset(this GridDirection direction)
+        {
+            return direction switch
+            {
+                GridDirection.Up => Vector2Int.up,
+                GridDirection.Right => Vector2Int.right,
+                GridDirection.Down => Vector2Int.down,
+                GridDirection.Left => Vector2Int.left,
+                _ => throw new System.ArgumentOutOfRangeException(nameof(direction))
+            };
+        }
+
         public static char ToSpriteCode(this GridDirection direction)
         {
             return direction switch

@@ -89,6 +89,7 @@ namespace Maptory.Factory
                 tile_catalog,
                 map_size);
             extraction_network.ExtractorPlaced += OnExtractorPlaced;
+            extraction_network.DyeingMachinePlaced += OnDyeingMachinePlaced;
 
             var extractor_builder = gameObject.AddComponent<ExtractorBuilder>();
             extractor_builder.Initialize(
@@ -100,6 +101,18 @@ namespace Maptory.Factory
                 tile_catalog,
                 map_size);
 
+            var recipe_panel = DyeingRecipePanel.Create(transform, tile_catalog);
+            var dyeing_builder = gameObject.AddComponent<DyeingMachineBuilder>();
+            dyeing_builder.Initialize(
+                Camera.main,
+                grid,
+                world_root,
+                build_mode,
+                extraction_network,
+                tile_catalog,
+                recipe_panel,
+                map_size);
+
             var item_transport = new FactoryItemTransport(conveyor_network, extraction_network);
             var item_view = gameObject.AddComponent<FactoryItemTransportView>();
             item_view.Initialize(item_transport, tile_catalog, grid, item_root, map_size);
@@ -107,7 +120,8 @@ namespace Maptory.Factory
             var hotbar = FactoryHotbar.Create(
                 transform,
                 tile_catalog.ConveyorIcon,
-                tile_catalog.ExtractorIcon);
+                tile_catalog.ExtractorIcon,
+                tile_catalog.DyeingMachineIcon);
             hotbar.ToolClicked += build_mode.Toggle;
             build_mode.Changed += hotbar.SetSelectedTool;
         }
@@ -115,6 +129,15 @@ namespace Maptory.Factory
         private void OnExtractorPlaced(ExtractorState extractor)
         {
             conveyor_network.AddExternalInput(extractor.OutputPosition, extractor.Direction);
+            conveyor_builder.RefreshConveyors();
+        }
+
+        private void OnDyeingMachinePlaced(DyeingMachineState machine)
+        {
+            var direction = GridDirectionExtensions.FromDelta(machine.Forward);
+            conveyor_network.AddExternalInput(machine.OutputConveyorPosition, direction);
+            conveyor_network.AddExternalOutput(machine.GetInputConveyorPosition(0), direction);
+            conveyor_network.AddExternalOutput(machine.GetInputConveyorPosition(1), direction);
             conveyor_builder.RefreshConveyors();
         }
 

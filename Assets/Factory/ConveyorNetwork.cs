@@ -41,6 +41,7 @@ namespace Maptory.Factory
 
         private readonly Dictionary<Vector2Int, ConveyorTile> conveyors = new();
         private readonly Dictionary<Vector2Int, List<GridDirection>> external_inputs = new();
+        private readonly Dictionary<Vector2Int, List<GridDirection>> external_outputs = new();
 
         public IReadOnlyDictionary<Vector2Int, ConveyorTile> Conveyors => conveyors;
 
@@ -84,7 +85,30 @@ namespace Maptory.Factory
             inputs.Add(direction);
         }
 
+        public void AddExternalOutput(Vector2Int position, GridDirection direction)
+        {
+            if (!external_outputs.TryGetValue(position, out var outputs))
+            {
+                outputs = new List<GridDirection>();
+                external_outputs.Add(position, outputs);
+            }
+
+            outputs.Add(direction);
+        }
+
         public List<GridDirection> GetOutputDirections(Vector2Int position)
+        {
+            var outputs = GetConveyorOutputDirections(position);
+
+            if (external_outputs.TryGetValue(position, out var registered_outputs))
+            {
+                outputs.AddRange(registered_outputs);
+            }
+
+            return outputs;
+        }
+
+        private List<GridDirection> GetConveyorOutputDirections(Vector2Int position)
         {
             var conveyor = conveyors[position];
             var outputs = new List<GridDirection>(3);
@@ -124,7 +148,7 @@ namespace Maptory.Factory
 
         public bool TrySelectNextOutput(Vector2Int position, out GridDirection output)
         {
-            var outputs = GetOutputDirections(position);
+            var outputs = GetConveyorOutputDirections(position);
             if (outputs.Count == 0)
             {
                 output = default;

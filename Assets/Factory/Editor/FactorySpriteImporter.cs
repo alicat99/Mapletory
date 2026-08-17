@@ -21,6 +21,14 @@ namespace Maptory.Factory.Editor
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.alphaIsTransparency = true;
 
+            if (assetPath.EndsWith("/UI/RoundedRectangle.png"))
+            {
+                importer.spritePixelsPerUnit = 256f;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.spriteBorder = new Vector4(127f, 127f, 127f, 127f);
+                return;
+            }
+
             if (assetPath.Contains("/Conveyors/")
                 || assetPath.Contains("/Buildings/")
                 || assetPath.Contains("/Items/"))

@@ -3,6 +3,7 @@
   "rootNamespace": "Maptory.Factory",
   "references": [
     "Unity.InputSystem",
+    "Unity.TextMeshPro",
     "Unity.ugui"
   ],
   "autoReferenced": true

@@ -15,11 +15,13 @@ namespace Maptory.Factory
 
         private Image conveyor_slot;
         private Image extractor_slot;
+        private Image dyeing_machine_slot;
 
         public static FactoryHotbar Create(
             Transform parent,
             Sprite conveyor_icon,
-            Sprite extractor_icon)
+            Sprite extractor_icon,
+            Sprite dyeing_machine_icon)
         {
             EnsureEventSystem();
 
@@ -41,7 +43,7 @@ namespace Maptory.Factory
             scaler.matchWidthOrHeight = 1f;
 
             var hotbar = canvas_object.AddComponent<FactoryHotbar>();
-            hotbar.Build(conveyor_icon, extractor_icon);
+            hotbar.Build(conveyor_icon, extractor_icon, dyeing_machine_icon);
             return hotbar;
         }
 
@@ -49,9 +51,10 @@ namespace Maptory.Factory
         {
             conveyor_slot.color = tool == FactoryBuildTool.Conveyor ? SELECTED_COLOR : SLOT_COLOR;
             extractor_slot.color = tool == FactoryBuildTool.Extractor ? SELECTED_COLOR : SLOT_COLOR;
+            dyeing_machine_slot.color = tool == FactoryBuildTool.DyeingMachine ? SELECTED_COLOR : SLOT_COLOR;
         }
 
-        private void Build(Sprite conveyor_icon, Sprite extractor_icon)
+        private void Build(Sprite conveyor_icon, Sprite extractor_icon, Sprite dyeing_machine_icon)
         {
             var panel = CreateUiObject("Slots", transform);
             var panel_rect = panel.GetComponent<RectTransform>();
@@ -75,7 +78,7 @@ namespace Maptory.Factory
 
             for (var index = 0; index < 10; index++)
             {
-                CreateSlot(panel.transform, index, conveyor_icon, extractor_icon);
+                CreateSlot(panel.transform, index, conveyor_icon, extractor_icon, dyeing_machine_icon);
             }
         }
 
@@ -83,7 +86,8 @@ namespace Maptory.Factory
             Transform parent,
             int index,
             Sprite conveyor_icon,
-            Sprite extractor_icon)
+            Sprite extractor_icon,
+            Sprite dyeing_machine_icon)
         {
             var slot = CreateUiObject($"Slot {index + 1}", parent);
             var rect = slot.GetComponent<RectTransform>();
@@ -102,13 +106,23 @@ namespace Maptory.Factory
             inner_image.color = new Color(0.28f, 0.29f, 0.3f, 1f);
             inner_image.raycastTarget = false;
 
-            if (index > 1)
+            if (index > 2)
             {
                 return;
             }
 
-            var tool = index == 0 ? FactoryBuildTool.Conveyor : FactoryBuildTool.Extractor;
-            var selected_icon = index == 0 ? conveyor_icon : extractor_icon;
+            var tool = index switch
+            {
+                0 => FactoryBuildTool.Conveyor,
+                1 => FactoryBuildTool.Extractor,
+                _ => FactoryBuildTool.DyeingMachine
+            };
+            var selected_icon = index switch
+            {
+                0 => conveyor_icon,
+                1 => extractor_icon,
+                _ => dyeing_machine_icon
+            };
             var icon = CreateUiObject($"{tool} Icon", inner.transform);
             var icon_rect = icon.GetComponent<RectTransform>();
             icon_rect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -127,9 +141,13 @@ namespace Maptory.Factory
             {
                 conveyor_slot = slot_image;
             }
-            else
+            else if (tool == FactoryBuildTool.Extractor)
             {
                 extractor_slot = slot_image;
+            }
+            else
+            {
+                dyeing_machine_slot = slot_image;
             }
         }
 

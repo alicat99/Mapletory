@@ -8,7 +8,8 @@ namespace Maptory.Factory
     {
         None,
         Conveyor,
-        Extractor
+        Extractor,
+        DyeingMachine
     }
 
     public sealed class FactoryBuildMode : MonoBehaviour

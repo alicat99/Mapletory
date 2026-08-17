@@ -42,16 +42,15 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
-        public void ExtractorCannotOverlapAnotherBuildingFootprint()
+        public void DyeingMachineCannotOverlapExtractorFootprint()
         {
             var network = new ExtractionNetwork(new[]
             {
-                new RawMaterialDeposit(RawMaterialType.DyeBlue, Vector2Int.zero),
-                new RawMaterialDeposit(RawMaterialType.DyeRed, new Vector2Int(2, 0))
+                new RawMaterialDeposit(RawMaterialType.DyeBlue, Vector2Int.zero)
             }, new ConveyorNetwork());
             network.PlaceExtractor(Vector2Int.zero, GridDirection.Up);
 
-            Assert.That(network.CanPlaceExtractor(new Vector2Int(2, 0)), Is.False);
+            Assert.That(network.CanPlaceDyeingMachine(new Vector2Int(2, 0)), Is.False);
         }
 
         [Test]
@@ -197,6 +196,132 @@ namespace Maptory.Factory.Tests
                 Assert.That(lower.rect.size, Is.EqualTo(upper.rect.size));
                 Assert.That(lower.pivot, Is.EqualTo(upper.pivot));
             }
+        }
+
+        [Test]
+        public void UpDyeingMachineUsesSpecifiedPorts()
+        {
+            var machine = new DyeingMachineState(Vector2Int.zero, GridDirection.Up);
+
+            Assert.That(machine.GetInputPort(0), Is.EqualTo(new Vector2Int(-1, -1)));
+            Assert.That(machine.GetInputPort(1), Is.EqualTo(new Vector2Int(1, -1)));
+            Assert.That(machine.OutputPort, Is.EqualTo(new Vector2Int(0, 1)));
+            Assert.That(machine.GetInputConveyorPosition(0), Is.EqualTo(new Vector2Int(-1, -2)));
+            Assert.That(machine.OutputConveyorPosition, Is.EqualTo(new Vector2Int(0, 2)));
+        }
+
+        [Test]
+        public void DyeingMachinePortsRotateWithOutputDirection()
+        {
+            var machine = new DyeingMachineState(Vector2Int.zero, GridDirection.Right);
+
+            Assert.That(machine.GetInputPort(0), Is.EqualTo(new Vector2Int(-1, 1)));
+            Assert.That(machine.GetInputPort(1), Is.EqualTo(new Vector2Int(-1, -1)));
+            Assert.That(machine.OutputPort, Is.EqualTo(Vector2Int.right));
+            Assert.That(machine.OutputConveyorPosition, Is.EqualTo(Vector2Int.right * 2));
+        }
+
+        [Test]
+        public void DyeingMachineStartsWithoutRecipeAndCannotOverlapResources()
+        {
+            var network = CreateExtractionNetwork();
+
+            Assert.That(network.CanPlaceDyeingMachine(Vector2Int.zero), Is.False);
+            Assert.That(network.CanPlaceDyeingMachine(new Vector2Int(2, 0)), Is.False);
+            Assert.That(network.CanPlaceDyeingMachine(new Vector2Int(4, 4)), Is.True);
+            var machine = network.PlaceDyeingMachine(new Vector2Int(4, 4), GridDirection.Up);
+            Assert.That(machine.SelectedRecipe, Is.Null);
+            Assert.That(network.IsBuildingOccupied(new Vector2Int(5, 5)), Is.True);
+        }
+
+        [Test]
+        public void AllEightDyeingRecipesAreAvailableIncludingSpikeMushrooms()
+        {
+            Assert.That(DyeingRecipe.All.Count, Is.EqualTo(8));
+            Assert.That(DyeingRecipe.All[DyeingRecipeId.SnailRed].Result,
+                Is.EqualTo(RawMaterialType.SnailRed));
+            Assert.That(DyeingRecipe.All[DyeingRecipeId.SpikeMushroomGreen].BaseMaterial,
+                Is.EqualTo(RawMaterialType.SpikeMushroom));
+            Assert.That(DyeingRecipe.All[DyeingRecipeId.SpikeMushroomGreen].Result,
+                Is.EqualTo(RawMaterialType.SpikeMushroomGreen));
+
+            var catalog = new FactoryTileCatalog();
+            foreach (var recipe in DyeingRecipe.All.Values)
+            {
+                Assert.That(catalog.GetItemSprite(recipe.BaseMaterial), Is.Not.Null);
+                Assert.That(catalog.GetItemSprite(recipe.Dye), Is.Not.Null);
+                Assert.That(catalog.GetItemSprite(recipe.Result), Is.Not.Null);
+            }
+        }
+
+        [Test]
+        public void DyeingInputsDisappearAndProduceSelectedResult()
+        {
+            var conveyors = new ConveyorNetwork();
+            var center = new Vector2Int(10, 10);
+            var network = new ExtractionNetwork(new RawMaterialDeposit[0], conveyors);
+            var machine = network.PlaceDyeingMachine(center, GridDirection.Up);
+            machine.SelectRecipe(DyeingRecipe.All[DyeingRecipeId.SnailRed]);
+            var input_direction = GridDirectionExtensions.FromDelta(machine.Forward);
+            conveyors.SetConveyor(machine.GetInputConveyorPosition(0), input_direction);
+            conveyors.SetConveyor(machine.GetInputConveyorPosition(1), input_direction);
+            conveyors.SetConveyor(machine.OutputConveyorPosition, GridDirection.Up);
+            var transport = new FactoryItemTransport(conveyors, network);
+            transport.SpawnItem(RawMaterialType.Snail, machine.GetInputConveyorPosition(0));
+            transport.SpawnItem(RawMaterialType.DyeRed, machine.GetInputConveyorPosition(1));
+
+            transport.Step();
+
+            Assert.That(transport.Items, Has.All.Matches<FactoryItemState>(
+                item => item.ScaleAnimation == ItemScaleAnimation.Despawning));
+
+            transport.Step();
+
+            Assert.That(transport.Items.Count, Is.EqualTo(1));
+            Assert.That(transport.Items[0].Material, Is.EqualTo(RawMaterialType.SnailRed));
+            Assert.That(transport.Items[0].Position, Is.EqualTo(machine.OutputConveyorPosition));
+            Assert.That(transport.Items[0].ScaleAnimation, Is.EqualTo(ItemScaleAnimation.Spawning));
+        }
+
+        [Test]
+        public void DyeingMachineDoesNotConsumeUnselectedMaterial()
+        {
+            var conveyors = new ConveyorNetwork();
+            var network = new ExtractionNetwork(new RawMaterialDeposit[0], conveyors);
+            var machine = network.PlaceDyeingMachine(new Vector2Int(10, 10), GridDirection.Up);
+            machine.SelectRecipe(DyeingRecipe.All[DyeingRecipeId.SnailRed]);
+            var input = machine.GetInputConveyorPosition(0);
+            conveyors.SetConveyor(input, GridDirectionExtensions.FromDelta(machine.Forward));
+            var transport = new FactoryItemTransport(conveyors, network);
+            transport.SpawnItem(RawMaterialType.DyeYellow, input);
+
+            transport.Step();
+
+            Assert.That(transport.Items.Count, Is.EqualTo(1));
+            Assert.That(transport.Items[0].Position, Is.EqualTo(input));
+            Assert.That(transport.Items[0].TargetPosition, Is.EqualTo(input));
+            Assert.That(transport.Items[0].ScaleAnimation, Is.EqualTo(ItemScaleAnimation.None));
+        }
+
+        [Test]
+        public void DyeingMachineAndExtractorUseSplitBuildingSprites()
+        {
+            var catalog = new FactoryTileCatalog();
+
+            foreach (var direction in new[]
+            {
+                GridDirection.Up,
+                GridDirection.Right,
+                GridDirection.Down,
+                GridDirection.Left
+            })
+            {
+                Assert.That(catalog.GetDyeingMachineLowerSprite(direction), Is.Not.Null);
+                Assert.That(catalog.GetDyeingMachineUpperSprite(direction), Is.Not.Null);
+            }
+
+            Assert.That(FactoryItemTransport.SCALE_ANIMATION_DURATION,
+                Is.LessThan(FactoryItemTransport.STEP_DURATION));
         }
 
         private static ExtractionNetwork CreateExtractionNetwork(

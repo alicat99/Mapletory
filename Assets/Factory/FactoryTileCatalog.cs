@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -15,6 +16,9 @@ namespace Maptory.Factory
         public Tile Grass02 { get; }
         public Sprite ConveyorIcon { get; }
         public Sprite ExtractorIcon { get; }
+        public Sprite DyeingMachineIcon { get; }
+        public Sprite RoundedRectangle { get; }
+        public TMP_FontAsset UiFont { get; }
 
         public FactoryTileCatalog()
         {
@@ -32,6 +36,10 @@ namespace Maptory.Factory
 
             ConveyorIcon = conveyor_tiles["ConveyorUU"].sprite;
             ExtractorIcon = building_sprites["ExtractorU"];
+            DyeingMachineIcon = building_sprites["DyeingMachineU"];
+            RoundedRectangle = Resources.Load<Sprite>("Factory/UI/RoundedRectangle");
+            UiFont = TMP_FontAsset.CreateFontAsset(Resources.Load<Font>("Factory/UI/Cafe24PROSlimFit"));
+            UiFont.hideFlags = HideFlags.DontSave;
         }
 
         public Tile GetConveyorTile(string sprite_name)
@@ -62,6 +70,21 @@ namespace Maptory.Factory
         public Sprite GetExtractorUpperSprite(GridDirection direction)
         {
             return building_sprites[$"Extractor{direction.ToSpriteCode()}Upper"];
+        }
+
+        public Sprite GetDyeingMachineSprite(GridDirection direction)
+        {
+            return building_sprites[$"DyeingMachine{direction.ToSpriteCode()}"];
+        }
+
+        public Sprite GetDyeingMachineLowerSprite(GridDirection direction)
+        {
+            return building_sprites[$"DyeingMachine{direction.ToSpriteCode()}Lower"];
+        }
+
+        public Sprite GetDyeingMachineUpperSprite(GridDirection direction)
+        {
+            return building_sprites[$"DyeingMachine{direction.ToSpriteCode()}Upper"];
         }
 
         public Sprite GetItemSprite(RawMaterialType material)

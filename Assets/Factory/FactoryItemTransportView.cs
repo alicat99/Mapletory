@@ -40,9 +40,12 @@ namespace Maptory.Factory
         private void DrawItems()
         {
             var progress = transport.StepProgress;
+            var scale_progress = transport.ScaleAnimationProgress;
+            var active_ids = new HashSet<int>();
 
             foreach (var item in transport.Items)
             {
+                active_ids.Add(item.Id);
                 if (!item_renderers.TryGetValue(item.Id, out var renderer))
                 {
                     renderer = CreateRenderer(item);
@@ -51,17 +54,30 @@ namespace Maptory.Factory
 
                 var from = grid.GetCellCenterLocal((Vector3Int)item.Position);
                 var target = grid.GetCellCenterLocal((Vector3Int)item.TargetPosition);
-                renderer.transform.localPosition = Vector3.Lerp(from, target, progress)
+                var movement_progress = item.ScaleAnimation == ItemScaleAnimation.Despawning
+                    ? scale_progress
+                    : progress;
+                renderer.transform.localPosition = Vector3.Lerp(from, target, movement_progress)
                     + ITEM_SURFACE_OFFSET;
-                renderer.transform.localScale = item.IsSpawning
-                    ? Vector3.one * progress
-                    : Vector3.one;
+                renderer.transform.localScale = item.ScaleAnimation switch
+                {
+                    ItemScaleAnimation.Spawning => Vector3.one * scale_progress,
+                    ItemScaleAnimation.Despawning => Vector3.one * (1f - scale_progress),
+                    _ => Vector3.one
+                };
 
-                var grid_position = Vector2.Lerp(item.Position, item.TargetPosition, progress);
+                var grid_position = Vector2.Lerp(item.Position, item.TargetPosition, movement_progress);
                 renderer.sortingOrder = FactorySorting.GetOrder(
                     grid_position,
                     map_size,
                     FactorySorting.ITEM_LAYER);
+            }
+
+            foreach (var pair in new List<KeyValuePair<int, SpriteRenderer>>(item_renderers))
+            {
+                if (active_ids.Contains(pair.Key)) continue;
+                Destroy(pair.Value.gameObject);
+                item_renderers.Remove(pair.Key);
             }
         }
 
