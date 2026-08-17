@@ -11,11 +11,15 @@ namespace Maptory.Factory
         private static readonly Color SLOT_COLOR = new(0.16f, 0.17f, 0.18f, 0.96f);
         private static readonly Color SELECTED_COLOR = new(0.94f, 0.83f, 0.32f, 1f);
 
-        public event Action ConveyorClicked;
+        public event Action<FactoryBuildTool> ToolClicked;
 
         private Image conveyor_slot;
+        private Image extractor_slot;
 
-        public static FactoryHotbar Create(Transform parent, Sprite conveyor_icon)
+        public static FactoryHotbar Create(
+            Transform parent,
+            Sprite conveyor_icon,
+            Sprite extractor_icon)
         {
             EnsureEventSystem();
 
@@ -37,16 +41,17 @@ namespace Maptory.Factory
             scaler.matchWidthOrHeight = 1f;
 
             var hotbar = canvas_object.AddComponent<FactoryHotbar>();
-            hotbar.Build(conveyor_icon);
+            hotbar.Build(conveyor_icon, extractor_icon);
             return hotbar;
         }
 
-        public void SetConveyorSelected(bool selected)
+        public void SetSelectedTool(FactoryBuildTool tool)
         {
-            conveyor_slot.color = selected ? SELECTED_COLOR : SLOT_COLOR;
+            conveyor_slot.color = tool == FactoryBuildTool.Conveyor ? SELECTED_COLOR : SLOT_COLOR;
+            extractor_slot.color = tool == FactoryBuildTool.Extractor ? SELECTED_COLOR : SLOT_COLOR;
         }
 
-        private void Build(Sprite conveyor_icon)
+        private void Build(Sprite conveyor_icon, Sprite extractor_icon)
         {
             var panel = CreateUiObject("Slots", transform);
             var panel_rect = panel.GetComponent<RectTransform>();
@@ -70,11 +75,15 @@ namespace Maptory.Factory
 
             for (var index = 0; index < 10; index++)
             {
-                CreateSlot(panel.transform, index, conveyor_icon);
+                CreateSlot(panel.transform, index, conveyor_icon, extractor_icon);
             }
         }
 
-        private void CreateSlot(Transform parent, int index, Sprite conveyor_icon)
+        private void CreateSlot(
+            Transform parent,
+            int index,
+            Sprite conveyor_icon,
+            Sprite extractor_icon)
         {
             var slot = CreateUiObject($"Slot {index + 1}", parent);
             var rect = slot.GetComponent<RectTransform>();
@@ -93,25 +102,35 @@ namespace Maptory.Factory
             inner_image.color = new Color(0.28f, 0.29f, 0.3f, 1f);
             inner_image.raycastTarget = false;
 
-            if (index != 0)
+            if (index > 1)
             {
                 return;
             }
 
-            conveyor_slot = slot_image;
-            var icon = CreateUiObject("Conveyor Icon", inner.transform);
+            var tool = index == 0 ? FactoryBuildTool.Conveyor : FactoryBuildTool.Extractor;
+            var selected_icon = index == 0 ? conveyor_icon : extractor_icon;
+            var icon = CreateUiObject($"{tool} Icon", inner.transform);
             var icon_rect = icon.GetComponent<RectTransform>();
             icon_rect.anchorMin = new Vector2(0.5f, 0.5f);
             icon_rect.anchorMax = new Vector2(0.5f, 0.5f);
             icon_rect.sizeDelta = new Vector2(42f, 42f);
             var icon_image = icon.AddComponent<Image>();
-            icon_image.sprite = conveyor_icon;
+            icon_image.sprite = selected_icon;
             icon_image.preserveAspect = true;
             icon_image.raycastTarget = false;
 
             var button = slot.AddComponent<Button>();
             button.targetGraphic = slot_image;
-            button.onClick.AddListener(() => ConveyorClicked?.Invoke());
+            button.onClick.AddListener(() => ToolClicked?.Invoke(tool));
+
+            if (tool == FactoryBuildTool.Conveyor)
+            {
+                conveyor_slot = slot_image;
+            }
+            else
+            {
+                extractor_slot = slot_image;
+            }
         }
 
         private static void EnsureEventSystem()

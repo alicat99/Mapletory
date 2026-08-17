@@ -12,15 +12,19 @@ namespace Maptory.Factory
 
         private Grid grid;
         private Tilemap ground_tilemap;
+        private Transform world_root;
         private Transform conveyor_root;
+        private Transform item_root;
         private Tilemap preview_tilemap;
         private ConveyorNetwork conveyor_network;
+        private ExtractionNetwork extraction_network;
         private FactoryTileCatalog tile_catalog;
 
         private void Awake()
         {
             tile_catalog = new FactoryTileCatalog();
             conveyor_network = new ConveyorNetwork();
+            extraction_network = CreateExtractionNetwork();
 
             CreateMap();
             FillGround();
@@ -37,10 +41,16 @@ namespace Maptory.Factory
             grid.cellSize = new Vector3(1f, 0.5f, 1f);
 
             ground_tilemap = CreateTilemap("Grass", 0, TilemapRenderer.Mode.Chunk);
+            var world_object = new GameObject("Factory Objects");
+            world_object.transform.SetParent(grid.transform, false);
+            world_root = world_object.transform;
             var conveyor_object = new GameObject("Conveyors");
-            conveyor_object.transform.SetParent(grid.transform, false);
+            conveyor_object.transform.SetParent(world_root, false);
             conveyor_root = conveyor_object.transform;
-            preview_tilemap = CreateTilemap("Construction Preview", 10000, TilemapRenderer.Mode.Individual);
+            var item_object = new GameObject("Items");
+            item_object.transform.SetParent(world_root, false);
+            item_root = item_object.transform;
+            preview_tilemap = CreateTilemap("Construction Preview", 30000, TilemapRenderer.Mode.Individual);
             preview_tilemap.color = new Color(1f, 1f, 1f, 0.65f);
         }
 
@@ -62,19 +72,52 @@ namespace Maptory.Factory
 
         private void CreateConstructionControls()
         {
-            var builder = gameObject.AddComponent<ConveyorBuilder>();
-            builder.Initialize(
+            var map_size = new Vector2Int(map_width, map_height);
+            var build_mode = gameObject.AddComponent<FactoryBuildMode>();
+            var conveyor_builder = gameObject.AddComponent<ConveyorBuilder>();
+            conveyor_builder.Initialize(
                 Camera.main,
                 grid,
                 conveyor_root,
                 preview_tilemap,
+                build_mode,
                 conveyor_network,
                 tile_catalog,
-                new Vector2Int(map_width, map_height));
+                map_size);
 
-            var hotbar = FactoryHotbar.Create(transform, tile_catalog.ConveyorIcon);
-            hotbar.ConveyorClicked += builder.ToggleBuildMode;
-            builder.BuildModeChanged += hotbar.SetConveyorSelected;
+            var extractor_builder = gameObject.AddComponent<ExtractorBuilder>();
+            extractor_builder.Initialize(
+                Camera.main,
+                grid,
+                world_root,
+                build_mode,
+                extraction_network,
+                tile_catalog,
+                map_size);
+
+            var item_transport = new FactoryItemTransport(conveyor_network, extraction_network);
+            var item_view = gameObject.AddComponent<FactoryItemTransportView>();
+            item_view.Initialize(item_transport, tile_catalog, grid, item_root, map_size);
+
+            var hotbar = FactoryHotbar.Create(
+                transform,
+                tile_catalog.ConveyorIcon,
+                tile_catalog.ExtractorIcon);
+            hotbar.ToolClicked += build_mode.Toggle;
+            build_mode.Changed += hotbar.SetSelectedTool;
+        }
+
+        private ExtractionNetwork CreateExtractionNetwork()
+        {
+            var deposits = new[]
+            {
+                new RawMaterialDeposit(RawMaterialType.DyeBlue, new Vector2Int(8, 8)),
+                new RawMaterialDeposit(RawMaterialType.DyeRed, new Vector2Int(41, 8)),
+                new RawMaterialDeposit(RawMaterialType.DyeYellow, new Vector2Int(8, 41)),
+                new RawMaterialDeposit(RawMaterialType.Mushroom, new Vector2Int(41, 41)),
+                new RawMaterialDeposit(RawMaterialType.Snail, new Vector2Int(25, 25))
+            };
+            return new ExtractionNetwork(deposits);
         }
 
         private void ConfigureCamera()

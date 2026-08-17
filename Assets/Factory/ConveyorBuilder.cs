@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -9,14 +8,11 @@ namespace Maptory.Factory
 {
     public sealed class ConveyorBuilder : MonoBehaviour
     {
-        public event Action<bool> BuildModeChanged;
-
-        public bool IsBuildMode { get; private set; }
-
         private Camera main_camera;
         private Grid grid;
         private Transform conveyor_root;
         private Tilemap preview_tilemap;
+        private FactoryBuildMode build_mode;
         private ConveyorNetwork conveyor_network;
         private FactoryTileCatalog tile_catalog;
         private readonly Dictionary<Vector2Int, SpriteRenderer> conveyor_renderers = new();
@@ -30,6 +26,7 @@ namespace Maptory.Factory
             Grid map_grid,
             Transform conveyors,
             Tilemap preview,
+            FactoryBuildMode mode,
             ConveyorNetwork network,
             FactoryTileCatalog catalog,
             Vector2Int size)
@@ -38,24 +35,16 @@ namespace Maptory.Factory
             grid = map_grid;
             conveyor_root = conveyors;
             preview_tilemap = preview;
+            build_mode = mode;
             conveyor_network = network;
             tile_catalog = catalog;
             map_size = size;
-        }
-
-        public void ToggleBuildMode()
-        {
-            SetBuildMode(!IsBuildMode);
+            build_mode.Changed += OnBuildToolChanged;
         }
 
         private void Update()
         {
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-            {
-                SetBuildMode(false);
-            }
-
-            if (!IsBuildMode || Mouse.current == null)
+            if (build_mode.ActiveTool != FactoryBuildTool.Conveyor || Mouse.current == null)
             {
                 return;
             }
@@ -74,14 +63,6 @@ namespace Maptory.Factory
             {
                 CompleteDrag();
             }
-        }
-
-        private void SetBuildMode(bool active)
-        {
-            IsBuildMode = active;
-            is_dragging = false;
-            preview_tilemap.ClearAllTiles();
-            BuildModeChanged?.Invoke(active);
         }
 
         private void BeginDrag()
@@ -160,15 +141,11 @@ namespace Maptory.Factory
 
             var renderer = conveyor_object.AddComponent<SpriteRenderer>();
             renderer.spriteSortPoint = SpriteSortPoint.Pivot;
-            renderer.sortingOrder = GetSortingOrder(position);
+            renderer.sortingOrder = FactorySorting.GetOrder(
+                position,
+                map_size,
+                FactorySorting.CONVEYOR_LAYER);
             return renderer;
-        }
-
-        private int GetSortingOrder(Vector2Int position)
-        {
-            var depth_stride = map_size.x + 1;
-            return (map_size.x + map_size.y - position.x - position.y) * depth_stride
-                + position.x + 10;
         }
 
         private Vector2Int GetPointerCell()
@@ -189,6 +166,17 @@ namespace Maptory.Factory
         private bool Contains(Vector2Int cell)
         {
             return cell.x >= 0 && cell.x < map_size.x && cell.y >= 0 && cell.y < map_size.y;
+        }
+
+        private void OnBuildToolChanged(FactoryBuildTool tool)
+        {
+            if (tool == FactoryBuildTool.Conveyor)
+            {
+                return;
+            }
+
+            is_dragging = false;
+            preview_tilemap.ClearAllTiles();
         }
     }
 }

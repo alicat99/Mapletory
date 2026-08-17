@@ -72,5 +72,17 @@ namespace Maptory.Factory
                 _ => throw new System.ArgumentOutOfRangeException(nameof(direction))
             };
         }
+
+        public static GridDirection RotateCounterClockwise(this GridDirection direction)
+        {
+            return direction switch
+            {
+                GridDirection.Up => GridDirection.Left,
+                GridDirection.Left => GridDirection.Down,
+                GridDirection.Down => GridDirection.Right,
+                GridDirection.Right => GridDirection.Up,
+                _ => throw new System.ArgumentOutOfRangeException(nameof(direction))
+            };
+        }
     }
 }
