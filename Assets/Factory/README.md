@@ -38,14 +38,19 @@ Play Mode가 시작되면 다음을 확인한다.
 30. 여섯 번째 슬롯은 3×3 가공기계 건설 모드다. 설치 방향 반대쪽 중앙에 입력 컨베이어 한 개, 설치 방향 중앙에 출력 컨베이어 한 개를 연결한다. `R`로 출력 방향을 반시계 회전하며 다른 3×3 건물과 동일한 점유·고스트·Lower/Upper 정렬 규칙을 사용한다.
 31. 새 가공기계에는 `(레시피 선택)` 툴팁이 표시된다. 클릭하면 염색기·조합기와 같은 공용 레시피 창이 `가공기계` 제목과 `가공` 대분류로 열리고, 필요 재료에는 초록 달팽이 껍질 한 줄만 표시된다.
 32. 초록 달팽이 껍질 한 개를 입력하면 빠른 스케일 아웃 뒤 `Horn.png` 뿔 아이템이 출력 컨베이어에 스케일 인으로 생성된다. 조합기의 `뿔버섯` 대분류에서 뿔 한 개와 기본 버섯 갓 한 개를 조합하면 염색 전 뿔버섯 갓이 생산된다.
+33. 일곱 번째 슬롯은 2×2 포탈 건설 모드다. 포인터 셀을 발자국의 좌하단 앵커로 사용하고 네 칸의 중심에 고스트와 건물을 표시한다. 네 변에 붙는 컨베이어 두 칸씩, 총 8개 위치에서 포탈 방향으로 들어오는 아이템을 받을 수 있다. 발자국은 원재료·건물·컨베이어와 겹칠 수 없고 입력 위치까지 맵 안에 있을 때만 설치할 수 있다.
+34. 새 포탈에는 `(아이템 선택)` 툴팁이 표시된다. 건설 도구를 해제하고 포탈을 클릭하면 참조 이미지와 같은 남색 `공급 사냥터 / 몬스터 선택` 팝업, 빨간 `X`, 8개의 밝은 공급 행이 표시된다. 행 하나를 클릭하면 해당 품목이 즉시 선택되고 팝업이 닫힌다. 팝업이 열린 동안 카메라 이동·우클릭 패닝·휠 줌은 비활성화된다.
+35. 선택된 포탈은 선택 품목과 일치하고 포탈을 향하는 컨베이어 아이템만 빠른 스케일 아웃으로 소비한다. 아이템 두 개당 정확히 3메소가 누적되며 홀수 번째 입력에도 1메소, 다음 입력에는 2메소가 순서대로 반영된다. 총 메소는 화면 우측 상단 `메소` HUD에서 실시간으로 확인한다.
+36. 선택 후 월드 툴팁은 `<아이템> x.x/분 | x.x메소/분`으로 바뀐다. 품목별 공급량은 1초 표본과 6초 반감기의 지수이동평균으로 계산하므로 공급이 멈춰도 부드럽게 감소한다. 같은 품목을 선택한 모든 포탈은 `PortalEconomy`의 같은 통계를 조회하여 합산된 분당 공급량과 메소 생산량을 공유한다.
+37. 포탈은 `BuildingLowerMaskPortal.png` 전용 마스크로 Lower/Upper Sprite를 만들며 기존 건물과 같은 `ConveyorLevel`/`ItemLevel`, `(0.5, 0.25)` 피벗 및 Y 기반 정렬 규칙을 사용한다.
 
-Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 맵 크기와 무관한 격자 메시, 염색기와 조합기의 포트·점유·레시피·생산, 가공기계의 중앙 1입력·1출력과 뿔 생산, 조합기의 뿔버섯 생산, 에르다 주입기의 1×1 점유와 7종 운송 아이템 변환·출력 대기·후속 이동, 두 마스크로 생성한 Lower/Upper Sprite 및 런타임 에셋을 검증한다.
+Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 맵 크기와 무관한 격자 메시, 염색기와 조합기의 포트·점유·레시피·생산, 가공기계의 중앙 1입력·1출력과 뿔 생산, 조합기의 뿔버섯 생산, 에르다 주입기의 1×1 점유와 7종 운송 아이템 변환·출력 대기·후속 이동, 포탈의 2×2 점유·8방향 입력·선택 품목 필터·메소·공유 EMA, 세 마스크로 생성한 Lower/Upper Sprite 및 런타임 에셋을 검증한다.
 
 ## 2. 기능 사용법
 
 `FactoryGame`은 맵 표현과 입력/UI 조립을 담당하는 Scene 진입점이다. Main Camera가 `MainCamera` 태그를 가지고 있어야 한다. 모든 런타임 Sprite는 `Art/Resources/Factory` 아래에서 이름으로 로드된다. `FactorySpriteImporter`는 Point 필터와 16 PPU를 적용하고, 컨베이어·건물·아이템에는 `(0.5, 0.25)`, 원재료에는 중앙 피벗을 사용한다. 월드 객체는 `FactorySorting`의 명시적 Y 깊이 순서를 공유한다.
 
-건물 원본이나 `Art/BuildingProcessing`의 마스크가 변경되면 `BuildingSpriteLayerGenerator`가 각 원본의 `Lower`와 `Upper` PNG를 `Art/Resources/Factory/Buildings/Generated`에 다시 만든다. 64×64 건물은 `BuildingLowerMask.png`, 32×64 1×1 건물은 `BuildingLowerMask1x1.png`를 사용한다. 수동 갱신은 Unity 메뉴 `Tools > Maptory > Regenerate Building Layers`를 사용한다.
+건물 원본이나 `Art/BuildingProcessing`의 마스크가 변경되면 `BuildingSpriteLayerGenerator`가 각 원본의 `Lower`와 `Upper` PNG를 `Art/Resources/Factory/Buildings/Generated`에 다시 만든다. 64×64 건물은 `BuildingLowerMask.png`, 32×64 1×1 건물은 `BuildingLowerMask1x1.png`, 32×32 포탈은 `BuildingLowerMaskPortal.png`를 사용한다. 수동 갱신은 Unity 메뉴 `Tools > Maptory > Regenerate Building Layers`를 사용한다.
 
 검증 Scene의 Global Light 2D는 `Default`, `ConveyorLevel`, `ItemLevel`을 모두 대상으로 한다. 새 레이어를 추가할 때 Lit Sprite가 검게 표시되지 않도록 조명 대상에도 함께 등록해야 한다.
 
@@ -121,15 +126,35 @@ conveyors.SetConveyor(processor.GetInputConveyorPosition(0), GridDirection.Up);
 conveyors.SetConveyor(processor.OutputConveyorPosition, GridDirection.Up);
 ```
 
+포탈 좌표는 2×2 발자국의 좌하단 앵커다. `InputPorts`는 컨베이어 위치, 포탈 내부 도착 위치와 필수 진행 방향을 함께 제공한다. 선택 품목을 공급하면 네트워크 공용 `PortalEconomy`가 메소와 품목별 EMA를 갱신한다.
+
+```csharp
+var portal = extraction.PlacePortal(new Vector2Int(30, 20));
+portal.SelectMaterial(RawMaterialType.SnailRed);
+
+foreach (var input in portal.InputPorts)
+{
+    conveyors.SetConveyor(input.ConveyorPosition, input.Direction);
+    conveyors.AddExternalOutput(input.ConveyorPosition, input.Direction);
+}
+
+var transport = new FactoryItemTransport(conveyors, extraction);
+transport.SpawnItem(RawMaterialType.SnailRed, portal.InputPorts[0].ConveyorPosition);
+transport.Step();
+transport.Step();
+extraction.PortalEconomy.Update(1f);
+```
+
 ## 3. 코드 구조와 책임
 
 | 파일 | 책임 |
 | --- | --- |
-| `FactoryGame.cs` | 맵, 5종 고정 원재료, 여섯 건설 도구, 채굴·가공·운송 시스템, UI와 카메라를 조립하는 Scene 진입점 |
+| `FactoryGame.cs` | 맵, 5종 고정 원재료, 일곱 건설 도구, 채굴·가공·운송·포탈 경제 시스템, UI와 카메라를 조립하는 Scene 진입점 |
 | `GridDirection.cs` | 4방향 값과 격자 오프셋, Sprite 코드, 반대 방향 및 반시계 회전 정의 |
 | `ConveyorNetwork.cs` | 컨베이어 방향 상태, 직선 배치/덮어쓰기, 건물 입출력을 포함한 연결 분석, Sprite 이름과 출력 분배 순서 소유 |
 | `ExtractionNetwork.cs` | 아이템·가변 재료 공용 레시피 계약, 원재료와 채굴기·염색기·조합기·가공기계·에르다 주입기 상태, 3×3/1×1 점유와 포트 좌표, 설치 이벤트 소유 |
-| `FactoryItemTransport.cs` | 채굴 생산, 염색·조합·가공·에르다 입력 소비와 출력, 컨베이어 이동·역압·합류·분배 시뮬레이션 소유 |
+| `FactoryItemTransport.cs` | 채굴 생산, 염색·조합·가공·에르다·포탈 입력 소비와 출력, 컨베이어 이동·역압·합류·분배 시뮬레이션 소유 |
+| `PortalSystem.cs` | 8개 공급 선택 항목, 2×2 포탈 상태와 입력 포트, 메소 지갑 및 품목별 공유 EMA 통계 소유 |
 | `ErdaInjectionRecipes.cs` | 에르다 주입기가 받는 7종 재료와 대응하는 몬스터 운송 아이템 정의 |
 | `FactorySorting.cs` | 컨베이어·아이템 레벨 Sorting Layer 이름, 결정적 Y/X 정렬 순서와 높이 Z를 포함한 투명 정렬 축 정의 |
 | `FactoryBuildMode.cs` | 핫바 도구 선택과 `Esc` 해제를 단일 상태로 관리 |
@@ -142,19 +167,24 @@ conveyors.SetConveyor(processor.OutputConveyorPosition, GridDirection.Up);
 | `CombinerBuilder.cs` | 3×3 조합기 방향 고스트·설치·클릭, Lower/Upper 렌더러와 미선택 툴팁 생성 |
 | `ErdaInjectorBuilder.cs` | 1×1 에르다 주입기 방향 고스트·설치 및 전용 마스크 Lower/Upper 렌더러 생성 |
 | `ProcessingMachineBuilder.cs` | 3×3 가공기계 방향 고스트·설치·클릭, Lower/Upper 렌더러와 미선택 툴팁 생성 |
+| `PortalBuilder.cs` | 2×2 포탈 고스트·점유 검증·설치·클릭과 Lower/Upper 렌더러 생성 |
 | `RecipeSelectionPanel.cs` | 염색기·조합기·가공기계가 공유하는 TMP 기반 레시피 모달, 동적 대분류·1~2개 필요 재료·결과 표시와 확정 처리 |
 | `RecipeTooltip.cs` | 레시피 기반 건물이 공유하는 `(레시피 선택)` 월드 UI 생성 |
+| `PortalSelectionPanel.cs` | 참조 화면을 따르는 8행 공급 품목 선택 모달과 즉시 선택 처리 |
+| `PortalTooltip.cs` | 포탈의 미선택 안내 또는 공유 품목별 공급량·메소 생산량 월드 UI 표시 |
+| `MesoHud.cs` | 화면 우측 상단 총 메소 표시와 공용 포탈 경제 표본 시간 진행 |
 | `FactoryItemTransportView.cs` | 운송 상태를 선형 보간해 아이템 위치·빠른 입출력 스케일·실시간 깊이를 갱신하고 소비된 렌더러 제거 |
-| `FactoryHotbar.cs` | 화면 하단 10슬롯 UI, 여섯 건설 도구의 선택 상태와 클릭 이벤트 제공 |
+| `FactoryHotbar.cs` | 화면 하단 10슬롯 UI, 일곱 건설 도구의 선택 상태와 클릭 이벤트 제공 |
 | `FactoryCameraController.cs` | 키보드 이동, 우클릭 패닝, 휠 확대/축소와 맵 범위 제한을 담당하고 모달 입력 차단 함수를 적용 |
 | `Editor/FactorySpriteImporter.cs` | 기능 전용 픽셀 아트의 Sprite import 설정 고정 |
-| `Editor/BuildingSpriteLayerGenerator.cs` | 3×3/1×1 하단 마스크를 건물 폭에 맞춰 선택해 Lower/Upper PNG로 전처리하고 변경 시 재생성 |
+| `Editor/BuildingSpriteLayerGenerator.cs` | 3×3/1×1/포탈 전용 하단 마스크를 선택해 Lower/Upper PNG로 전처리하고 변경 시 재생성 |
 | `Tests/EditMode/ConveyorNetworkTests.cs` | 컨베이어 연결 및 분배 규칙의 Edit Mode 회귀 테스트 |
 | `Tests/EditMode/ExtractionAndTransportTests.cs` | 채굴기 배치·회전·생산, 운송·합류 및 정렬 규칙 회귀 테스트 |
 | `Tests/EditMode/ConstructionGridOverlayTests.cs` | 초대형 맵에서도 메시 크기가 일정하고 건설 모드에만 표시되는지 검증 |
 | `Tests/EditMode/CombinerAndErdaInjectorTests.cs` | 3종 염료 조합, 3×3/1×1 점유, 7종 몬스터 아이템 변환·출력 대기·이동과 신규 런타임 Sprite 검증 |
 | `Tests/EditMode/ProcessingMachineTests.cs` | 가공기계 중앙 포트·뿔 생산, 조합기 뿔버섯 레시피와 신규 Sprite 검증 |
+| `Tests/EditMode/PortalTests.cs` | 포탈 2×2 점유·8개 입력·운송 소비·품목 필터·메소·공유 EMA·Sprite 검증 |
 
 `ConveyorNetwork`와 `ExtractionNetwork`가 영속 가능한 게임 상태를 소유한다. `FactoryItemTransport`는 두 네트워크만 참조하고 Unity UI나 Renderer에 의존하지 않는다. 건설 Builder와 `FactoryItemTransportView`가 입력과 표현을 담당하며 레시피 UI는 선택 결과만 `DyeingMachineState`에 전달한다.
 
-현재 뿔버섯 원재료 생산자, 컨베이어 및 건물 철거, 저장은 구현되어 있지 않다. 에르다 결과는 별도 월드 개체가 아니라 기존 아이템 운송 상태를 사용하므로 막힌 끝 X 규칙과 라운드로빈 합류·분배를 그대로 따른다.
+현재 컨베이어 및 건물 철거와 저장은 구현되어 있지 않다. 에르다 결과는 별도 월드 개체가 아니라 기존 아이템 운송 상태를 사용하므로 막힌 끝 X 규칙과 라운드로빈 합류·분배를 그대로 따른다. 포탈 EMA는 런타임 세션 통계이며 저장되지 않는다.

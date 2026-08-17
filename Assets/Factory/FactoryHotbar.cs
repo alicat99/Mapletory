@@ -23,7 +23,8 @@ namespace Maptory.Factory
             Sprite dyeing_machine_icon,
             Sprite combiner_icon,
             Sprite erda_injector_icon,
-            Sprite processing_machine_icon)
+            Sprite processing_machine_icon,
+            Sprite portal_icon)
         {
             EnsureEventSystem();
 
@@ -51,7 +52,8 @@ namespace Maptory.Factory
                 dyeing_machine_icon,
                 combiner_icon,
                 erda_injector_icon,
-                processing_machine_icon);
+                processing_machine_icon,
+                portal_icon);
             return hotbar;
         }
 
@@ -69,7 +71,8 @@ namespace Maptory.Factory
             Sprite dyeing_machine_icon,
             Sprite combiner_icon,
             Sprite erda_injector_icon,
-            Sprite processing_machine_icon)
+            Sprite processing_machine_icon,
+            Sprite portal_icon)
         {
             var panel = CreateUiObject("Slots", transform);
             var panel_rect = panel.GetComponent<RectTransform>();
@@ -98,7 +101,8 @@ namespace Maptory.Factory
                 FactoryBuildTool.DyeingMachine,
                 FactoryBuildTool.Combiner,
                 FactoryBuildTool.ErdaInjector,
-                FactoryBuildTool.ProcessingMachine
+                FactoryBuildTool.ProcessingMachine,
+                FactoryBuildTool.Portal
             };
             var icons = new[]
             {
@@ -107,7 +111,8 @@ namespace Maptory.Factory
                 dyeing_machine_icon,
                 combiner_icon,
                 erda_injector_icon,
-                processing_machine_icon
+                processing_machine_icon,
+                portal_icon
             };
 
             for (var index = 0; index < 10; index++)

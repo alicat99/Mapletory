@@ -21,6 +21,7 @@ namespace Maptory.Factory
         private FactoryTileCatalog tile_catalog;
         private ConveyorBuilder conveyor_builder;
         private RecipeSelectionPanel recipe_panel;
+        private PortalSelectionPanel portal_panel;
 
         private void Awake()
         {
@@ -99,6 +100,7 @@ namespace Maptory.Factory
             extraction_network.CombinerPlaced += OnCombinerPlaced;
             extraction_network.ProcessingMachinePlaced += OnProcessingMachinePlaced;
             extraction_network.ErdaInjectorPlaced += OnErdaInjectorPlaced;
+            extraction_network.PortalPlaced += OnPortalPlaced;
 
             var extractor_builder = gameObject.AddComponent<ExtractorBuilder>();
             extractor_builder.Initialize(
@@ -154,6 +156,18 @@ namespace Maptory.Factory
                 recipe_panel,
                 map_size);
 
+            portal_panel = PortalSelectionPanel.Create(transform, tile_catalog);
+            var portal_builder = gameObject.AddComponent<PortalBuilder>();
+            portal_builder.Initialize(
+                Camera.main,
+                grid,
+                world_root,
+                build_mode,
+                extraction_network,
+                tile_catalog,
+                portal_panel,
+                map_size);
+
             var item_transport = new FactoryItemTransport(conveyor_network, extraction_network);
             var item_view = gameObject.AddComponent<FactoryItemTransportView>();
             item_view.Initialize(item_transport, tile_catalog, grid, item_root, map_size);
@@ -165,9 +179,11 @@ namespace Maptory.Factory
                 tile_catalog.DyeingMachineIcon,
                 tile_catalog.CombinerIcon,
                 tile_catalog.ErdaInjectorIcon,
-                tile_catalog.ProcessingMachineIcon);
+                tile_catalog.ProcessingMachineIcon,
+                tile_catalog.PortalIcon);
             hotbar.ToolClicked += build_mode.Toggle;
             build_mode.Changed += hotbar.SetSelectedTool;
+            MesoHud.Create(transform, tile_catalog, extraction_network.PortalEconomy);
         }
 
         private void OnExtractorPlaced(ExtractorState extractor)
@@ -210,6 +226,15 @@ namespace Maptory.Factory
             conveyor_builder.RefreshConveyors();
         }
 
+        private void OnPortalPlaced(PortalState portal)
+        {
+            foreach (var port in portal.InputPorts)
+            {
+                conveyor_network.AddExternalOutput(port.ConveyorPosition, port.Direction);
+            }
+            conveyor_builder.RefreshConveyors();
+        }
+
         private ExtractionNetwork CreateExtractionNetwork()
         {
             var deposits = new[]
@@ -240,7 +265,8 @@ namespace Maptory.Factory
             var controller = main_camera.gameObject.AddComponent<FactoryCameraController>();
             controller.Initialize(
                 ground_tilemap.GetComponent<Renderer>(),
-                () => recipe_panel != null && recipe_panel.IsOpen);
+                () => (recipe_panel != null && recipe_panel.IsOpen)
+                    || (portal_panel != null && portal_panel.IsOpen));
         }
 
         private Tilemap CreateTilemap(string object_name, int sorting_order, TilemapRenderer.Mode mode)

@@ -122,11 +122,15 @@ namespace Maptory.Factory
         private void PlanConveyorMoves()
         {
             var proposals = new List<MoveProposal>();
+            foreach (var item in items)
+            {
+                item.TargetPosition = item.Position;
+            }
+
             var routed_items = RouteMachineInputs();
 
             foreach (var item in items)
             {
-                item.TargetPosition = item.Position;
                 if (routed_items.Contains(item)) continue;
 
                 if (conveyor_network.Conveyors.ContainsKey(item.Position)
@@ -148,6 +152,7 @@ namespace Maptory.Factory
             RouteRecipeMachineInputs(extraction_network.Combiners.Values, routed_items);
             RouteRecipeMachineInputs(extraction_network.ProcessingMachines.Values, routed_items);
             RouteErdaInjectorInputs(routed_items);
+            RoutePortalInputs(routed_items);
             return routed_items;
         }
 
@@ -199,6 +204,30 @@ namespace Maptory.Factory
                 item.ScaleAnimation = ItemScaleAnimation.Despawning;
                 item.DestinationConsumer = injector;
                 routed_items.Add(item);
+            }
+        }
+
+        private void RoutePortalInputs(ISet<FactoryItemState> routed_items)
+        {
+            foreach (var portal in extraction_network.Portals.Values)
+            {
+                if (!portal.SelectedMaterial.HasValue) continue;
+
+                foreach (var port in portal.InputPorts)
+                {
+                    var item = items.FirstOrDefault(candidate =>
+                        candidate.Position == port.ConveyorPosition
+                        && !routed_items.Contains(candidate));
+                    if (item == null || !portal.CanAccept(item.Material)) continue;
+
+                    if (!conveyor_network.Conveyors.TryGetValue(port.ConveyorPosition, out var conveyor)
+                        || conveyor.Direction != port.Direction) continue;
+
+                    item.TargetPosition = port.PortalPosition;
+                    item.ScaleAnimation = ItemScaleAnimation.Despawning;
+                    item.DestinationConsumer = portal;
+                    routed_items.Add(item);
+                }
             }
         }
 

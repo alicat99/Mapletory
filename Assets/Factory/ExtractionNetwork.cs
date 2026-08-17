@@ -545,6 +545,7 @@ namespace Maptory.Factory
         private readonly Dictionary<Vector2Int, CombinerState> combiners = new();
         private readonly Dictionary<Vector2Int, ProcessingMachineState> processing_machines = new();
         private readonly Dictionary<Vector2Int, ErdaInjectorState> erda_injectors = new();
+        private readonly Dictionary<Vector2Int, PortalState> portals = new();
         private readonly ConveyorNetwork conveyor_network;
 
         public IReadOnlyDictionary<Vector2Int, RawMaterialDeposit> Deposits => deposits;
@@ -553,11 +554,14 @@ namespace Maptory.Factory
         public IReadOnlyDictionary<Vector2Int, CombinerState> Combiners => combiners;
         public IReadOnlyDictionary<Vector2Int, ProcessingMachineState> ProcessingMachines => processing_machines;
         public IReadOnlyDictionary<Vector2Int, ErdaInjectorState> ErdaInjectors => erda_injectors;
+        public IReadOnlyDictionary<Vector2Int, PortalState> Portals => portals;
+        public PortalEconomy PortalEconomy { get; } = new();
         public event Action<ExtractorState> ExtractorPlaced;
         public event Action<DyeingMachineState> DyeingMachinePlaced;
         public event Action<CombinerState> CombinerPlaced;
         public event Action<ProcessingMachineState> ProcessingMachinePlaced;
         public event Action<ErdaInjectorState> ErdaInjectorPlaced;
+        public event Action<PortalState> PortalPlaced;
 
         public ExtractionNetwork(IEnumerable<RawMaterialDeposit> fixed_deposits, ConveyorNetwork conveyors)
         {
@@ -600,6 +604,26 @@ namespace Maptory.Factory
             return true;
         }
 
+        public bool CanPlacePortal(Vector2Int anchor)
+        {
+            for (var y = 0; y <= 1; y++)
+            {
+                for (var x = 0; x <= 1; x++)
+                {
+                    var position = anchor + new Vector2Int(x, y);
+                    if (IsBuildingOccupied(position)
+                        || conveyor_network.Conveyors.ContainsKey(position)) return false;
+
+                    foreach (var deposit in deposits.Values)
+                    {
+                        if (IsInsideFootprint(position, deposit.Center)) return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public bool IsBuildingOccupied(Vector2Int position)
         {
             foreach (var center in extractors.Keys)
@@ -624,7 +648,22 @@ namespace Maptory.Factory
 
             if (erda_injectors.ContainsKey(position)) return true;
 
+            foreach (var portal in portals.Values)
+            {
+                if (portal.Contains(position)) return true;
+            }
+
             return false;
+        }
+
+        public PortalState FindPortal(Vector2Int position)
+        {
+            foreach (var portal in portals.Values)
+            {
+                if (portal.Contains(position)) return portal;
+            }
+
+            return null;
         }
 
         public DyeingMachineState FindDyeingMachine(Vector2Int position)
@@ -708,6 +747,19 @@ namespace Maptory.Factory
             erda_injectors.Add(center, injector);
             ErdaInjectorPlaced?.Invoke(injector);
             return injector;
+        }
+
+        public PortalState PlacePortal(Vector2Int anchor)
+        {
+            if (!CanPlacePortal(anchor))
+            {
+                throw new InvalidOperationException("Portal footprint is occupied.");
+            }
+
+            var portal = new PortalState(anchor, PortalEconomy);
+            portals.Add(anchor, portal);
+            PortalPlaced?.Invoke(portal);
+            return portal;
         }
 
         private bool IsFootprintClear(Vector2Int center, bool allow_centered_deposit)

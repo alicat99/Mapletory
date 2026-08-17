@@ -11,6 +11,8 @@ namespace Maptory.Factory.Editor
             "Assets/Factory/Art/BuildingProcessing/BuildingLowerMask.png";
         private const string SINGLE_CELL_MASK_PATH =
             "Assets/Factory/Art/BuildingProcessing/BuildingLowerMask1x1.png";
+        private const string PORTAL_MASK_PATH =
+            "Assets/Factory/Art/BuildingProcessing/BuildingLowerMaskPortal.png";
         private const string SOURCE_DIRECTORY =
             "Assets/Factory/Art/Resources/Factory/Buildings";
         private const string OUTPUT_DIRECTORY =
@@ -22,6 +24,7 @@ namespace Maptory.Factory.Editor
             Directory.CreateDirectory(OUTPUT_DIRECTORY);
             var large_mask = LoadTexture(LARGE_MASK_PATH);
             var single_cell_mask = LoadTexture(SINGLE_CELL_MASK_PATH);
+            var portal_mask = LoadTexture(PORTAL_MASK_PATH);
 
             foreach (var source_path in Directory.GetFiles(
                 SOURCE_DIRECTORY,
@@ -31,22 +34,28 @@ namespace Maptory.Factory.Editor
                 GenerateLayers(
                     source_path.Replace('\\', '/'),
                     large_mask,
-                    single_cell_mask);
+                    single_cell_mask,
+                    portal_mask);
             }
 
             Object.DestroyImmediate(large_mask);
             Object.DestroyImmediate(single_cell_mask);
+            Object.DestroyImmediate(portal_mask);
         }
 
         private static void GenerateLayers(
             string source_path,
             Texture2D large_mask,
-            Texture2D single_cell_mask)
+            Texture2D single_cell_mask,
+            Texture2D portal_mask)
         {
             var source = LoadTexture(source_path);
-            var mask = source.width == single_cell_mask.width
-                ? single_cell_mask
-                : large_mask;
+            var source_name = Path.GetFileNameWithoutExtension(source_path);
+            var mask = source_name == "Portal"
+                ? portal_mask
+                : source.width == single_cell_mask.width
+                    ? single_cell_mask
+                    : large_mask;
             if (source.width != mask.width || source.height != mask.height)
             {
                 Object.DestroyImmediate(source);
@@ -125,6 +134,7 @@ namespace Maptory.Factory.Editor
         {
             return path == LARGE_MASK_PATH
                 || path == SINGLE_CELL_MASK_PATH
+                || path == PORTAL_MASK_PATH
                 || (path.StartsWith(SOURCE_DIRECTORY + "/")
                     && !path.StartsWith(OUTPUT_DIRECTORY + "/")
                     && path.EndsWith(".png"));

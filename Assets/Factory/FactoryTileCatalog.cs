@@ -20,6 +20,7 @@ namespace Maptory.Factory
         public Sprite CombinerIcon { get; }
         public Sprite ErdaInjectorIcon { get; }
         public Sprite ProcessingMachineIcon { get; }
+        public Sprite PortalIcon { get; }
         public Sprite RoundedRectangle { get; }
         public TMP_FontAsset UiFont { get; }
 
@@ -44,6 +45,7 @@ namespace Maptory.Factory
             CombinerIcon = building_sprites["CombinerU"];
             ErdaInjectorIcon = building_sprites["ErdaInjectorU"];
             ProcessingMachineIcon = building_sprites["ProcessingMachineU"];
+            PortalIcon = building_sprites["Portal"];
             RoundedRectangle = Resources.Load<Sprite>("Factory/UI/RoundedRectangle");
             UiFont = TMP_FontAsset.CreateFontAsset(Resources.Load<Font>("Factory/UI/Cafe24PROSlimFit"));
             UiFont.hideFlags = HideFlags.DontSave;
@@ -137,6 +139,21 @@ namespace Maptory.Factory
         public Sprite GetProcessingMachineUpperSprite(GridDirection direction)
         {
             return building_sprites[$"ProcessingMachine{direction.ToSpriteCode()}Upper"];
+        }
+
+        public Sprite GetPortalSprite()
+        {
+            return building_sprites["Portal"];
+        }
+
+        public Sprite GetPortalLowerSprite()
+        {
+            return building_sprites["PortalLower"];
+        }
+
+        public Sprite GetPortalUpperSprite()
+        {
+            return building_sprites["PortalUpper"];
         }
 
         public Sprite GetItemSprite(RawMaterialType material)
