@@ -39,8 +39,8 @@ Play Mode가 시작되면 다음을 확인한다.
 31. 새 가공기계에는 `(레시피 선택)` 툴팁이 표시된다. 클릭하면 염색기·조합기와 같은 공용 레시피 창이 `가공기계` 제목과 `가공` 대분류로 열리고, 필요 재료에는 초록 달팽이 껍질 한 줄만 표시된다.
 32. 초록 달팽이 껍질 한 개를 입력하면 빠른 스케일 아웃 뒤 `Horn.png` 뿔 아이템이 출력 컨베이어에 스케일 인으로 생성된다. 조합기의 `뿔버섯` 대분류에서 뿔 한 개와 기본 버섯 갓 한 개를 조합하면 염색 전 뿔버섯 갓이 생산된다.
 33. 일곱 번째 슬롯은 2×2 포탈 건설 모드다. 포인터 셀을 발자국의 좌하단 앵커로 사용하고 네 칸의 중심에 고스트와 건물을 표시한다. 네 변에 붙는 컨베이어 두 칸씩, 총 8개 위치에서 포탈 방향으로 들어오는 아이템을 받을 수 있다. 발자국은 원재료·건물·컨베이어와 겹칠 수 없고 입력 위치까지 맵 안에 있을 때만 설치할 수 있다.
-34. 새 포탈에는 `(아이템 선택)` 툴팁이 표시된다. 건설 도구를 해제하고 포탈을 클릭하면 참조 이미지와 같은 남색 `공급 사냥터 / 몬스터 선택` 팝업, 빨간 `X`, 8개의 밝은 공급 행이 표시된다. 행 하나를 클릭하면 해당 품목이 즉시 선택되고 팝업이 닫힌다. 팝업이 열린 동안 카메라 이동·우클릭 패닝·휠 줌은 비활성화된다.
-35. 선택된 포탈은 선택 품목과 일치하고 포탈을 향하는 컨베이어 아이템만 빠른 스케일 아웃으로 소비한다. 아이템 두 개당 정확히 3메소가 누적되며 홀수 번째 입력에도 1메소, 다음 입력에는 2메소가 순서대로 반영된다. 총 메소는 화면 좌측 상단 `<누적량> 메소` HUD에서 실시간으로 확인한다.
+34. 새 포탈에는 `(아이템 선택)` 툴팁이 표시된다. 건설 도구를 해제하고 포탈을 클릭하면 참조 이미지와 같은 남색 `공급 사냥터 / 몬스터 선택` 팝업, 빨간 `X`, 현재 생산 가능한 7종 몬스터의 밝은 공급 행이 표시된다. 행 하나를 클릭하면 해당 품목이 즉시 선택되고 팝업이 닫힌다. 팝업이 열린 동안 카메라 이동·우클릭 패닝·휠 줌은 비활성화된다.
+35. 선택된 포탈은 선택한 버섯·달팽이·뿔버섯 몬스터와 일치하고 포탈을 향하는 컨베이어 아이템만 빠른 스케일 아웃으로 소비한다. 가공 전 버섯 갓·달팽이 껍질·뿔버섯 갓은 받지 않는다. 몬스터 아이템 두 개당 정확히 3메소가 누적되며 홀수 번째 입력에도 1메소, 다음 입력에는 2메소가 순서대로 반영된다. 총 메소는 화면 좌측 상단 `<누적량> 메소` HUD에서 실시간으로 확인한다.
 36. 선택 후 월드 툴팁은 `<아이템> x.x/분 | x.x메소/분`으로 바뀐다. 품목별 공급량은 1초 표본과 6초 반감기의 지수이동평균으로 계산하므로 공급이 멈춰도 부드럽게 감소한다. 같은 품목을 선택한 모든 포탈은 `PortalEconomy`의 같은 통계를 조회하여 합산된 분당 공급량과 메소 생산량을 공유한다.
 37. 포탈은 `BuildingLowerMaskPortal.png` 전용 마스크로 Lower/Upper Sprite를 만들며 기존 건물과 같은 `ConveyorLevel`/`ItemLevel`, `(0.5, 0.25)` 피벗 및 Y 기반 정렬 규칙을 사용한다.
 38. 추출기·염색기·조합기·가공기계·에르다 주입기의 출력 방향에 다음 공장의 입력 포트가 바로 닿아 있고 두 공장의 진행 방향이 같으면 중간 컨베이어 없이 생산물이 빠른 이동·스케일 아웃으로 다음 공장에 전달된다. 다음 공장이 해당 아이템을 받을 수 없으면 생산물은 이전 공장에 대기한다.
@@ -133,7 +133,7 @@ conveyors.SetConveyor(processor.OutputConveyorPosition, GridDirection.Up);
 
 ```csharp
 var portal = extraction.PlacePortal(new Vector2Int(30, 20));
-portal.SelectMaterial(RawMaterialType.SnailRed);
+portal.SelectMaterial(RawMaterialType.MonsterSnailRed);
 
 foreach (var input in portal.InputPorts)
 {
@@ -142,7 +142,7 @@ foreach (var input in portal.InputPorts)
 }
 
 var transport = new FactoryItemTransport(conveyors, extraction);
-transport.SpawnItem(RawMaterialType.SnailRed, portal.InputPorts[0].ConveyorPosition);
+transport.SpawnItem(RawMaterialType.MonsterSnailRed, portal.InputPorts[0].ConveyorPosition);
 transport.Step();
 transport.Step();
 extraction.PortalEconomy.Update(1f);
@@ -157,7 +157,7 @@ extraction.PortalEconomy.Update(1f);
 | `ConveyorNetwork.cs` | 컨베이어 방향 상태, 직선 배치/덮어쓰기, 건물 입출력을 포함한 연결 분석, Sprite 이름과 출력 분배 순서 소유 |
 | `ExtractionNetwork.cs` | 아이템·가변 재료 공용 레시피 계약, 원재료와 채굴기·염색기·조합기·가공기계·에르다 주입기 상태, 3×3/1×1 점유와 포트 좌표, 설치 이벤트 소유 |
 | `FactoryItemTransport.cs` | 채굴 생산, 공장 간 직접 전달, 염색·조합·가공·에르다·포탈 입력 소비와 출력, 컨베이어 이동·역압·합류·분배 시뮬레이션 소유 |
-| `PortalSystem.cs` | 8개 공급 선택 항목, 2×2 포탈 상태와 입력 포트, 메소 지갑 및 품목별 공유 EMA 통계 소유 |
+| `PortalSystem.cs` | 7종 몬스터 공급 선택 항목, 2×2 포탈 상태와 입력 포트, 메소 지갑 및 품목별 공유 EMA 통계 소유 |
 | `ErdaInjectionRecipes.cs` | 에르다 주입기가 받는 7종 재료와 대응하는 몬스터 운송 아이템 정의 |
 | `FactorySorting.cs` | 컨베이어·아이템 레벨 Sorting Layer 이름, 결정적 Y/X 정렬 순서와 높이 Z를 포함한 투명 정렬 축 정의 |
 | `FactoryBuildMode.cs` | 핫바 도구 선택과 `Esc` 해제를 단일 상태로 관리 |

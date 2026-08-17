@@ -26,14 +26,13 @@ namespace Maptory.Factory
     {
         private static readonly PortalSupplyOption[] OPTIONS =
         {
-            new(RawMaterialType.SnailRed, "오솔길1", "빨간 달팽이"),
-            new(RawMaterialType.Snail, "리스항구 외곽", "달팽이"),
-            new(RawMaterialType.MushroomGreen, "포자언덕", "초록 버섯"),
-            new(RawMaterialType.SnailBlue, "오솔길2", "파란 달팽이"),
-            new(RawMaterialType.SpikeMushroomOrange, "콧노래 오솔길", "주황 뿔버섯"),
-            new(RawMaterialType.MushroomOrange, "헤네시스 북쪽언덕", "주황 버섯"),
-            new(RawMaterialType.SpikeMushroomGreen, "바람꽃 수풀", "초록 뿔버섯"),
-            new(RawMaterialType.MushroomBlue, "꿈꾸는 오솔길", "파란 버섯")
+            new(RawMaterialType.MonsterSnailRed, "오솔길1", "빨간 달팽이"),
+            new(RawMaterialType.MonsterSnailGreen, "리스항구 외곽", "달팽이"),
+            new(RawMaterialType.MonsterMushroomGreen, "포자언덕", "초록 버섯"),
+            new(RawMaterialType.MonsterSnailBlue, "오솔길2", "파란 달팽이"),
+            new(RawMaterialType.MonsterMushroomOrange, "헤네시스 북쪽언덕", "주황 버섯"),
+            new(RawMaterialType.MonsterSpikeMushroomBlue, "뿔버섯 숲", "파란 뿔버섯"),
+            new(RawMaterialType.MonsterMushroomBlue, "꿈꾸는 오솔길", "파란 버섯")
         };
 
         public static IReadOnlyList<PortalSupplyOption> Options => OPTIONS;

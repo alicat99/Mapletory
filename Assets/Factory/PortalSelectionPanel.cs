@@ -61,7 +61,9 @@ namespace Maptory.Factory
             panel_rect.anchorMin = panel_rect.anchorMax = new Vector2(0.5f, 0.5f);
             panel_rect.pivot = new Vector2(0.5f, 0.5f);
             panel_rect.anchoredPosition = Vector2.zero;
-            panel_rect.sizeDelta = new Vector2(504f, 422f);
+            panel_rect.sizeDelta = new Vector2(
+                504f,
+                86f + PortalSupplyCatalog.Options.Count * 42f);
             panel.AddComponent<Image>().color = PANEL_COLOR;
 
             CreateText(

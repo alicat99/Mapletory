@@ -7,15 +7,18 @@ namespace Maptory.Factory.Tests
     public sealed class PortalTests
     {
         [Test]
-        public void SupplyCatalogMatchesEightReferenceRows()
+        public void SupplyCatalogUsesSevenProducedMonsterItems()
         {
-            Assert.That(PortalSupplyCatalog.Options.Count, Is.EqualTo(8));
+            Assert.That(PortalSupplyCatalog.Options.Count, Is.EqualTo(7));
             Assert.That(
                 PortalSupplyCatalog.Options[0].SelectionLabel,
                 Is.EqualTo("[오솔길1 level1] 빨간 달팽이 · 공급 0/60"));
             Assert.That(
-                PortalSupplyCatalog.Options[7].SelectionLabel,
+                PortalSupplyCatalog.Options[6].SelectionLabel,
                 Is.EqualTo("[꿈꾸는 오솔길 level1] 파란 버섯 · 공급 0/60"));
+            Assert.That(
+                PortalSupplyCatalog.Options.Select(option => option.Material),
+                Is.EquivalentTo(ErdaInjectionRecipes.All.Values));
         }
 
         [Test]
@@ -66,16 +69,16 @@ namespace Maptory.Factory.Tests
             var economy = new PortalEconomy();
             var portal = new PortalState(Vector2Int.zero, economy);
 
+            Assert.That(portal.CanAccept(RawMaterialType.MonsterSnailRed), Is.False);
+            portal.SelectMaterial(RawMaterialType.MonsterSnailRed);
+            Assert.That(portal.CanAccept(RawMaterialType.MonsterSnailRed), Is.True);
             Assert.That(portal.CanAccept(RawMaterialType.SnailRed), Is.False);
-            portal.SelectMaterial(RawMaterialType.SnailRed);
-            Assert.That(portal.CanAccept(RawMaterialType.SnailRed), Is.True);
-            Assert.That(portal.CanAccept(RawMaterialType.SnailBlue), Is.False);
 
-            portal.AddInput(RawMaterialType.SnailRed);
+            portal.AddInput(RawMaterialType.MonsterSnailRed);
             Assert.That(economy.TotalMeso, Is.EqualTo(1));
-            portal.AddInput(RawMaterialType.SnailRed);
+            portal.AddInput(RawMaterialType.MonsterSnailRed);
             Assert.That(economy.TotalMeso, Is.EqualTo(3));
-            Assert.That(economy.GetTotalItems(RawMaterialType.SnailRed), Is.EqualTo(2));
+            Assert.That(economy.GetTotalItems(RawMaterialType.MonsterSnailRed), Is.EqualTo(2));
         }
 
         [Test]
@@ -86,11 +89,11 @@ namespace Maptory.Factory.Tests
                 var conveyors = new ConveyorNetwork();
                 var network = new ExtractionNetwork(new RawMaterialDeposit[0], conveyors);
                 var portal = network.PlacePortal(new Vector2Int(10, 10));
-                portal.SelectMaterial(RawMaterialType.SnailRed);
+                portal.SelectMaterial(RawMaterialType.MonsterSnailRed);
                 var input = portal.InputPorts[input_index];
                 conveyors.SetConveyor(input.ConveyorPosition, input.Direction);
                 var transport = new FactoryItemTransport(conveyors, network);
-                transport.SpawnItem(RawMaterialType.SnailRed, input.ConveyorPosition);
+                transport.SpawnItem(RawMaterialType.MonsterSnailRed, input.ConveyorPosition);
 
                 transport.Step();
 
@@ -112,21 +115,21 @@ namespace Maptory.Factory.Tests
             var economy = new PortalEconomy();
             var first = new PortalState(Vector2Int.zero, economy);
             var second = new PortalState(new Vector2Int(4, 4), economy);
-            first.SelectMaterial(RawMaterialType.MushroomGreen);
-            second.SelectMaterial(RawMaterialType.MushroomGreen);
-            first.AddInput(RawMaterialType.MushroomGreen);
-            second.AddInput(RawMaterialType.MushroomGreen);
+            first.SelectMaterial(RawMaterialType.MonsterMushroomGreen);
+            second.SelectMaterial(RawMaterialType.MonsterMushroomGreen);
+            first.AddInput(RawMaterialType.MonsterMushroomGreen);
+            second.AddInput(RawMaterialType.MonsterMushroomGreen);
 
             economy.Update(1f);
 
-            var first_sample = economy.GetItemsPerMinute(RawMaterialType.MushroomGreen);
+            var first_sample = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
             Assert.That(first_sample, Is.EqualTo(120f).Within(0.001f));
             Assert.That(first_sample * PortalEconomy.MESO_PER_ITEM,
                 Is.EqualTo(180f).Within(0.001f));
 
             economy.Update(1f);
 
-            var smoothed_sample = economy.GetItemsPerMinute(RawMaterialType.MushroomGreen);
+            var smoothed_sample = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
             Assert.That(smoothed_sample, Is.GreaterThan(0f));
             Assert.That(smoothed_sample, Is.LessThan(first_sample));
         }
