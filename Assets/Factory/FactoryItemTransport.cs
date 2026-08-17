@@ -10,10 +10,7 @@ namespace Maptory.Factory
         public RawMaterialType Material { get; }
         public Vector2Int Position { get; internal set; }
         public Vector2Int TargetPosition { get; internal set; }
-
-        internal Vector2Int EntryOrigin { get; set; }
-        internal GridDirection EntryDirection { get; set; }
-        internal int EntryStepsRemaining { get; set; }
+        public bool IsSpawning { get; internal set; }
 
         public FactoryItemState(int id, RawMaterialType material, Vector2Int position)
         {
@@ -87,12 +84,8 @@ namespace Maptory.Factory
         {
             foreach (var item in items)
             {
-                var moved = item.Position != item.TargetPosition;
                 item.Position = item.TargetPosition;
-                if (moved && item.EntryStepsRemaining > 0)
-                {
-                    item.EntryStepsRemaining--;
-                }
+                item.IsSpawning = false;
             }
         }
 
@@ -103,14 +96,6 @@ namespace Maptory.Factory
             foreach (var item in items)
             {
                 item.TargetPosition = item.Position;
-
-                if (item.EntryStepsRemaining > 0)
-                {
-                    proposals.Add(new MoveProposal(
-                        item,
-                        item.Position + item.EntryDirection.ToOffset()));
-                    continue;
-                }
 
                 if (conveyor_network.Conveyors.ContainsKey(item.Position)
                     && conveyor_network.TrySelectNextOutput(item.Position, out var output))
@@ -179,18 +164,18 @@ namespace Maptory.Factory
 
                 if (steps < PRODUCTION_STEP_INTERVAL
                     || !conveyor_network.Conveyors.ContainsKey(extractor.OutputPosition)
-                    || items.Any(item => item.EntryStepsRemaining > 0
-                        && item.EntryOrigin == extractor.Center))
+                    || items.Any(item => item.Position == extractor.OutputPosition
+                        || item.TargetPosition == extractor.OutputPosition))
                 {
                     continue;
                 }
 
-                var item = new FactoryItemState(next_item_id++, extractor.Material, extractor.Center)
+                var item = new FactoryItemState(
+                    next_item_id++,
+                    extractor.Material,
+                    extractor.OutputPosition)
                 {
-                    TargetPosition = extractor.Center + extractor.Direction.ToOffset(),
-                    EntryOrigin = extractor.Center,
-                    EntryDirection = extractor.Direction,
-                    EntryStepsRemaining = 2
+                    IsSpawning = true
                 };
                 items.Add(item);
                 production_steps[extractor.Center] = 0;

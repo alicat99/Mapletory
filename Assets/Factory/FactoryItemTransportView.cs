@@ -37,7 +37,7 @@ namespace Maptory.Factory
 
         private void DrawItems()
         {
-            var progress = Mathf.SmoothStep(0f, 1f, transport.StepProgress);
+            var progress = transport.StepProgress;
 
             foreach (var item in transport.Items)
             {
@@ -51,15 +51,15 @@ namespace Maptory.Factory
                 var target = grid.GetCellCenterLocal((Vector3Int)item.TargetPosition);
                 renderer.transform.localPosition = Vector3.Lerp(from, target, progress)
                     + ITEM_SURFACE_OFFSET;
-                var from_order = FactorySorting.GetOrder(
-                    item.Position,
+                renderer.transform.localScale = item.IsSpawning
+                    ? Vector3.one * progress
+                    : Vector3.one;
+
+                var grid_position = Vector2.Lerp(item.Position, item.TargetPosition, progress);
+                renderer.sortingOrder = FactorySorting.GetOrder(
+                    grid_position,
                     map_size,
                     FactorySorting.ITEM_LAYER);
-                var target_order = FactorySorting.GetOrder(
-                    item.TargetPosition,
-                    map_size,
-                    FactorySorting.ITEM_LAYER);
-                renderer.sortingOrder = Mathf.Max(from_order, target_order);
             }
         }
 

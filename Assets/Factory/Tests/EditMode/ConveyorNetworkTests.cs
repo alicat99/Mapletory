@@ -72,6 +72,19 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
+        public void ExtractorOutputCreatesTurnSpriteOnFirstConveyor()
+        {
+            var network = new ConveyorNetwork();
+            var first_conveyor = new Vector2Int(2, 0);
+            network.SetConveyor(first_conveyor, GridDirection.Right);
+            network.SetConveyor(new Vector2Int(2, -1), GridDirection.Right);
+
+            network.AddExternalInput(first_conveyor, GridDirection.Up);
+
+            Assert.That(network.GetSpriteName(first_conveyor), Is.EqualTo("ConveyorUR"));
+        }
+
+        [Test]
         public void OutputToTurningConveyorUsesConnectedDirectionSprite()
         {
             var network = new ConveyorNetwork();

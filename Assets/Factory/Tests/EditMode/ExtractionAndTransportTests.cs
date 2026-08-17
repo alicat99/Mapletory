@@ -39,7 +39,7 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
-        public void ExtractedItemMovesOntoAndAlongConveyors()
+        public void ExtractedItemAppearsOnFirstConveyorThenMovesAlongLine()
         {
             var conveyors = new ConveyorNetwork();
             conveyors.PlaceLine(new Vector2Int(2, 0), new Vector2Int(4, 0));
@@ -53,14 +53,27 @@ namespace Maptory.Factory.Tests
 
             Assert.That(transport.Items.Count, Is.EqualTo(1));
             Assert.That(transport.Items[0].Material, Is.EqualTo(RawMaterialType.DyeBlue));
-            Assert.That(transport.Items[0].Position, Is.EqualTo(Vector2Int.zero));
-            Assert.That(transport.Items[0].TargetPosition, Is.EqualTo(Vector2Int.right));
+            Assert.That(transport.Items[0].Position, Is.EqualTo(new Vector2Int(2, 0)));
+            Assert.That(transport.Items[0].TargetPosition, Is.EqualTo(new Vector2Int(2, 0)));
+            Assert.That(transport.Items[0].IsSpawning, Is.True);
 
-            transport.Step();
             transport.Step();
 
             Assert.That(transport.Items[0].Position, Is.EqualTo(new Vector2Int(2, 0)));
             Assert.That(transport.Items[0].TargetPosition, Is.EqualTo(new Vector2Int(3, 0)));
+            Assert.That(transport.Items[0].IsSpawning, Is.False);
+        }
+
+        [Test]
+        public void StepProgressAdvancesLinearlyWithElapsedTime()
+        {
+            var transport = new FactoryItemTransport(
+                new ConveyorNetwork(),
+                CreateExtractionNetwork());
+
+            transport.Update(FactoryItemTransport.STEP_DURATION * 0.25f);
+
+            Assert.That(transport.StepProgress, Is.EqualTo(0.25f).Within(0.0001f));
         }
 
         [Test]

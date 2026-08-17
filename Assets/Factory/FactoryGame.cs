@@ -19,6 +19,7 @@ namespace Maptory.Factory
         private ConveyorNetwork conveyor_network;
         private ExtractionNetwork extraction_network;
         private FactoryTileCatalog tile_catalog;
+        private ConveyorBuilder conveyor_builder;
 
         private void Awake()
         {
@@ -74,7 +75,7 @@ namespace Maptory.Factory
         {
             var map_size = new Vector2Int(map_width, map_height);
             var build_mode = gameObject.AddComponent<FactoryBuildMode>();
-            var conveyor_builder = gameObject.AddComponent<ConveyorBuilder>();
+            conveyor_builder = gameObject.AddComponent<ConveyorBuilder>();
             conveyor_builder.Initialize(
                 Camera.main,
                 grid,
@@ -84,6 +85,7 @@ namespace Maptory.Factory
                 conveyor_network,
                 tile_catalog,
                 map_size);
+            extraction_network.ExtractorPlaced += OnExtractorPlaced;
 
             var extractor_builder = gameObject.AddComponent<ExtractorBuilder>();
             extractor_builder.Initialize(
@@ -105,6 +107,12 @@ namespace Maptory.Factory
                 tile_catalog.ExtractorIcon);
             hotbar.ToolClicked += build_mode.Toggle;
             build_mode.Changed += hotbar.SetSelectedTool;
+        }
+
+        private void OnExtractorPlaced(ExtractorState extractor)
+        {
+            conveyor_network.AddExternalInput(extractor.OutputPosition, extractor.Direction);
+            conveyor_builder.RefreshConveyors();
         }
 
         private ExtractionNetwork CreateExtractionNetwork()

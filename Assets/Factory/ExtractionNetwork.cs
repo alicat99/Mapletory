@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -60,6 +61,7 @@ namespace Maptory.Factory
 
         public IReadOnlyDictionary<Vector2Int, RawMaterialDeposit> Deposits => deposits;
         public IReadOnlyDictionary<Vector2Int, ExtractorState> Extractors => extractors;
+        public event Action<ExtractorState> ExtractorPlaced;
 
         public ExtractionNetwork(IEnumerable<RawMaterialDeposit> fixed_deposits)
         {
@@ -79,6 +81,7 @@ namespace Maptory.Factory
             var deposit = deposits[center];
             var extractor = new ExtractorState(deposit.Material, center, direction);
             extractors.Add(center, extractor);
+            ExtractorPlaced?.Invoke(extractor);
             return extractor;
         }
     }

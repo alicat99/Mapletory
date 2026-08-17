@@ -42,6 +42,11 @@ namespace Maptory.Factory
             build_mode.Changed += OnBuildToolChanged;
         }
 
+        public void RefreshConveyors()
+        {
+            DrawConveyors();
+        }
+
         private void Update()
         {
             if (build_mode.ActiveTool != FactoryBuildTool.Conveyor || Mouse.current == null)
