@@ -72,6 +72,7 @@ namespace Maptory.Factory
             var renderer = item_object.AddComponent<SpriteRenderer>();
             renderer.sprite = tile_catalog.GetItemSprite(item.Material);
             renderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            renderer.sortingLayerName = FactorySorting.ITEM_SORTING_LAYER;
             return renderer;
         }
     }

@@ -41,3 +41,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: ConveyorLevel
+    uniqueID: 1650000001
+    locked: 0
+  - name: ItemLevel
+    uniqueID: 1650000002
+    locked: 0

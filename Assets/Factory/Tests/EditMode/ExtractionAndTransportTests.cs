@@ -166,6 +166,39 @@ namespace Maptory.Factory.Tests
             Assert.That(FactoryItemTransportView.ITEM_HEIGHT, Is.EqualTo(0.3f));
         }
 
+        [Test]
+        public void ItemSortingLevelIsAboveConveyorSortingLevel()
+        {
+            var conveyor_level = SortingLayer.GetLayerValueFromName(
+                FactorySorting.CONVEYOR_SORTING_LAYER);
+            var item_level = SortingLayer.GetLayerValueFromName(
+                FactorySorting.ITEM_SORTING_LAYER);
+
+            Assert.That(item_level, Is.GreaterThan(conveyor_level));
+        }
+
+        [Test]
+        public void ExtractorHasGeneratedLowerAndUpperSprites()
+        {
+            var catalog = new FactoryTileCatalog();
+
+            foreach (var direction in new[]
+            {
+                GridDirection.Up,
+                GridDirection.Right,
+                GridDirection.Down,
+                GridDirection.Left
+            })
+            {
+                var lower = catalog.GetExtractorLowerSprite(direction);
+                var upper = catalog.GetExtractorUpperSprite(direction);
+                Assert.That(lower, Is.Not.Null);
+                Assert.That(upper, Is.Not.Null);
+                Assert.That(lower.rect.size, Is.EqualTo(upper.rect.size));
+                Assert.That(lower.pivot, Is.EqualTo(upper.pivot));
+            }
+        }
+
         private static ExtractionNetwork CreateExtractionNetwork(
             ConveyorNetwork conveyors = null)
         {

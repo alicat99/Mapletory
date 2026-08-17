@@ -54,6 +54,16 @@ namespace Maptory.Factory
             return building_sprites[$"Extractor{direction.ToSpriteCode()}"];
         }
 
+        public Sprite GetExtractorLowerSprite(GridDirection direction)
+        {
+            return building_sprites[$"Extractor{direction.ToSpriteCode()}Lower"];
+        }
+
+        public Sprite GetExtractorUpperSprite(GridDirection direction)
+        {
+            return building_sprites[$"Extractor{direction.ToSpriteCode()}Upper"];
+        }
+
         public Sprite GetItemSprite(RawMaterialType material)
         {
             return item_sprites[material.ToItemSpriteName()];

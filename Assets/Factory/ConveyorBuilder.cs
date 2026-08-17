@@ -173,6 +173,7 @@ namespace Maptory.Factory
 
             var renderer = conveyor_object.AddComponent<SpriteRenderer>();
             renderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            renderer.sortingLayerName = FactorySorting.CONVEYOR_SORTING_LAYER;
             renderer.sortingOrder = FactorySorting.GetOrder(
                 position,
                 map_size,

@@ -53,6 +53,8 @@ namespace Maptory.Factory
             item_root = item_object.transform;
             preview_tilemap = CreateTilemap("Construction Preview", 30000, TilemapRenderer.Mode.Individual);
             preview_tilemap.color = new Color(1f, 1f, 1f, 0.65f);
+            preview_tilemap.GetComponent<TilemapRenderer>().sortingLayerName =
+                FactorySorting.ITEM_SORTING_LAYER;
         }
 
         private void FillGround()

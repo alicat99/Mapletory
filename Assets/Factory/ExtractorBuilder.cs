@@ -88,6 +88,7 @@ namespace Maptory.Factory
             ghost_object.transform.SetParent(world_root, false);
             ghost_renderer = ghost_object.AddComponent<SpriteRenderer>();
             ghost_renderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            ghost_renderer.sortingLayerName = FactorySorting.ITEM_SORTING_LAYER;
             ghost_renderer.enabled = false;
         }
 
@@ -116,14 +117,38 @@ namespace Maptory.Factory
             var extractor_object = new GameObject($"Extractor ({center.x}, {center.y})");
             extractor_object.transform.SetParent(world_root, false);
             extractor_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
-            var renderer = extractor_object.AddComponent<SpriteRenderer>();
-            renderer.sprite = tile_catalog.GetExtractorSprite(direction);
+            CreateExtractorPart(
+                extractor_object.transform,
+                "Lower",
+                tile_catalog.GetExtractorLowerSprite(direction),
+                FactorySorting.CONVEYOR_SORTING_LAYER,
+                center);
+            CreateExtractorPart(
+                extractor_object.transform,
+                "Upper",
+                tile_catalog.GetExtractorUpperSprite(direction),
+                FactorySorting.ITEM_SORTING_LAYER,
+                center);
+            ghost_renderer.enabled = false;
+        }
+
+        private void CreateExtractorPart(
+            Transform extractor,
+            string part_name,
+            Sprite sprite,
+            string sorting_layer,
+            Vector2Int center)
+        {
+            var part_object = new GameObject(part_name);
+            part_object.transform.SetParent(extractor, false);
+            var renderer = part_object.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
             renderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            renderer.sortingLayerName = sorting_layer;
             renderer.sortingOrder = FactorySorting.GetOrder(
                 center,
                 map_size,
                 FactorySorting.EXTRACTOR_LAYER);
-            ghost_renderer.enabled = false;
         }
 
         private Vector2Int GetPointerCell()

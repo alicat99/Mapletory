@@ -4,6 +4,9 @@ namespace Maptory.Factory
 {
     public static class FactorySorting
     {
+        public const string CONVEYOR_SORTING_LAYER = "ConveyorLevel";
+        public const string ITEM_SORTING_LAYER = "ItemLevel";
+
         public static readonly Vector3 TRANSPARENCY_AXIS = new Vector3(0f, 1f, -1f).normalized;
 
         public const int CONVEYOR_LAYER = 0;
