@@ -34,10 +34,10 @@ namespace Maptory.Factory
             var panel = new GameObject("Meso", typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(canvas_object.transform, false);
             var panel_rect = panel.GetComponent<RectTransform>();
-            panel_rect.anchorMin = panel_rect.anchorMax = new Vector2(1f, 1f);
-            panel_rect.pivot = new Vector2(1f, 1f);
-            panel_rect.anchoredPosition = new Vector2(-24f, -20f);
-            panel_rect.sizeDelta = new Vector2(230f, 58f);
+            panel_rect.anchorMin = panel_rect.anchorMax = new Vector2(0f, 1f);
+            panel_rect.pivot = new Vector2(0f, 1f);
+            panel_rect.anchoredPosition = new Vector2(24f, -20f);
+            panel_rect.sizeDelta = new Vector2(190f, 58f);
             var panel_image = panel.GetComponent<Image>();
             panel_image.sprite = catalog.RoundedRectangle;
             panel_image.type = Image.Type.Sliced;
@@ -57,7 +57,7 @@ namespace Maptory.Factory
             var text = text_object.GetComponent<TextMeshProUGUI>();
             text.font = catalog.UiFont;
             text.fontSize = 26f;
-            text.alignment = TextAlignmentOptions.MidlineRight;
+            text.alignment = TextAlignmentOptions.Center;
             text.color = new Color(1f, 0.85f, 0.22f, 1f);
             text.raycastTarget = false;
 
@@ -76,7 +76,7 @@ namespace Maptory.Factory
 
         private void Refresh()
         {
-            meso_text.text = $"메소 {economy.TotalMeso:N0}";
+            meso_text.text = $"{economy.TotalMeso:N0} 메소";
         }
     }
 }

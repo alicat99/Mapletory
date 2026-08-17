@@ -8,6 +8,7 @@ namespace Maptory.Factory
     {
         private PortalState portal;
         private PortalEconomy economy;
+        private RectTransform tooltip_rect;
         private TMP_Text label;
 
         public static PortalTooltip Create(
@@ -64,6 +65,7 @@ namespace Maptory.Factory
             var tooltip = tooltip_object.AddComponent<PortalTooltip>();
             tooltip.portal = portal;
             tooltip.economy = economy;
+            tooltip.tooltip_rect = tooltip_object.GetComponent<RectTransform>();
             tooltip.label = text;
             tooltip.Refresh();
             return tooltip;
@@ -79,6 +81,7 @@ namespace Maptory.Factory
             if (!portal.SelectedMaterial.HasValue)
             {
                 label.text = "(아이템 선택)";
+                FitWidth();
                 return;
             }
 
@@ -87,6 +90,13 @@ namespace Maptory.Factory
             var meso_per_minute = items_per_minute * PortalEconomy.MESO_PER_ITEM;
             label.text = $"{material.ToKoreanName()} {items_per_minute:0.0}/분 | "
                 + $"{meso_per_minute:0.0}메소/분";
+            FitWidth();
+        }
+
+        private void FitWidth()
+        {
+            var width = Mathf.Clamp(label.preferredWidth + 32f, 140f, 340f);
+            tooltip_rect.sizeDelta = new Vector2(width, tooltip_rect.sizeDelta.y);
         }
 
         private static void Stretch(RectTransform rect)
