@@ -134,7 +134,7 @@ namespace Maptory.Factory
             var main_camera = Camera.main;
             main_camera.backgroundColor = new Color(0.075f, 0.12f, 0.08f);
             main_camera.transparencySortMode = TransparencySortMode.CustomAxis;
-            main_camera.transparencySortAxis = Vector3.up;
+            main_camera.transparencySortAxis = FactorySorting.TRANSPARENCY_AXIS;
 
             var first_corner = ground_tilemap.GetCellCenterWorld(Vector3Int.zero);
             var opposite_corner = ground_tilemap.GetCellCenterWorld(

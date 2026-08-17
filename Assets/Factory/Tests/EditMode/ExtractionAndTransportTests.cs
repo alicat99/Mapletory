@@ -156,6 +156,16 @@ namespace Maptory.Factory.Tests
             Assert.That(lower_y, Is.GreaterThan(higher_y));
         }
 
+        [Test]
+        public void TransparencyAxisIncludesItemHeight()
+        {
+            Assert.That(FactorySorting.TRANSPARENCY_AXIS.y, Is.GreaterThan(0f));
+            Assert.That(FactorySorting.TRANSPARENCY_AXIS.z, Is.LessThan(0f));
+            Assert.That(FactorySorting.TRANSPARENCY_AXIS.magnitude,
+                Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(FactoryItemTransportView.ITEM_HEIGHT, Is.EqualTo(0.3f));
+        }
+
         private static ExtractionNetwork CreateExtractionNetwork(
             ConveyorNetwork conveyors = null)
         {
