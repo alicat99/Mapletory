@@ -203,11 +203,12 @@ namespace Maptory.Factory.Tests
         {
             var machine = new DyeingMachineState(Vector2Int.zero, GridDirection.Up);
 
-            Assert.That(machine.GetInputPort(0), Is.EqualTo(new Vector2Int(-1, -1)));
-            Assert.That(machine.GetInputPort(1), Is.EqualTo(new Vector2Int(1, -1)));
-            Assert.That(machine.OutputPort, Is.EqualTo(new Vector2Int(0, 1)));
-            Assert.That(machine.GetInputConveyorPosition(0), Is.EqualTo(new Vector2Int(-1, -2)));
-            Assert.That(machine.OutputConveyorPosition, Is.EqualTo(new Vector2Int(0, 2)));
+            Assert.That(machine.GetInputPort(0), Is.EqualTo(new Vector2Int(-1, 1)));
+            Assert.That(machine.GetInputPort(1), Is.EqualTo(new Vector2Int(-1, -1)));
+            Assert.That(machine.OutputPort, Is.EqualTo(new Vector2Int(1, 0)));
+            Assert.That(machine.GetInputConveyorPosition(0), Is.EqualTo(new Vector2Int(-2, 1)));
+            Assert.That(machine.GetInputConveyorPosition(1), Is.EqualTo(new Vector2Int(-2, -1)));
+            Assert.That(machine.OutputConveyorPosition, Is.EqualTo(new Vector2Int(2, 0)));
         }
 
         [Test]
@@ -215,10 +216,10 @@ namespace Maptory.Factory.Tests
         {
             var machine = new DyeingMachineState(Vector2Int.zero, GridDirection.Right);
 
-            Assert.That(machine.GetInputPort(0), Is.EqualTo(new Vector2Int(-1, 1)));
-            Assert.That(machine.GetInputPort(1), Is.EqualTo(new Vector2Int(-1, -1)));
-            Assert.That(machine.OutputPort, Is.EqualTo(Vector2Int.right));
-            Assert.That(machine.OutputConveyorPosition, Is.EqualTo(Vector2Int.right * 2));
+            Assert.That(machine.GetInputPort(0), Is.EqualTo(new Vector2Int(1, 1)));
+            Assert.That(machine.GetInputPort(1), Is.EqualTo(new Vector2Int(-1, 1)));
+            Assert.That(machine.OutputPort, Is.EqualTo(Vector2Int.down));
+            Assert.That(machine.OutputConveyorPosition, Is.EqualTo(Vector2Int.down * 2));
         }
 
         [Test]

@@ -119,7 +119,7 @@ namespace Maptory.Factory
         public Vector2Int Center { get; }
         public GridDirection Direction { get; }
         public DyeingRecipe SelectedRecipe { get; private set; }
-        public Vector2Int Forward => Direction.ToCardinalOffset();
+        public Vector2Int Forward => Direction.ToOffset();
         public Vector2Int OutputPort => Center + Forward;
         public Vector2Int OutputConveyorPosition => Center + Forward * 2;
         public IReadOnlyCollection<RawMaterialType> StoredMaterials => stored_materials;
@@ -135,7 +135,7 @@ namespace Maptory.Factory
 
         public Vector2Int GetInputPort(int index)
         {
-            var offset = index == 0 ? new Vector2Int(-1, -1) : new Vector2Int(1, -1);
+            var offset = index == 0 ? new Vector2Int(-1, 1) : new Vector2Int(-1, -1);
 
             for (var rotation = 0; rotation < (int)Direction; rotation++)
             {

@@ -117,7 +117,7 @@ namespace Maptory.Factory
                 typeof(RectTransform),
                 typeof(Canvas));
             tooltip_object.transform.SetParent(parent, false);
-            tooltip_object.transform.localPosition = new Vector3(0f, 3.35f, -0.1f);
+            tooltip_object.transform.localPosition = new Vector3(0f, 2.05f, -0.1f);
             tooltip_object.transform.localScale = Vector3.one * 0.015f;
             var tooltip_rect = tooltip_object.GetComponent<RectTransform>();
             tooltip_rect.sizeDelta = new Vector2(240f, 42f);
