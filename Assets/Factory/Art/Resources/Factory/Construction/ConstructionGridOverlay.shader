@@ -2,7 +2,7 @@ Shader "Maptory/ConstructionGridOverlay"
 {
     Properties
     {
-        _LineColor ("Line Color", Color) = (1, 1, 1, 0.18)
+        _LineColor ("Line Color", Color) = (0, 0, 0, 0.18)
         _LineWidth ("Line Width (Pixels)", Range(0.5, 2)) = 0.75
     }
 

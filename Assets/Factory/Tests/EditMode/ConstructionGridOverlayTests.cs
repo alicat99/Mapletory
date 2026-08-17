@@ -20,6 +20,10 @@ namespace Maptory.Factory.Tests
             var mesh = root.GetComponent<MeshFilter>().sharedMesh;
             var renderer = root.GetComponent<MeshRenderer>();
             Assert.That(mesh.vertexCount, Is.EqualTo(4));
+            Assert.That(mesh.vertices[0], Is.EqualTo(grid.CellToLocalInterpolated(Vector3.zero)));
+            Assert.That(
+                mesh.vertices[2],
+                Is.EqualTo(grid.CellToLocalInterpolated(new Vector3(100000f, 100000f))));
             Assert.That(renderer.enabled, Is.False);
 
             build_mode.SetActiveTool(FactoryBuildTool.Conveyor);

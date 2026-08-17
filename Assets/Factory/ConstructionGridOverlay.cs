@@ -56,10 +56,10 @@ namespace Maptory.Factory
 
         private static Mesh CreateMesh(Grid map_grid, Vector2Int map_size)
         {
-            var min_x = -0.5f;
-            var min_y = -0.5f;
-            var max_x = map_size.x - 0.5f;
-            var max_y = map_size.y - 0.5f;
+            var min_x = 0f;
+            var min_y = 0f;
+            var max_x = map_size.x;
+            var max_y = map_size.y;
             var mesh = new Mesh
             {
                 name = "Construction Grid Overlay",
