@@ -7,9 +7,9 @@
 Play Mode가 시작되면 다음을 확인한다.
 
 1. 16×8 픽셀 잔디 두 종류가 무작위로 섞인 50×50 등각 Tilemap이 표시된다. 각 셀의 월드 크기는 1×0.5이므로 타일의 세로:가로 비율은 1:2이다.
-2. 화면 아래에 10칸 핫바가 있고 첫 슬롯부터 컨베이어, 채굴기, 염색기, 조합기, 에르다 주입기 아이콘이 순서대로 표시된다.
+2. 화면 아래에 10칸 핫바가 있고 첫 슬롯부터 컨베이어, 채굴기, 염색기, 조합기, 에르다 주입기, 가공기계 아이콘이 순서대로 표시된다.
 3. 첫 슬롯을 클릭하면 테두리가 노란색으로 바뀌며 건설 모드가 된다.
-4. 컨베이어·채굴기·염색기·조합기·에르다 주입기 중 하나의 건설 도구를 선택하면 각 설치 셀 중심을 둘러싸는 마름모 경계에 화면상 약 1픽셀 굵기의 낮은 알파 검은색 격자선이 표시되고, 도구를 해제하면 사라진다. 격자는 맵 크기와 무관하게 꼭짓점 4개의 단일 메시로 그려진다.
+4. 컨베이어·채굴기·염색기·조합기·에르다 주입기·가공기계 중 하나의 건설 도구를 선택하면 각 설치 셀 중심을 둘러싸는 마름모 경계에 화면상 약 1픽셀 굵기의 낮은 알파 검은색 격자선이 표시되고, 도구를 해제하면 사라진다. 격자는 맵 크기와 무관하게 꼭짓점 4개의 단일 메시로 그려진다.
 5. 잔디 위에서 마우스 왼쪽 버튼을 누른 채 드래그하면 더 긴 축을 기준으로 수평 또는 수직 직선 미리보기만 표시된다. 버튼을 놓으면 컨베이어가 설치된다.
 6. 이미 설치된 칸을 반대 방향으로 다시 드래그하면 해당 칸의 방향과 이미지가 새 방향으로 교체된다.
 7. 출력 방향 바로 앞에 다른 컨베이어가 있으면 대상 컨베이어의 방향과 관계없이 연결된 출력 이미지를 사용한다. 따라서 U 방향 출력이 다른 컨베이어로 이어지면 `ConveyorUX`가 아니라 `ConveyorUU`가 표시된다. 연결되지 않은 끝은 `Conveyor?X`, 한 칸에서 바깥으로 향하는 이웃이 둘 이상이면 `Conveyor?A` 이미지가 표시된다. 현재 칸을 향하는 이웃이 정확히 하나라면 그 입력 방향과 출력 방향을 조합해 `ConveyorUR` 같은 회전 이미지를 사용한다. 여러 이웃이 한 칸으로 들어오는 합류는 도착 컨베이어 이미지를 바꾸지 않는다.
@@ -35,8 +35,11 @@ Play Mode가 시작되면 다음을 확인한다.
 27. 다섯 번째 슬롯은 1×1 에르다 주입기 건설 모드다. 방향 반대편 한 칸의 컨베이어가 입력이고 방향 앞 한 칸의 컨베이어가 출력이다. `R`로 방향을 회전하며 주입기 셀은 다른 건물·원재료·컨베이어와 겹칠 수 없다.
 28. 입력 컨베이어가 주입기 방향을 향할 때 초록·빨강·파랑 달팽이 껍질, 파랑·주황·초록 버섯 갓, 회색 뿔버섯 갓을 넣으면 각각 대응하는 7종 몬스터 아이템이 출력 컨베이어에 0.12초 스케일 인으로 생성된다. 결과는 달팽이 껍질과 동일하게 셀당 0.45초로 이동하고 합류·분배·정렬 규칙을 공유한다. 출력 컨베이어가 없거나 점유되어 있으면 내부 결과를 보관하고 생산을 대기한다. 에르다 주입기는 별도의 레시피 선택 UI가 없고 등록되지 않은 아이템을 소비하지 않는다.
 29. Combiner는 `BuildingLowerMask.png`, 32×64 에르다 주입기는 `BuildingLowerMask1x1.png`로 Lower/Upper를 각각 전처리한다. 두 건물과 모든 운송 아이템은 기존 `ConveyorLevel`/`ItemLevel` 및 Y 기반 정렬 규칙을 따른다.
+30. 여섯 번째 슬롯은 3×3 가공기계 건설 모드다. 설치 방향 반대쪽 중앙에 입력 컨베이어 한 개, 설치 방향 중앙에 출력 컨베이어 한 개를 연결한다. `R`로 출력 방향을 반시계 회전하며 다른 3×3 건물과 동일한 점유·고스트·Lower/Upper 정렬 규칙을 사용한다.
+31. 새 가공기계에는 `(레시피 선택)` 툴팁이 표시된다. 클릭하면 염색기·조합기와 같은 공용 레시피 창이 `가공기계` 제목과 `가공` 대분류로 열리고, 필요 재료에는 초록 달팽이 껍질 한 줄만 표시된다.
+32. 초록 달팽이 껍질 한 개를 입력하면 빠른 스케일 아웃 뒤 `Horn.png` 뿔 아이템이 출력 컨베이어에 스케일 인으로 생성된다. 조합기의 `뿔버섯` 대분류에서 뿔 한 개와 기본 버섯 갓 한 개를 조합하면 염색 전 뿔버섯 갓이 생산된다.
 
-Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 맵 크기와 무관한 격자 메시, 염색기와 조합기의 포트·점유·레시피·생산, 에르다 주입기의 1×1 점유와 7종 운송 아이템 변환·출력 대기·후속 이동, 두 마스크로 생성한 Lower/Upper Sprite 및 런타임 에셋을 검증한다.
+Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 맵 크기와 무관한 격자 메시, 염색기와 조합기의 포트·점유·레시피·생산, 가공기계의 중앙 1입력·1출력과 뿔 생산, 조합기의 뿔버섯 생산, 에르다 주입기의 1×1 점유와 7종 운송 아이템 변환·출력 대기·후속 이동, 두 마스크로 생성한 Lower/Upper Sprite 및 런타임 에셋을 검증한다.
 
 ## 2. 기능 사용법
 
@@ -106,15 +109,27 @@ transport.Step();
 var spawned_item = transport.Items[0];
 ```
 
+`IRecipe`는 재료 목록을 소유하므로 공용 레시피 UI와 운송 시스템은 1재료 가공기계와 2재료 염색기·조합기를 함께 처리한다. 가공기계는 중앙 입력 한 개만 사용한다.
+
+```csharp
+var processor = extraction.PlaceProcessingMachine(
+    new Vector2Int(24, 20),
+    GridDirection.Up);
+processor.SelectRecipe(ProcessingRecipe.All[ProcessingRecipeId.Horn]);
+
+conveyors.SetConveyor(processor.GetInputConveyorPosition(0), GridDirection.Up);
+conveyors.SetConveyor(processor.OutputConveyorPosition, GridDirection.Up);
+```
+
 ## 3. 코드 구조와 책임
 
 | 파일 | 책임 |
 | --- | --- |
-| `FactoryGame.cs` | 맵, 5종 고정 원재료, 다섯 건설 도구, 채굴·가공·운송 시스템, UI와 카메라를 조립하는 Scene 진입점 |
+| `FactoryGame.cs` | 맵, 5종 고정 원재료, 여섯 건설 도구, 채굴·가공·운송 시스템, UI와 카메라를 조립하는 Scene 진입점 |
 | `GridDirection.cs` | 4방향 값과 격자 오프셋, Sprite 코드, 반대 방향 및 반시계 회전 정의 |
 | `ConveyorNetwork.cs` | 컨베이어 방향 상태, 직선 배치/덮어쓰기, 건물 입출력을 포함한 연결 분석, Sprite 이름과 출력 분배 순서 소유 |
-| `ExtractionNetwork.cs` | 아이템·공용 레시피 계약, 원재료와 채굴기·염색기·조합기·에르다 주입기 상태, 3×3/1×1 점유와 포트 좌표, 설치 이벤트 소유 |
-| `FactoryItemTransport.cs` | 채굴 생산, 염색·조합·에르다 입력 소비와 출력, 컨베이어 이동·역압·합류·분배 시뮬레이션 소유 |
+| `ExtractionNetwork.cs` | 아이템·가변 재료 공용 레시피 계약, 원재료와 채굴기·염색기·조합기·가공기계·에르다 주입기 상태, 3×3/1×1 점유와 포트 좌표, 설치 이벤트 소유 |
+| `FactoryItemTransport.cs` | 채굴 생산, 염색·조합·가공·에르다 입력 소비와 출력, 컨베이어 이동·역압·합류·분배 시뮬레이션 소유 |
 | `ErdaInjectionRecipes.cs` | 에르다 주입기가 받는 7종 재료와 대응하는 몬스터 운송 아이템 정의 |
 | `FactorySorting.cs` | 컨베이어·아이템 레벨 Sorting Layer 이름, 결정적 Y/X 정렬 순서와 높이 Z를 포함한 투명 정렬 축 정의 |
 | `FactoryBuildMode.cs` | 핫바 도구 선택과 `Esc` 해제를 단일 상태로 관리 |
@@ -126,10 +141,11 @@ var spawned_item = transport.Items[0];
 | `DyeingMachineBuilder.cs` | 염색기 방향 고스트·설치·클릭, Lower/Upper 렌더러와 미선택 툴팁 생성 |
 | `CombinerBuilder.cs` | 3×3 조합기 방향 고스트·설치·클릭, Lower/Upper 렌더러와 미선택 툴팁 생성 |
 | `ErdaInjectorBuilder.cs` | 1×1 에르다 주입기 방향 고스트·설치 및 전용 마스크 Lower/Upper 렌더러 생성 |
-| `RecipeSelectionPanel.cs` | 염색기와 조합기가 공유하는 TMP 기반 레시피 모달, 동적 대분류·선택·필요 재료·결과 표시와 확정 처리 |
+| `ProcessingMachineBuilder.cs` | 3×3 가공기계 방향 고스트·설치·클릭, Lower/Upper 렌더러와 미선택 툴팁 생성 |
+| `RecipeSelectionPanel.cs` | 염색기·조합기·가공기계가 공유하는 TMP 기반 레시피 모달, 동적 대분류·1~2개 필요 재료·결과 표시와 확정 처리 |
 | `RecipeTooltip.cs` | 레시피 기반 건물이 공유하는 `(레시피 선택)` 월드 UI 생성 |
 | `FactoryItemTransportView.cs` | 운송 상태를 선형 보간해 아이템 위치·빠른 입출력 스케일·실시간 깊이를 갱신하고 소비된 렌더러 제거 |
-| `FactoryHotbar.cs` | 화면 하단 10슬롯 UI, 다섯 건설 도구의 선택 상태와 클릭 이벤트 제공 |
+| `FactoryHotbar.cs` | 화면 하단 10슬롯 UI, 여섯 건설 도구의 선택 상태와 클릭 이벤트 제공 |
 | `FactoryCameraController.cs` | 키보드 이동, 우클릭 패닝, 휠 확대/축소와 맵 범위 제한을 담당하고 모달 입력 차단 함수를 적용 |
 | `Editor/FactorySpriteImporter.cs` | 기능 전용 픽셀 아트의 Sprite import 설정 고정 |
 | `Editor/BuildingSpriteLayerGenerator.cs` | 3×3/1×1 하단 마스크를 건물 폭에 맞춰 선택해 Lower/Upper PNG로 전처리하고 변경 시 재생성 |
@@ -137,6 +153,7 @@ var spawned_item = transport.Items[0];
 | `Tests/EditMode/ExtractionAndTransportTests.cs` | 채굴기 배치·회전·생산, 운송·합류 및 정렬 규칙 회귀 테스트 |
 | `Tests/EditMode/ConstructionGridOverlayTests.cs` | 초대형 맵에서도 메시 크기가 일정하고 건설 모드에만 표시되는지 검증 |
 | `Tests/EditMode/CombinerAndErdaInjectorTests.cs` | 3종 염료 조합, 3×3/1×1 점유, 7종 몬스터 아이템 변환·출력 대기·이동과 신규 런타임 Sprite 검증 |
+| `Tests/EditMode/ProcessingMachineTests.cs` | 가공기계 중앙 포트·뿔 생산, 조합기 뿔버섯 레시피와 신규 Sprite 검증 |
 
 `ConveyorNetwork`와 `ExtractionNetwork`가 영속 가능한 게임 상태를 소유한다. `FactoryItemTransport`는 두 네트워크만 참조하고 Unity UI나 Renderer에 의존하지 않는다. 건설 Builder와 `FactoryItemTransportView`가 입력과 표현을 담당하며 레시피 UI는 선택 결과만 `DyeingMachineState`에 전달한다.
 

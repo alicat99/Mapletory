@@ -11,7 +11,7 @@ namespace Maptory.Factory
         SnailRed, SnailBlue,
         MushroomBlue, MushroomOrange, MushroomGreen,
         SpikeMushroom, SpikeMushroomBlue, SpikeMushroomOrange, SpikeMushroomGreen,
-        SpikeMushroomGray,
+        SpikeMushroomGray, Horn,
         MonsterMushroomBlue, MonsterMushroomGreen, MonsterMushroomOrange,
         MonsterSnailBlue, MonsterSnailGreen, MonsterSnailRed,
         MonsterSpikeMushroomGray
@@ -51,6 +51,7 @@ namespace Maptory.Factory
                 RawMaterialType.SpikeMushroomOrange => "주황 뿔버섯 갓",
                 RawMaterialType.SpikeMushroomGreen => "초록 뿔버섯 갓",
                 RawMaterialType.SpikeMushroomGray => "회색 뿔버섯 갓",
+                RawMaterialType.Horn => "뿔",
                 RawMaterialType.MonsterMushroomBlue => "파란 버섯 몬스터",
                 RawMaterialType.MonsterMushroomGreen => "초록 버섯 몬스터",
                 RawMaterialType.MonsterMushroomOrange => "주황 버섯 몬스터",
@@ -63,10 +64,9 @@ namespace Maptory.Factory
         }
     }
 
-    public interface ITwoIngredientRecipe
+    public interface IRecipe
     {
-        RawMaterialType FirstMaterial { get; }
-        RawMaterialType SecondMaterial { get; }
+        IReadOnlyList<RawMaterialType> Ingredients { get; }
         RawMaterialType Result { get; }
         string DisplayName { get; }
     }
@@ -74,9 +74,9 @@ namespace Maptory.Factory
     public sealed class RecipeCategory
     {
         public string Name { get; }
-        public IReadOnlyList<ITwoIngredientRecipe> Recipes { get; }
+        public IReadOnlyList<IRecipe> Recipes { get; }
 
-        public RecipeCategory(string name, params ITwoIngredientRecipe[] recipes)
+        public RecipeCategory(string name, params IRecipe[] recipes)
         {
             Name = name;
             Recipes = recipes;
@@ -92,13 +92,14 @@ namespace Maptory.Factory
     {
         Vector2Int Center { get; }
         Vector2Int Forward { get; }
-        ITwoIngredientRecipe SelectedRecipe { get; }
+        IRecipe SelectedRecipe { get; }
+        int InputCount { get; }
         bool CanCraft { get; }
         Vector2Int OutputConveyorPosition { get; }
         Vector2Int GetInputPort(int index);
         Vector2Int GetInputConveyorPosition(int index);
         bool CanAccept(RawMaterialType material);
-        void SelectRecipe(ITwoIngredientRecipe recipe);
+        void SelectRecipe(IRecipe recipe);
         RawMaterialType Craft();
     }
 
@@ -109,7 +110,7 @@ namespace Maptory.Factory
         SpikeMushroomBlue, SpikeMushroomOrange, SpikeMushroomGreen
     }
 
-    public sealed class DyeingRecipe : ITwoIngredientRecipe
+    public sealed class DyeingRecipe : IRecipe
     {
         private static readonly Dictionary<DyeingRecipeId, DyeingRecipe> RECIPES = new()
         {
@@ -142,6 +143,7 @@ namespace Maptory.Factory
         public RawMaterialType Dye { get; }
         public RawMaterialType FirstMaterial => BaseMaterial;
         public RawMaterialType SecondMaterial => Dye;
+        public IReadOnlyList<RawMaterialType> Ingredients { get; }
         public RawMaterialType Result { get; }
         public string DisplayName => Result.ToKoreanName();
 
@@ -149,6 +151,7 @@ namespace Maptory.Factory
         {
             BaseMaterial = base_material;
             Dye = dye;
+            Ingredients = new[] { base_material, dye };
             Result = result;
         }
     }
@@ -157,16 +160,18 @@ namespace Maptory.Factory
     {
         DyeOrange,
         DyePurple,
-        DyeGreen
+        DyeGreen,
+        SpikeMushroom
     }
 
-    public sealed class CombiningRecipe : ITwoIngredientRecipe
+    public sealed class CombiningRecipe : IRecipe
     {
         private static readonly Dictionary<CombiningRecipeId, CombiningRecipe> RECIPES = new()
         {
             { CombiningRecipeId.DyeOrange, new(RawMaterialType.DyeRed, RawMaterialType.DyeYellow, RawMaterialType.DyeOrange) },
             { CombiningRecipeId.DyePurple, new(RawMaterialType.DyeRed, RawMaterialType.DyeBlue, RawMaterialType.DyePurple) },
-            { CombiningRecipeId.DyeGreen, new(RawMaterialType.DyeBlue, RawMaterialType.DyeYellow, RawMaterialType.DyeGreen) }
+            { CombiningRecipeId.DyeGreen, new(RawMaterialType.DyeBlue, RawMaterialType.DyeYellow, RawMaterialType.DyeGreen) },
+            { CombiningRecipeId.SpikeMushroom, new(RawMaterialType.Horn, RawMaterialType.Mushroom, RawMaterialType.SpikeMushroom) }
         };
 
         private static readonly RecipeCategory[] CATEGORIES =
@@ -174,13 +179,15 @@ namespace Maptory.Factory
             new("염료",
                 RECIPES[CombiningRecipeId.DyeOrange],
                 RECIPES[CombiningRecipeId.DyePurple],
-                RECIPES[CombiningRecipeId.DyeGreen])
+                RECIPES[CombiningRecipeId.DyeGreen]),
+            new("뿔버섯", RECIPES[CombiningRecipeId.SpikeMushroom])
         };
 
         public static IReadOnlyDictionary<CombiningRecipeId, CombiningRecipe> All => RECIPES;
         public static IReadOnlyList<RecipeCategory> Categories => CATEGORIES;
         public RawMaterialType FirstMaterial { get; }
         public RawMaterialType SecondMaterial { get; }
+        public IReadOnlyList<RawMaterialType> Ingredients { get; }
         public RawMaterialType Result { get; }
         public string DisplayName => Result.ToKoreanName();
 
@@ -191,6 +198,39 @@ namespace Maptory.Factory
         {
             FirstMaterial = first_material;
             SecondMaterial = second_material;
+            Ingredients = new[] { first_material, second_material };
+            Result = result;
+        }
+    }
+
+    public enum ProcessingRecipeId
+    {
+        Horn
+    }
+
+    public sealed class ProcessingRecipe : IRecipe
+    {
+        private static readonly Dictionary<ProcessingRecipeId, ProcessingRecipe> RECIPES = new()
+        {
+            { ProcessingRecipeId.Horn, new(RawMaterialType.Snail, RawMaterialType.Horn) }
+        };
+
+        private static readonly RecipeCategory[] CATEGORIES =
+        {
+            new("가공", RECIPES[ProcessingRecipeId.Horn])
+        };
+
+        public static IReadOnlyDictionary<ProcessingRecipeId, ProcessingRecipe> All => RECIPES;
+        public static IReadOnlyList<RecipeCategory> Categories => CATEGORIES;
+        public RawMaterialType InputMaterial { get; }
+        public IReadOnlyList<RawMaterialType> Ingredients { get; }
+        public RawMaterialType Result { get; }
+        public string DisplayName => Result.ToKoreanName();
+
+        private ProcessingRecipe(RawMaterialType input_material, RawMaterialType result)
+        {
+            InputMaterial = input_material;
+            Ingredients = new[] { input_material };
             Result = result;
         }
     }
@@ -229,7 +269,8 @@ namespace Maptory.Factory
         public Vector2Int Center { get; }
         public GridDirection Direction { get; }
         public DyeingRecipe SelectedRecipe { get; private set; }
-        ITwoIngredientRecipe IRecipeMachine.SelectedRecipe => SelectedRecipe;
+        IRecipe IRecipeMachine.SelectedRecipe => SelectedRecipe;
+        public int InputCount => 2;
         public Vector2Int Forward => Direction.ToOffset();
         public Vector2Int OutputPort => Center + Forward;
         public Vector2Int OutputConveyorPosition => Center + Forward * 2;
@@ -267,7 +308,7 @@ namespace Maptory.Factory
             stored_materials.Clear();
         }
 
-        void IRecipeMachine.SelectRecipe(ITwoIngredientRecipe recipe)
+        void IRecipeMachine.SelectRecipe(IRecipe recipe)
         {
             SelectRecipe((DyeingRecipe)recipe);
         }
@@ -308,7 +349,8 @@ namespace Maptory.Factory
         public Vector2Int Center { get; }
         public GridDirection Direction { get; }
         public CombiningRecipe SelectedRecipe { get; private set; }
-        ITwoIngredientRecipe IRecipeMachine.SelectedRecipe => SelectedRecipe;
+        IRecipe IRecipeMachine.SelectedRecipe => SelectedRecipe;
+        public int InputCount => 2;
         public Vector2Int Forward => Direction.ToOffset();
         public Vector2Int OutputPort => Center + Forward;
         public Vector2Int OutputConveyorPosition => Center + Forward * 2;
@@ -346,7 +388,7 @@ namespace Maptory.Factory
             stored_materials.Clear();
         }
 
-        void IRecipeMachine.SelectRecipe(ITwoIngredientRecipe recipe)
+        void IRecipeMachine.SelectRecipe(IRecipe recipe)
         {
             SelectRecipe((CombiningRecipe)recipe);
         }
@@ -377,6 +419,76 @@ namespace Maptory.Factory
             }
 
             stored_materials.Clear();
+            return SelectedRecipe.Result;
+        }
+    }
+
+    public sealed class ProcessingMachineState : IRecipeMachine
+    {
+        private RawMaterialType? stored_material;
+
+        public Vector2Int Center { get; }
+        public GridDirection Direction { get; }
+        public ProcessingRecipe SelectedRecipe { get; private set; }
+        IRecipe IRecipeMachine.SelectedRecipe => SelectedRecipe;
+        public int InputCount => 1;
+        public Vector2Int Forward => Direction.ToOffset();
+        public Vector2Int OutputConveyorPosition => Center + Forward * 2;
+        public bool CanCraft => SelectedRecipe != null
+            && stored_material == SelectedRecipe.InputMaterial;
+
+        public ProcessingMachineState(Vector2Int center, GridDirection direction)
+        {
+            Center = center;
+            Direction = direction;
+        }
+
+        public Vector2Int GetInputPort(int index)
+        {
+            return Center - Forward;
+        }
+
+        public Vector2Int GetInputConveyorPosition(int index)
+        {
+            return Center - Forward * 2;
+        }
+
+        public void SelectRecipe(ProcessingRecipe recipe)
+        {
+            SelectedRecipe = recipe;
+            stored_material = null;
+        }
+
+        void IRecipeMachine.SelectRecipe(IRecipe recipe)
+        {
+            SelectRecipe((ProcessingRecipe)recipe);
+        }
+
+        public bool CanAccept(RawMaterialType material)
+        {
+            return SelectedRecipe != null
+                && material == SelectedRecipe.InputMaterial
+                && !stored_material.HasValue;
+        }
+
+        public void AddInput(RawMaterialType material)
+        {
+            if (!CanAccept(material))
+            {
+                throw new InvalidOperationException("The processing machine cannot accept this item.");
+            }
+
+            stored_material = material;
+        }
+
+        public RawMaterialType Craft()
+        {
+            if (!CanCraft)
+            {
+                throw new InvalidOperationException("The processing recipe is incomplete.");
+            }
+
+            stored_material = null;
             return SelectedRecipe.Result;
         }
     }
@@ -432,6 +544,7 @@ namespace Maptory.Factory
         private readonly Dictionary<Vector2Int, ExtractorState> extractors = new();
         private readonly Dictionary<Vector2Int, DyeingMachineState> dyeing_machines = new();
         private readonly Dictionary<Vector2Int, CombinerState> combiners = new();
+        private readonly Dictionary<Vector2Int, ProcessingMachineState> processing_machines = new();
         private readonly Dictionary<Vector2Int, ErdaInjectorState> erda_injectors = new();
         private readonly ConveyorNetwork conveyor_network;
 
@@ -439,10 +552,12 @@ namespace Maptory.Factory
         public IReadOnlyDictionary<Vector2Int, ExtractorState> Extractors => extractors;
         public IReadOnlyDictionary<Vector2Int, DyeingMachineState> DyeingMachines => dyeing_machines;
         public IReadOnlyDictionary<Vector2Int, CombinerState> Combiners => combiners;
+        public IReadOnlyDictionary<Vector2Int, ProcessingMachineState> ProcessingMachines => processing_machines;
         public IReadOnlyDictionary<Vector2Int, ErdaInjectorState> ErdaInjectors => erda_injectors;
         public event Action<ExtractorState> ExtractorPlaced;
         public event Action<DyeingMachineState> DyeingMachinePlaced;
         public event Action<CombinerState> CombinerPlaced;
+        public event Action<ProcessingMachineState> ProcessingMachinePlaced;
         public event Action<ErdaInjectorState> ErdaInjectorPlaced;
 
         public ExtractionNetwork(IEnumerable<RawMaterialDeposit> fixed_deposits, ConveyorNetwork conveyors)
@@ -465,6 +580,11 @@ namespace Maptory.Factory
         }
 
         public bool CanPlaceCombiner(Vector2Int center)
+        {
+            return IsFootprintClear(center, false);
+        }
+
+        public bool CanPlaceProcessingMachine(Vector2Int center)
         {
             return IsFootprintClear(center, false);
         }
@@ -498,6 +618,11 @@ namespace Maptory.Factory
                 if (IsInsideFootprint(position, center)) return true;
             }
 
+            foreach (var center in processing_machines.Keys)
+            {
+                if (IsInsideFootprint(position, center)) return true;
+            }
+
             if (erda_injectors.ContainsKey(position)) return true;
 
             return false;
@@ -516,6 +641,16 @@ namespace Maptory.Factory
         public CombinerState FindCombiner(Vector2Int position)
         {
             foreach (var machine in combiners.Values)
+            {
+                if (IsInsideFootprint(position, machine.Center)) return machine;
+            }
+
+            return null;
+        }
+
+        public ProcessingMachineState FindProcessingMachine(Vector2Int position)
+        {
+            foreach (var machine in processing_machines.Values)
             {
                 if (IsInsideFootprint(position, machine.Center)) return machine;
             }
@@ -550,6 +685,19 @@ namespace Maptory.Factory
             var machine = new CombinerState(center, direction);
             combiners.Add(center, machine);
             CombinerPlaced?.Invoke(machine);
+            return machine;
+        }
+
+        public ProcessingMachineState PlaceProcessingMachine(Vector2Int center, GridDirection direction)
+        {
+            if (!CanPlaceProcessingMachine(center))
+            {
+                throw new InvalidOperationException("Processing machine footprint is occupied.");
+            }
+
+            var machine = new ProcessingMachineState(center, direction);
+            processing_machines.Add(center, machine);
+            ProcessingMachinePlaced?.Invoke(machine);
             return machine;
         }
 

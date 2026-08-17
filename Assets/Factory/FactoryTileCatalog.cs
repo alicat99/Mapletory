@@ -19,6 +19,7 @@ namespace Maptory.Factory
         public Sprite DyeingMachineIcon { get; }
         public Sprite CombinerIcon { get; }
         public Sprite ErdaInjectorIcon { get; }
+        public Sprite ProcessingMachineIcon { get; }
         public Sprite RoundedRectangle { get; }
         public TMP_FontAsset UiFont { get; }
 
@@ -42,6 +43,7 @@ namespace Maptory.Factory
             DyeingMachineIcon = building_sprites["DyeingMachineU"];
             CombinerIcon = building_sprites["CombinerU"];
             ErdaInjectorIcon = building_sprites["ErdaInjectorU"];
+            ProcessingMachineIcon = building_sprites["ProcessingMachineU"];
             RoundedRectangle = Resources.Load<Sprite>("Factory/UI/RoundedRectangle");
             UiFont = TMP_FontAsset.CreateFontAsset(Resources.Load<Font>("Factory/UI/Cafe24PROSlimFit"));
             UiFont.hideFlags = HideFlags.DontSave;
@@ -120,6 +122,21 @@ namespace Maptory.Factory
         public Sprite GetErdaInjectorUpperSprite(GridDirection direction)
         {
             return building_sprites[$"ErdaInjector{direction.ToSpriteCode()}Upper"];
+        }
+
+        public Sprite GetProcessingMachineSprite(GridDirection direction)
+        {
+            return building_sprites[$"ProcessingMachine{direction.ToSpriteCode()}"];
+        }
+
+        public Sprite GetProcessingMachineLowerSprite(GridDirection direction)
+        {
+            return building_sprites[$"ProcessingMachine{direction.ToSpriteCode()}Lower"];
+        }
+
+        public Sprite GetProcessingMachineUpperSprite(GridDirection direction)
+        {
+            return building_sprites[$"ProcessingMachine{direction.ToSpriteCode()}Upper"];
         }
 
         public Sprite GetItemSprite(RawMaterialType material)

@@ -14,20 +14,17 @@ namespace Maptory.Factory
         private static readonly Color SELECTION_COLOR = new(0.88f, 0.9f, 0.86f, 1f);
         private static readonly Color FOOTER_COLOR = new(0.34f, 0.36f, 0.33f, 1f);
 
-        private readonly Dictionary<ITwoIngredientRecipe, GameObject> recipe_selections = new();
+        private readonly Dictionary<IRecipe, GameObject> recipe_selections = new();
+        private readonly List<GameObject> ingredient_rows = new();
+        private readonly List<Image> ingredient_icons = new();
+        private readonly List<TMP_Text> ingredient_names = new();
 
         private FactoryTileCatalog catalog;
         private IRecipeMachine machine;
-        private ITwoIngredientRecipe pending_recipe;
+        private IRecipe pending_recipe;
         private GameObject blocker;
         private Transform recipe_list;
-        private GameObject base_row;
-        private GameObject dye_row;
-        private Image base_icon;
-        private Image dye_icon;
         private Image selected_result_icon;
-        private TMP_Text base_name;
-        private TMP_Text dye_name;
         private TMP_Text selected_name;
         private TMP_Text title;
 
@@ -137,8 +134,20 @@ namespace Maptory.Factory
             CreateText("필요 재료", details.transform, 20f, TextAlignmentOptions.Left,
                 new Vector2(16f, -14f), new Vector2(220f, 30f));
 
-            base_row = CreateItemRow(details.transform, 50f, out base_icon, out base_name);
-            dye_row = CreateItemRow(details.transform, 126f, out dye_icon, out dye_name);
+            ingredient_rows.Add(CreateItemRow(
+                details.transform,
+                50f,
+                out var first_icon,
+                out var first_name));
+            ingredient_icons.Add(first_icon);
+            ingredient_names.Add(first_name);
+            ingredient_rows.Add(CreateItemRow(
+                details.transform,
+                126f,
+                out var second_icon,
+                out var second_name));
+            ingredient_icons.Add(second_icon);
+            ingredient_names.Add(second_name);
             CreateLine(details.transform, new Vector2(16f, -226f), new Vector2(242f, 1f));
             CreateText("소요 시간", details.transform, 18f, TextAlignmentOptions.Left,
                 new Vector2(16f, -238f), new Vector2(140f, 32f));
@@ -171,7 +180,7 @@ namespace Maptory.Factory
 
         private void CreateRecipeCard(
             Transform parent,
-            ITwoIngredientRecipe recipe,
+            IRecipe recipe,
             int column,
             float y)
         {
@@ -215,7 +224,7 @@ namespace Maptory.Factory
             return row;
         }
 
-        private void Select(ITwoIngredientRecipe recipe)
+        private void Select(IRecipe recipe)
         {
             pending_recipe = recipe;
             RefreshSelection();
@@ -230,19 +239,27 @@ namespace Maptory.Factory
 
             if (pending_recipe == null)
             {
-                base_row.SetActive(true);
-                dye_row.SetActive(false);
-                base_icon.enabled = false;
-                base_name.text = "레시피를 선택하세요";
+                ingredient_rows[0].SetActive(true);
+                ingredient_rows[1].SetActive(false);
+                ingredient_icons[0].enabled = false;
+                ingredient_names[0].text = "레시피를 선택하세요";
                 selected_name.text = "(레시피 선택)";
                 selected_result_icon.enabled = false;
                 return;
             }
 
-            base_row.SetActive(true);
-            dye_row.SetActive(true);
-            SetItem(base_icon, base_name, pending_recipe.FirstMaterial);
-            SetItem(dye_icon, dye_name, pending_recipe.SecondMaterial);
+            for (var index = 0; index < ingredient_rows.Count; index++)
+            {
+                var active = index < pending_recipe.Ingredients.Count;
+                ingredient_rows[index].SetActive(active);
+                if (active)
+                {
+                    SetItem(
+                        ingredient_icons[index],
+                        ingredient_names[index],
+                        pending_recipe.Ingredients[index]);
+                }
+            }
             selected_name.text = pending_recipe.DisplayName;
             selected_result_icon.enabled = true;
             selected_result_icon.sprite = catalog.GetItemSprite(pending_recipe.Result);

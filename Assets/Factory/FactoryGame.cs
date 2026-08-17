@@ -97,6 +97,7 @@ namespace Maptory.Factory
             extraction_network.ExtractorPlaced += OnExtractorPlaced;
             extraction_network.DyeingMachinePlaced += OnDyeingMachinePlaced;
             extraction_network.CombinerPlaced += OnCombinerPlaced;
+            extraction_network.ProcessingMachinePlaced += OnProcessingMachinePlaced;
             extraction_network.ErdaInjectorPlaced += OnErdaInjectorPlaced;
 
             var extractor_builder = gameObject.AddComponent<ExtractorBuilder>();
@@ -142,6 +143,17 @@ namespace Maptory.Factory
                 tile_catalog,
                 map_size);
 
+            var processing_machine_builder = gameObject.AddComponent<ProcessingMachineBuilder>();
+            processing_machine_builder.Initialize(
+                Camera.main,
+                grid,
+                world_root,
+                build_mode,
+                extraction_network,
+                tile_catalog,
+                recipe_panel,
+                map_size);
+
             var item_transport = new FactoryItemTransport(conveyor_network, extraction_network);
             var item_view = gameObject.AddComponent<FactoryItemTransportView>();
             item_view.Initialize(item_transport, tile_catalog, grid, item_root, map_size);
@@ -152,7 +164,8 @@ namespace Maptory.Factory
                 tile_catalog.ExtractorIcon,
                 tile_catalog.DyeingMachineIcon,
                 tile_catalog.CombinerIcon,
-                tile_catalog.ErdaInjectorIcon);
+                tile_catalog.ErdaInjectorIcon,
+                tile_catalog.ProcessingMachineIcon);
             hotbar.ToolClicked += build_mode.Toggle;
             build_mode.Changed += hotbar.SetSelectedTool;
         }
@@ -173,12 +186,19 @@ namespace Maptory.Factory
             ConnectRecipeMachine(machine);
         }
 
+        private void OnProcessingMachinePlaced(ProcessingMachineState machine)
+        {
+            ConnectRecipeMachine(machine);
+        }
+
         private void ConnectRecipeMachine(IRecipeMachine machine)
         {
             var direction = GridDirectionExtensions.FromDelta(machine.Forward);
             conveyor_network.AddExternalInput(machine.OutputConveyorPosition, direction);
-            conveyor_network.AddExternalOutput(machine.GetInputConveyorPosition(0), direction);
-            conveyor_network.AddExternalOutput(machine.GetInputConveyorPosition(1), direction);
+            for (var input = 0; input < machine.InputCount; input++)
+            {
+                conveyor_network.AddExternalOutput(machine.GetInputConveyorPosition(input), direction);
+            }
             conveyor_builder.RefreshConveyors();
         }
 

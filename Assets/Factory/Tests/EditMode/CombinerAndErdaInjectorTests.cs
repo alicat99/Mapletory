@@ -6,9 +6,9 @@ namespace Maptory.Factory.Tests
     public sealed class CombinerAndErdaInjectorTests
     {
         [Test]
-        public void CombinerProvidesThreeSecondaryDyeRecipes()
+        public void CombinerProvidesThreeDyesAndSpikeMushroomRecipe()
         {
-            Assert.That(CombiningRecipe.All.Count, Is.EqualTo(3));
+            Assert.That(CombiningRecipe.All.Count, Is.EqualTo(4));
             AssertRecipe(
                 CombiningRecipe.All[CombiningRecipeId.DyeOrange],
                 RawMaterialType.DyeRed,
@@ -24,6 +24,12 @@ namespace Maptory.Factory.Tests
                 RawMaterialType.DyeBlue,
                 RawMaterialType.DyeYellow,
                 RawMaterialType.DyeGreen);
+            AssertRecipe(
+                CombiningRecipe.All[CombiningRecipeId.SpikeMushroom],
+                RawMaterialType.Horn,
+                RawMaterialType.Mushroom,
+                RawMaterialType.SpikeMushroom);
+            Assert.That(CombiningRecipe.Categories[1].Name, Is.EqualTo("뿔버섯"));
         }
 
         [Test]

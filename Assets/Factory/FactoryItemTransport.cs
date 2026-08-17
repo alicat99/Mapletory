@@ -146,6 +146,7 @@ namespace Maptory.Factory
             var routed_items = new HashSet<FactoryItemState>();
             RouteRecipeMachineInputs(extraction_network.DyeingMachines.Values, routed_items);
             RouteRecipeMachineInputs(extraction_network.Combiners.Values, routed_items);
+            RouteRecipeMachineInputs(extraction_network.ProcessingMachines.Values, routed_items);
             RouteErdaInjectorInputs(routed_items);
             return routed_items;
         }
@@ -159,7 +160,7 @@ namespace Maptory.Factory
                 if (machine.SelectedRecipe == null) continue;
                 var reserved = new HashSet<RawMaterialType>();
 
-                for (var input = 0; input < 2; input++)
+                for (var input = 0; input < machine.InputCount; input++)
                 {
                     var conveyor_position = machine.GetInputConveyorPosition(input);
                     var item = items.FirstOrDefault(candidate =>
@@ -238,6 +239,7 @@ namespace Maptory.Factory
             ProduceExtractorItems();
             ProduceRecipeMachineItems(extraction_network.DyeingMachines.Values);
             ProduceRecipeMachineItems(extraction_network.Combiners.Values);
+            ProduceRecipeMachineItems(extraction_network.ProcessingMachines.Values);
             ProduceErdaInjectorItems();
         }
 
