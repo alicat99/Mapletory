@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
@@ -13,15 +14,15 @@ namespace Maptory.Factory
 
         public event Action<FactoryBuildTool> ToolClicked;
 
-        private Image conveyor_slot;
-        private Image extractor_slot;
-        private Image dyeing_machine_slot;
+        private readonly Dictionary<FactoryBuildTool, Image> tool_slots = new();
 
         public static FactoryHotbar Create(
             Transform parent,
             Sprite conveyor_icon,
             Sprite extractor_icon,
-            Sprite dyeing_machine_icon)
+            Sprite dyeing_machine_icon,
+            Sprite combiner_icon,
+            Sprite erda_injector_icon)
         {
             EnsureEventSystem();
 
@@ -43,18 +44,29 @@ namespace Maptory.Factory
             scaler.matchWidthOrHeight = 1f;
 
             var hotbar = canvas_object.AddComponent<FactoryHotbar>();
-            hotbar.Build(conveyor_icon, extractor_icon, dyeing_machine_icon);
+            hotbar.Build(
+                conveyor_icon,
+                extractor_icon,
+                dyeing_machine_icon,
+                combiner_icon,
+                erda_injector_icon);
             return hotbar;
         }
 
         public void SetSelectedTool(FactoryBuildTool tool)
         {
-            conveyor_slot.color = tool == FactoryBuildTool.Conveyor ? SELECTED_COLOR : SLOT_COLOR;
-            extractor_slot.color = tool == FactoryBuildTool.Extractor ? SELECTED_COLOR : SLOT_COLOR;
-            dyeing_machine_slot.color = tool == FactoryBuildTool.DyeingMachine ? SELECTED_COLOR : SLOT_COLOR;
+            foreach (var pair in tool_slots)
+            {
+                pair.Value.color = tool == pair.Key ? SELECTED_COLOR : SLOT_COLOR;
+            }
         }
 
-        private void Build(Sprite conveyor_icon, Sprite extractor_icon, Sprite dyeing_machine_icon)
+        private void Build(
+            Sprite conveyor_icon,
+            Sprite extractor_icon,
+            Sprite dyeing_machine_icon,
+            Sprite combiner_icon,
+            Sprite erda_injector_icon)
         {
             var panel = CreateUiObject("Slots", transform);
             var panel_rect = panel.GetComponent<RectTransform>();
@@ -76,18 +88,34 @@ namespace Maptory.Factory
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = false;
 
+            var tools = new[]
+            {
+                FactoryBuildTool.Conveyor,
+                FactoryBuildTool.Extractor,
+                FactoryBuildTool.DyeingMachine,
+                FactoryBuildTool.Combiner,
+                FactoryBuildTool.ErdaInjector
+            };
+            var icons = new[]
+            {
+                conveyor_icon,
+                extractor_icon,
+                dyeing_machine_icon,
+                combiner_icon,
+                erda_injector_icon
+            };
+
             for (var index = 0; index < 10; index++)
             {
-                CreateSlot(panel.transform, index, conveyor_icon, extractor_icon, dyeing_machine_icon);
+                CreateSlot(panel.transform, index, tools, icons);
             }
         }
 
         private void CreateSlot(
             Transform parent,
             int index,
-            Sprite conveyor_icon,
-            Sprite extractor_icon,
-            Sprite dyeing_machine_icon)
+            IReadOnlyList<FactoryBuildTool> tools,
+            IReadOnlyList<Sprite> icons)
         {
             var slot = CreateUiObject($"Slot {index + 1}", parent);
             var rect = slot.GetComponent<RectTransform>();
@@ -106,30 +134,19 @@ namespace Maptory.Factory
             inner_image.color = new Color(0.28f, 0.29f, 0.3f, 1f);
             inner_image.raycastTarget = false;
 
-            if (index > 2)
+            if (index >= tools.Count)
             {
                 return;
             }
 
-            var tool = index switch
-            {
-                0 => FactoryBuildTool.Conveyor,
-                1 => FactoryBuildTool.Extractor,
-                _ => FactoryBuildTool.DyeingMachine
-            };
-            var selected_icon = index switch
-            {
-                0 => conveyor_icon,
-                1 => extractor_icon,
-                _ => dyeing_machine_icon
-            };
+            var tool = tools[index];
             var icon = CreateUiObject($"{tool} Icon", inner.transform);
             var icon_rect = icon.GetComponent<RectTransform>();
             icon_rect.anchorMin = new Vector2(0.5f, 0.5f);
             icon_rect.anchorMax = new Vector2(0.5f, 0.5f);
             icon_rect.sizeDelta = new Vector2(42f, 42f);
             var icon_image = icon.AddComponent<Image>();
-            icon_image.sprite = selected_icon;
+            icon_image.sprite = icons[index];
             icon_image.preserveAspect = true;
             icon_image.raycastTarget = false;
 
@@ -137,18 +154,7 @@ namespace Maptory.Factory
             button.targetGraphic = slot_image;
             button.onClick.AddListener(() => ToolClicked?.Invoke(tool));
 
-            if (tool == FactoryBuildTool.Conveyor)
-            {
-                conveyor_slot = slot_image;
-            }
-            else if (tool == FactoryBuildTool.Extractor)
-            {
-                extractor_slot = slot_image;
-            }
-            else
-            {
-                dyeing_machine_slot = slot_image;
-            }
+            tool_slots.Add(tool, slot_image);
         }
 
         private static void EnsureEventSystem()

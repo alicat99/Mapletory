@@ -15,12 +15,13 @@ namespace Maptory.Factory
         private Transform world_root;
         private Transform conveyor_root;
         private Transform item_root;
+        private Transform monster_root;
         private Tilemap preview_tilemap;
         private ConveyorNetwork conveyor_network;
         private ExtractionNetwork extraction_network;
         private FactoryTileCatalog tile_catalog;
         private ConveyorBuilder conveyor_builder;
-        private DyeingRecipePanel recipe_panel;
+        private RecipeSelectionPanel recipe_panel;
 
         private void Awake()
         {
@@ -52,6 +53,9 @@ namespace Maptory.Factory
             var item_object = new GameObject("Items");
             item_object.transform.SetParent(world_root, false);
             item_root = item_object.transform;
+            var monster_object = new GameObject("Monsters");
+            monster_object.transform.SetParent(world_root, false);
+            monster_root = monster_object.transform;
             preview_tilemap = CreateTilemap("Construction Preview", 30000, TilemapRenderer.Mode.Individual);
             preview_tilemap.color = new Color(1f, 1f, 1f, 0.65f);
             preview_tilemap.GetComponent<TilemapRenderer>().sortingLayerName =
@@ -96,6 +100,8 @@ namespace Maptory.Factory
                 map_size);
             extraction_network.ExtractorPlaced += OnExtractorPlaced;
             extraction_network.DyeingMachinePlaced += OnDyeingMachinePlaced;
+            extraction_network.CombinerPlaced += OnCombinerPlaced;
+            extraction_network.ErdaInjectorPlaced += OnErdaInjectorPlaced;
 
             var extractor_builder = gameObject.AddComponent<ExtractorBuilder>();
             extractor_builder.Initialize(
@@ -107,7 +113,7 @@ namespace Maptory.Factory
                 tile_catalog,
                 map_size);
 
-            recipe_panel = DyeingRecipePanel.Create(transform, tile_catalog);
+            recipe_panel = RecipeSelectionPanel.Create(transform, tile_catalog);
             var dyeing_builder = gameObject.AddComponent<DyeingMachineBuilder>();
             dyeing_builder.Initialize(
                 Camera.main,
@@ -119,15 +125,40 @@ namespace Maptory.Factory
                 recipe_panel,
                 map_size);
 
+            var combiner_builder = gameObject.AddComponent<CombinerBuilder>();
+            combiner_builder.Initialize(
+                Camera.main,
+                grid,
+                world_root,
+                build_mode,
+                extraction_network,
+                tile_catalog,
+                recipe_panel,
+                map_size);
+
+            var erda_injector_builder = gameObject.AddComponent<ErdaInjectorBuilder>();
+            erda_injector_builder.Initialize(
+                Camera.main,
+                grid,
+                world_root,
+                build_mode,
+                extraction_network,
+                tile_catalog,
+                map_size);
+
             var item_transport = new FactoryItemTransport(conveyor_network, extraction_network);
             var item_view = gameObject.AddComponent<FactoryItemTransportView>();
             item_view.Initialize(item_transport, tile_catalog, grid, item_root, map_size);
+            var monster_view = gameObject.AddComponent<FactoryMonsterView>();
+            monster_view.Initialize(item_transport, tile_catalog, grid, monster_root, map_size);
 
             var hotbar = FactoryHotbar.Create(
                 transform,
                 tile_catalog.ConveyorIcon,
                 tile_catalog.ExtractorIcon,
-                tile_catalog.DyeingMachineIcon);
+                tile_catalog.DyeingMachineIcon,
+                tile_catalog.CombinerIcon,
+                tile_catalog.ErdaInjectorIcon);
             hotbar.ToolClicked += build_mode.Toggle;
             build_mode.Changed += hotbar.SetSelectedTool;
         }
@@ -140,10 +171,27 @@ namespace Maptory.Factory
 
         private void OnDyeingMachinePlaced(DyeingMachineState machine)
         {
+            ConnectRecipeMachine(machine);
+        }
+
+        private void OnCombinerPlaced(CombinerState machine)
+        {
+            ConnectRecipeMachine(machine);
+        }
+
+        private void ConnectRecipeMachine(IRecipeMachine machine)
+        {
             var direction = GridDirectionExtensions.FromDelta(machine.Forward);
             conveyor_network.AddExternalInput(machine.OutputConveyorPosition, direction);
             conveyor_network.AddExternalOutput(machine.GetInputConveyorPosition(0), direction);
             conveyor_network.AddExternalOutput(machine.GetInputConveyorPosition(1), direction);
+            conveyor_builder.RefreshConveyors();
+        }
+
+        private void OnErdaInjectorPlaced(ErdaInjectorState injector)
+        {
+            var direction = GridDirectionExtensions.FromDelta(injector.Forward);
+            conveyor_network.AddExternalOutput(injector.InputConveyorPosition, direction);
             conveyor_builder.RefreshConveyors();
         }
 

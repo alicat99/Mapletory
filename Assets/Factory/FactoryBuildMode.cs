@@ -9,7 +9,9 @@ namespace Maptory.Factory
         None,
         Conveyor,
         Extractor,
-        DyeingMachine
+        DyeingMachine,
+        Combiner,
+        ErdaInjector
     }
 
     public sealed class FactoryBuildMode : MonoBehaviour

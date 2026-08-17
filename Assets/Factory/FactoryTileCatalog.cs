@@ -11,12 +11,15 @@ namespace Maptory.Factory
         private readonly Dictionary<string, Sprite> raw_material_sprites = new();
         private readonly Dictionary<string, Sprite> building_sprites = new();
         private readonly Dictionary<string, Sprite> item_sprites = new();
+        private readonly Dictionary<string, Sprite> monster_sprites = new();
 
         public Tile Grass01 { get; }
         public Tile Grass02 { get; }
         public Sprite ConveyorIcon { get; }
         public Sprite ExtractorIcon { get; }
         public Sprite DyeingMachineIcon { get; }
+        public Sprite CombinerIcon { get; }
+        public Sprite ErdaInjectorIcon { get; }
         public Sprite RoundedRectangle { get; }
         public TMP_FontAsset UiFont { get; }
 
@@ -33,10 +36,13 @@ namespace Maptory.Factory
             AddSprites("Factory/RawMaterials", raw_material_sprites);
             AddSprites("Factory/Buildings", building_sprites);
             AddSprites("Factory/Items", item_sprites);
+            AddSprites("Factory/Monsters", monster_sprites);
 
             ConveyorIcon = conveyor_tiles["ConveyorUU"].sprite;
             ExtractorIcon = building_sprites["ExtractorU"];
             DyeingMachineIcon = building_sprites["DyeingMachineU"];
+            CombinerIcon = building_sprites["CombinerU"];
+            ErdaInjectorIcon = building_sprites["ErdaInjectorU"];
             RoundedRectangle = Resources.Load<Sprite>("Factory/UI/RoundedRectangle");
             UiFont = TMP_FontAsset.CreateFontAsset(Resources.Load<Font>("Factory/UI/Cafe24PROSlimFit"));
             UiFont.hideFlags = HideFlags.DontSave;
@@ -87,9 +93,44 @@ namespace Maptory.Factory
             return building_sprites[$"DyeingMachine{direction.ToSpriteCode()}Upper"];
         }
 
+        public Sprite GetCombinerSprite(GridDirection direction)
+        {
+            return building_sprites[$"Combiner{direction.ToSpriteCode()}"];
+        }
+
+        public Sprite GetCombinerLowerSprite(GridDirection direction)
+        {
+            return building_sprites[$"Combiner{direction.ToSpriteCode()}Lower"];
+        }
+
+        public Sprite GetCombinerUpperSprite(GridDirection direction)
+        {
+            return building_sprites[$"Combiner{direction.ToSpriteCode()}Upper"];
+        }
+
+        public Sprite GetErdaInjectorSprite(GridDirection direction)
+        {
+            return building_sprites[$"ErdaInjector{direction.ToSpriteCode()}"];
+        }
+
+        public Sprite GetErdaInjectorLowerSprite(GridDirection direction)
+        {
+            return building_sprites[$"ErdaInjector{direction.ToSpriteCode()}Lower"];
+        }
+
+        public Sprite GetErdaInjectorUpperSprite(GridDirection direction)
+        {
+            return building_sprites[$"ErdaInjector{direction.ToSpriteCode()}Upper"];
+        }
+
         public Sprite GetItemSprite(RawMaterialType material)
         {
             return item_sprites[material.ToItemSpriteName()];
+        }
+
+        public Sprite GetMonsterSprite(FactoryMonsterType monster)
+        {
+            return monster_sprites[monster.ToSpriteName()];
         }
 
         private static void AddSprites(string resource_path, IDictionary<string, Sprite> sprites)

@@ -1,16 +1,13 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Maptory.Factory
 {
-    public sealed class DyeingMachineBuilder : MonoBehaviour
+    public sealed class ErdaInjectorBuilder : MonoBehaviour
     {
         private static readonly Color VALID_GHOST_COLOR = new(1f, 1f, 1f, 0.6f);
         private static readonly Color INVALID_GHOST_COLOR = new(1f, 0.35f, 0.35f, 0.45f);
-
-        private readonly Dictionary<DyeingMachineState, GameObject> tooltips = new();
 
         private Camera main_camera;
         private Grid grid;
@@ -18,7 +15,6 @@ namespace Maptory.Factory
         private FactoryBuildMode build_mode;
         private ExtractionNetwork extraction_network;
         private FactoryTileCatalog tile_catalog;
-        private RecipeSelectionPanel recipe_panel;
         private Vector2Int map_size;
         private GridDirection direction = GridDirection.Up;
         private SpriteRenderer ghost_renderer;
@@ -30,7 +26,6 @@ namespace Maptory.Factory
             FactoryBuildMode mode,
             ExtractionNetwork network,
             FactoryTileCatalog catalog,
-            RecipeSelectionPanel panel,
             Vector2Int size)
         {
             main_camera = camera;
@@ -39,57 +34,41 @@ namespace Maptory.Factory
             build_mode = mode;
             extraction_network = network;
             tile_catalog = catalog;
-            recipe_panel = panel;
             map_size = size;
             CreateGhost();
             build_mode.Changed += OnBuildToolChanged;
-            recipe_panel.RecipeSelected += OnRecipeSelected;
         }
 
         private void Update()
         {
-            if (Mouse.current == null) return;
-
-            if (build_mode.ActiveTool == FactoryBuildTool.DyeingMachine)
+            if (build_mode.ActiveTool != FactoryBuildTool.ErdaInjector || Mouse.current == null)
             {
-                UpdateConstruction();
+                ghost_renderer.enabled = false;
                 return;
             }
 
-            ghost_renderer.enabled = false;
-            if (build_mode.ActiveTool == FactoryBuildTool.None
-                && Mouse.current.leftButton.wasPressedThisFrame
-                && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
-            {
-                var machine = extraction_network.FindDyeingMachine(GetPointerCell());
-                if (machine != null)
-                {
-                    recipe_panel.Show(machine, "염색기", DyeingRecipe.Categories);
-                }
-            }
-        }
-
-        private void UpdateConstruction()
-        {
             if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
             {
                 direction = direction.RotateCounterClockwise();
             }
 
             var center = GetPointerCell();
-            ghost_renderer.enabled = ContainsFootprint(center);
+            ghost_renderer.enabled = ContainsPorts(center);
             if (!ghost_renderer.enabled) return;
 
             ghost_renderer.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
-            ghost_renderer.sprite = tile_catalog.GetDyeingMachineSprite(direction);
-            ghost_renderer.color = extraction_network.CanPlaceDyeingMachine(center)
+            ghost_renderer.sprite = tile_catalog.GetErdaInjectorSprite(direction);
+            ghost_renderer.color = extraction_network.CanPlaceErdaInjector(center)
                 ? VALID_GHOST_COLOR
                 : INVALID_GHOST_COLOR;
-            ghost_renderer.sortingOrder = FactorySorting.GetOrder(center, map_size, FactorySorting.ITEM_LAYER);
+            ghost_renderer.sortingOrder = FactorySorting.GetOrder(
+                center,
+                map_size,
+                FactorySorting.ITEM_LAYER);
 
             if (Mouse.current.leftButton.wasPressedThisFrame
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject())
-                && extraction_network.CanPlaceDyeingMachine(center))
+                && extraction_network.CanPlaceErdaInjector(center))
             {
                 Place(center);
             }
@@ -97,25 +76,22 @@ namespace Maptory.Factory
 
         private void Place(Vector2Int center)
         {
-            var machine = extraction_network.PlaceDyeingMachine(center, direction);
-            var machine_object = new GameObject($"Dyeing Machine ({center.x}, {center.y})");
-            machine_object.transform.SetParent(world_root, false);
-            machine_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
-            CreatePart(machine_object.transform, "Lower",
-                tile_catalog.GetDyeingMachineLowerSprite(direction),
+            extraction_network.PlaceErdaInjector(center, direction);
+            var injector_object = new GameObject($"Erda Injector ({center.x}, {center.y})");
+            injector_object.transform.SetParent(world_root, false);
+            injector_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
+            CreatePart(injector_object.transform, "Lower",
+                tile_catalog.GetErdaInjectorLowerSprite(direction),
                 FactorySorting.CONVEYOR_SORTING_LAYER, center);
-            CreatePart(machine_object.transform, "Upper",
-                tile_catalog.GetDyeingMachineUpperSprite(direction),
+            CreatePart(injector_object.transform, "Upper",
+                tile_catalog.GetErdaInjectorUpperSprite(direction),
                 FactorySorting.ITEM_SORTING_LAYER, center);
-            tooltips.Add(
-                machine,
-                RecipeTooltip.Create(machine_object.transform, tile_catalog, center, map_size));
             ghost_renderer.enabled = false;
         }
 
         private void CreateGhost()
         {
-            var ghost_object = new GameObject("Dyeing Machine Ghost");
+            var ghost_object = new GameObject("Erda Injector Ghost");
             ghost_object.transform.SetParent(world_root, false);
             ghost_renderer = ghost_object.AddComponent<SpriteRenderer>();
             ghost_renderer.spriteSortPoint = SpriteSortPoint.Pivot;
@@ -136,7 +112,10 @@ namespace Maptory.Factory
             renderer.sprite = sprite;
             renderer.spriteSortPoint = SpriteSortPoint.Pivot;
             renderer.sortingLayerName = sorting_layer;
-            renderer.sortingOrder = FactorySorting.GetOrder(center, map_size, FactorySorting.EXTRACTOR_LAYER);
+            renderer.sortingOrder = FactorySorting.GetOrder(
+                center,
+                map_size,
+                FactorySorting.EXTRACTOR_LAYER);
         }
 
         private Vector2Int GetPointerCell()
@@ -146,23 +125,21 @@ namespace Maptory.Factory
             return new Vector2Int(cell.x, cell.y);
         }
 
-        private bool ContainsFootprint(Vector2Int center)
+        private bool ContainsPorts(Vector2Int center)
         {
-            return center.x >= 1 && center.x < map_size.x - 1
-                && center.y >= 1 && center.y < map_size.y - 1;
+            var forward = direction.ToOffset();
+            return IsInsideMap(center - forward) && IsInsideMap(center + forward);
+        }
+
+        private bool IsInsideMap(Vector2Int position)
+        {
+            return position.x >= 0 && position.x < map_size.x
+                && position.y >= 0 && position.y < map_size.y;
         }
 
         private void OnBuildToolChanged(FactoryBuildTool tool)
         {
-            if (tool != FactoryBuildTool.DyeingMachine) ghost_renderer.enabled = false;
-        }
-
-        private void OnRecipeSelected(IRecipeMachine machine)
-        {
-            if (machine is DyeingMachineState dyeing_machine)
-            {
-                tooltips[dyeing_machine].SetActive(false);
-            }
+            if (tool != FactoryBuildTool.ErdaInjector) ghost_renderer.enabled = false;
         }
     }
 }

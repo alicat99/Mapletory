@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace Maptory.Factory
 {
-    public sealed class DyeingRecipePanel : MonoBehaviour
+    public sealed class RecipeSelectionPanel : MonoBehaviour
     {
         private static readonly Color PANEL_COLOR = new(0.035f, 0.045f, 0.035f, 0.98f);
         private static readonly Color DETAILS_COLOR = new(0.018f, 0.024f, 0.018f, 0.99f);
@@ -14,12 +14,13 @@ namespace Maptory.Factory
         private static readonly Color SELECTION_COLOR = new(0.88f, 0.9f, 0.86f, 1f);
         private static readonly Color FOOTER_COLOR = new(0.34f, 0.36f, 0.33f, 1f);
 
-        private readonly Dictionary<DyeingRecipe, GameObject> recipe_selections = new();
+        private readonly Dictionary<ITwoIngredientRecipe, GameObject> recipe_selections = new();
 
         private FactoryTileCatalog catalog;
-        private DyeingMachineState machine;
-        private DyeingRecipe pending_recipe;
+        private IRecipeMachine machine;
+        private ITwoIngredientRecipe pending_recipe;
         private GameObject blocker;
+        private Transform recipe_list;
         private GameObject base_row;
         private GameObject dye_row;
         private Image base_icon;
@@ -28,14 +29,15 @@ namespace Maptory.Factory
         private TMP_Text base_name;
         private TMP_Text dye_name;
         private TMP_Text selected_name;
+        private TMP_Text title;
 
-        public event Action<DyeingMachineState> RecipeSelected;
+        public event Action<IRecipeMachine> RecipeSelected;
         public bool IsOpen => blocker != null && blocker.activeSelf;
 
-        public static DyeingRecipePanel Create(Transform parent, FactoryTileCatalog catalog)
+        public static RecipeSelectionPanel Create(Transform parent, FactoryTileCatalog catalog)
         {
             var canvas_object = new GameObject(
-                "Dyeing Recipe UI",
+                "Recipe Selection UI",
                 typeof(RectTransform),
                 typeof(Canvas),
                 typeof(CanvasScaler),
@@ -50,16 +52,21 @@ namespace Maptory.Factory
             scaler.referenceResolution = new Vector2(1280f, 720f);
             scaler.matchWidthOrHeight = 1f;
 
-            var panel = canvas_object.AddComponent<DyeingRecipePanel>();
+            var panel = canvas_object.AddComponent<RecipeSelectionPanel>();
             panel.catalog = catalog;
             panel.Build();
             return panel;
         }
 
-        public void Show(DyeingMachineState target)
+        public void Show(
+            IRecipeMachine target,
+            string panel_title,
+            IReadOnlyList<RecipeCategory> categories)
         {
             machine = target;
             pending_recipe = target.SelectedRecipe;
+            title.text = panel_title;
+            PopulateRecipeList(categories);
             blocker.SetActive(true);
             RefreshSelection();
         }
@@ -77,7 +84,7 @@ namespace Maptory.Factory
             panel_rect.anchoredPosition = Vector2.zero;
             panel_rect.sizeDelta = new Vector2(720f, 480f);
 
-            CreateText("염색기", panel.transform, 30f, TextAlignmentOptions.Left,
+            title = CreateText("", panel.transform, 30f, TextAlignmentOptions.Left,
                 new Vector2(22f, -14f), new Vector2(600f, 44f));
             var close = CreateButton("Close", panel.transform, "×", 38f);
             SetRect(close.GetComponent<RectTransform>(), new Vector2(662f, -12f), new Vector2(40f, 40f));
@@ -95,20 +102,32 @@ namespace Maptory.Factory
         {
             var recipes = CreateObject("Recipes", panel);
             SetRect(recipes.GetComponent<RectTransform>(), new Vector2(20f, -76f), new Vector2(390f, 294f));
+            recipe_list = recipes.transform;
+        }
 
-            CreateRecipeCategory(recipes.transform, "달팽이", 0f);
-            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.SnailRed], 0, 28f);
-            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.SnailBlue], 1, 28f);
+        private void PopulateRecipeList(IReadOnlyList<RecipeCategory> categories)
+        {
+            recipe_selections.Clear();
+            foreach (Transform child in recipe_list)
+            {
+                child.gameObject.SetActive(false);
+                Destroy(child.gameObject);
+            }
 
-            CreateRecipeCategory(recipes.transform, "버섯", 94f);
-            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.MushroomBlue], 0, 122f);
-            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.MushroomOrange], 1, 122f);
-            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.MushroomGreen], 2, 122f);
-
-            CreateRecipeCategory(recipes.transform, "뿔버섯", 188f);
-            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.SpikeMushroomBlue], 0, 216f);
-            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.SpikeMushroomOrange], 1, 216f);
-            CreateRecipeCard(recipes.transform, DyeingRecipe.All[DyeingRecipeId.SpikeMushroomGreen], 2, 216f);
+            for (var category_index = 0; category_index < categories.Count; category_index++)
+            {
+                var category = categories[category_index];
+                var category_y = category_index * 94f;
+                CreateRecipeCategory(recipe_list, category.Name, category_y);
+                for (var recipe_index = 0; recipe_index < category.Recipes.Count; recipe_index++)
+                {
+                    CreateRecipeCard(
+                        recipe_list,
+                        category.Recipes[recipe_index],
+                        recipe_index,
+                        category_y + 28f);
+                }
+            }
         }
 
         private void BuildDetails(Transform panel)
@@ -150,7 +169,11 @@ namespace Maptory.Factory
                 new Vector2(6f, -y), new Vector2(160f, 26f));
         }
 
-        private void CreateRecipeCard(Transform parent, DyeingRecipe recipe, int column, float y)
+        private void CreateRecipeCard(
+            Transform parent,
+            ITwoIngredientRecipe recipe,
+            int column,
+            float y)
         {
             var card = CreateObject(recipe.DisplayName, parent);
             SetRect(card.GetComponent<RectTransform>(), new Vector2(6f + column * 82f, -y), new Vector2(70f, 62f));
@@ -192,7 +215,7 @@ namespace Maptory.Factory
             return row;
         }
 
-        private void Select(DyeingRecipe recipe)
+        private void Select(ITwoIngredientRecipe recipe)
         {
             pending_recipe = recipe;
             RefreshSelection();
@@ -218,8 +241,8 @@ namespace Maptory.Factory
 
             base_row.SetActive(true);
             dye_row.SetActive(true);
-            SetItem(base_icon, base_name, pending_recipe.BaseMaterial);
-            SetItem(dye_icon, dye_name, pending_recipe.Dye);
+            SetItem(base_icon, base_name, pending_recipe.FirstMaterial);
+            SetItem(dye_icon, dye_name, pending_recipe.SecondMaterial);
             selected_name.text = pending_recipe.DisplayName;
             selected_result_icon.enabled = true;
             selected_result_icon.sprite = catalog.GetItemSprite(pending_recipe.Result);

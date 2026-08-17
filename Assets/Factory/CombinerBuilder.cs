@@ -5,12 +5,12 @@ using UnityEngine.InputSystem;
 
 namespace Maptory.Factory
 {
-    public sealed class DyeingMachineBuilder : MonoBehaviour
+    public sealed class CombinerBuilder : MonoBehaviour
     {
         private static readonly Color VALID_GHOST_COLOR = new(1f, 1f, 1f, 0.6f);
         private static readonly Color INVALID_GHOST_COLOR = new(1f, 0.35f, 0.35f, 0.45f);
 
-        private readonly Dictionary<DyeingMachineState, GameObject> tooltips = new();
+        private readonly Dictionary<CombinerState, GameObject> tooltips = new();
 
         private Camera main_camera;
         private Grid grid;
@@ -50,7 +50,7 @@ namespace Maptory.Factory
         {
             if (Mouse.current == null) return;
 
-            if (build_mode.ActiveTool == FactoryBuildTool.DyeingMachine)
+            if (build_mode.ActiveTool == FactoryBuildTool.Combiner)
             {
                 UpdateConstruction();
                 return;
@@ -61,10 +61,10 @@ namespace Maptory.Factory
                 && Mouse.current.leftButton.wasPressedThisFrame
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
-                var machine = extraction_network.FindDyeingMachine(GetPointerCell());
+                var machine = extraction_network.FindCombiner(GetPointerCell());
                 if (machine != null)
                 {
-                    recipe_panel.Show(machine, "염색기", DyeingRecipe.Categories);
+                    recipe_panel.Show(machine, "조합기", CombiningRecipe.Categories);
                 }
             }
         }
@@ -81,15 +81,18 @@ namespace Maptory.Factory
             if (!ghost_renderer.enabled) return;
 
             ghost_renderer.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
-            ghost_renderer.sprite = tile_catalog.GetDyeingMachineSprite(direction);
-            ghost_renderer.color = extraction_network.CanPlaceDyeingMachine(center)
+            ghost_renderer.sprite = tile_catalog.GetCombinerSprite(direction);
+            ghost_renderer.color = extraction_network.CanPlaceCombiner(center)
                 ? VALID_GHOST_COLOR
                 : INVALID_GHOST_COLOR;
-            ghost_renderer.sortingOrder = FactorySorting.GetOrder(center, map_size, FactorySorting.ITEM_LAYER);
+            ghost_renderer.sortingOrder = FactorySorting.GetOrder(
+                center,
+                map_size,
+                FactorySorting.ITEM_LAYER);
 
             if (Mouse.current.leftButton.wasPressedThisFrame
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject())
-                && extraction_network.CanPlaceDyeingMachine(center))
+                && extraction_network.CanPlaceCombiner(center))
             {
                 Place(center);
             }
@@ -97,15 +100,15 @@ namespace Maptory.Factory
 
         private void Place(Vector2Int center)
         {
-            var machine = extraction_network.PlaceDyeingMachine(center, direction);
-            var machine_object = new GameObject($"Dyeing Machine ({center.x}, {center.y})");
+            var machine = extraction_network.PlaceCombiner(center, direction);
+            var machine_object = new GameObject($"Combiner ({center.x}, {center.y})");
             machine_object.transform.SetParent(world_root, false);
             machine_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
             CreatePart(machine_object.transform, "Lower",
-                tile_catalog.GetDyeingMachineLowerSprite(direction),
+                tile_catalog.GetCombinerLowerSprite(direction),
                 FactorySorting.CONVEYOR_SORTING_LAYER, center);
             CreatePart(machine_object.transform, "Upper",
-                tile_catalog.GetDyeingMachineUpperSprite(direction),
+                tile_catalog.GetCombinerUpperSprite(direction),
                 FactorySorting.ITEM_SORTING_LAYER, center);
             tooltips.Add(
                 machine,
@@ -115,7 +118,7 @@ namespace Maptory.Factory
 
         private void CreateGhost()
         {
-            var ghost_object = new GameObject("Dyeing Machine Ghost");
+            var ghost_object = new GameObject("Combiner Ghost");
             ghost_object.transform.SetParent(world_root, false);
             ghost_renderer = ghost_object.AddComponent<SpriteRenderer>();
             ghost_renderer.spriteSortPoint = SpriteSortPoint.Pivot;
@@ -136,7 +139,10 @@ namespace Maptory.Factory
             renderer.sprite = sprite;
             renderer.spriteSortPoint = SpriteSortPoint.Pivot;
             renderer.sortingLayerName = sorting_layer;
-            renderer.sortingOrder = FactorySorting.GetOrder(center, map_size, FactorySorting.EXTRACTOR_LAYER);
+            renderer.sortingOrder = FactorySorting.GetOrder(
+                center,
+                map_size,
+                FactorySorting.EXTRACTOR_LAYER);
         }
 
         private Vector2Int GetPointerCell()
@@ -154,14 +160,14 @@ namespace Maptory.Factory
 
         private void OnBuildToolChanged(FactoryBuildTool tool)
         {
-            if (tool != FactoryBuildTool.DyeingMachine) ghost_renderer.enabled = false;
+            if (tool != FactoryBuildTool.Combiner) ghost_renderer.enabled = false;
         }
 
         private void OnRecipeSelected(IRecipeMachine machine)
         {
-            if (machine is DyeingMachineState dyeing_machine)
+            if (machine is CombinerState combiner)
             {
-                tooltips[dyeing_machine].SetActive(false);
+                tooltips[combiner].SetActive(false);
             }
         }
     }

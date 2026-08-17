@@ -7,8 +7,10 @@ namespace Maptory.Factory.Editor
 {
     public sealed class BuildingSpriteLayerGenerator : AssetPostprocessor
     {
-        private const string MASK_PATH =
+        private const string LARGE_MASK_PATH =
             "Assets/Factory/Art/BuildingProcessing/BuildingLowerMask.png";
+        private const string SINGLE_CELL_MASK_PATH =
+            "Assets/Factory/Art/BuildingProcessing/BuildingLowerMask1x1.png";
         private const string SOURCE_DIRECTORY =
             "Assets/Factory/Art/Resources/Factory/Buildings";
         private const string OUTPUT_DIRECTORY =
@@ -18,22 +20,33 @@ namespace Maptory.Factory.Editor
         public static void GenerateAll()
         {
             Directory.CreateDirectory(OUTPUT_DIRECTORY);
-            var mask = LoadTexture(MASK_PATH);
+            var large_mask = LoadTexture(LARGE_MASK_PATH);
+            var single_cell_mask = LoadTexture(SINGLE_CELL_MASK_PATH);
 
             foreach (var source_path in Directory.GetFiles(
                 SOURCE_DIRECTORY,
                 "*.png",
                 SearchOption.TopDirectoryOnly))
             {
-                GenerateLayers(source_path.Replace('\\', '/'), mask);
+                GenerateLayers(
+                    source_path.Replace('\\', '/'),
+                    large_mask,
+                    single_cell_mask);
             }
 
-            Object.DestroyImmediate(mask);
+            Object.DestroyImmediate(large_mask);
+            Object.DestroyImmediate(single_cell_mask);
         }
 
-        private static void GenerateLayers(string source_path, Texture2D mask)
+        private static void GenerateLayers(
+            string source_path,
+            Texture2D large_mask,
+            Texture2D single_cell_mask)
         {
             var source = LoadTexture(source_path);
+            var mask = source.width == single_cell_mask.width
+                ? single_cell_mask
+                : large_mask;
             if (source.width != mask.width || source.height != mask.height)
             {
                 Object.DestroyImmediate(source);
@@ -110,7 +123,8 @@ namespace Maptory.Factory.Editor
 
         private static bool RequiresRegeneration(string path)
         {
-            return path == MASK_PATH
+            return path == LARGE_MASK_PATH
+                || path == SINGLE_CELL_MASK_PATH
                 || (path.StartsWith(SOURCE_DIRECTORY + "/")
                     && !path.StartsWith(OUTPUT_DIRECTORY + "/")
                     && path.EndsWith(".png"));

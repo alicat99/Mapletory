@@ -31,7 +31,8 @@ namespace Maptory.Factory.Editor
 
             if (assetPath.Contains("/Conveyors/")
                 || assetPath.Contains("/Buildings/")
-                || assetPath.Contains("/Items/"))
+                || assetPath.Contains("/Items/")
+                || assetPath.Contains("/Monsters/"))
             {
                 var settings = new TextureImporterSettings();
                 importer.ReadTextureSettings(settings);

@@ -18,7 +18,7 @@ namespace Maptory.Factory
         public Vector2Int Position { get; internal set; }
         public Vector2Int TargetPosition { get; internal set; }
         public ItemScaleAnimation ScaleAnimation { get; internal set; }
-        public DyeingMachineState DestinationMachine { get; internal set; }
+        public IItemConsumer DestinationConsumer { get; internal set; }
         public bool IsSpawning => ScaleAnimation == ItemScaleAnimation.Spawning;
 
         public FactoryItemState(int id, RawMaterialType material, Vector2Int position)
@@ -58,10 +58,13 @@ namespace Maptory.Factory
         private readonly FairMergeSelector merge_selector = new();
         private readonly Dictionary<Vector2Int, int> production_steps = new();
         private readonly List<FactoryItemState> items = new();
+        private readonly List<FactoryMonsterState> monsters = new();
         private float elapsed_step_time;
         private int next_item_id;
+        private int next_monster_id;
 
         public IReadOnlyList<FactoryItemState> Items => items;
+        public IReadOnlyList<FactoryMonsterState> Monsters => monsters;
         public float StepProgress => elapsed_step_time / STEP_DURATION;
         public float ScaleAnimationProgress => Mathf.Clamp01(elapsed_step_time / SCALE_ANIMATION_DURATION);
 
@@ -109,7 +112,7 @@ namespace Maptory.Factory
             {
                 if (item.ScaleAnimation == ItemScaleAnimation.Despawning)
                 {
-                    item.DestinationMachine.AddInput(item.Material);
+                    item.DestinationConsumer.AddInput(item.Material);
                     items.Remove(item);
                     continue;
                 }
@@ -122,7 +125,7 @@ namespace Maptory.Factory
         private void PlanConveyorMoves()
         {
             var proposals = new List<MoveProposal>();
-            var routed_items = RouteDyeingInputs();
+            var routed_items = RouteMachineInputs();
 
             foreach (var item in items)
             {
@@ -141,10 +144,20 @@ namespace Maptory.Factory
             foreach (var pair in accepted_moves) pair.Key.TargetPosition = pair.Value;
         }
 
-        private HashSet<FactoryItemState> RouteDyeingInputs()
+        private HashSet<FactoryItemState> RouteMachineInputs()
         {
             var routed_items = new HashSet<FactoryItemState>();
-            foreach (var machine in extraction_network.DyeingMachines.Values)
+            RouteRecipeMachineInputs(extraction_network.DyeingMachines.Values, routed_items);
+            RouteRecipeMachineInputs(extraction_network.Combiners.Values, routed_items);
+            RouteErdaInjectorInputs(routed_items);
+            return routed_items;
+        }
+
+        private void RouteRecipeMachineInputs(
+            IEnumerable<IRecipeMachine> machines,
+            ISet<FactoryItemState> routed_items)
+        {
+            foreach (var machine in machines)
             {
                 if (machine.SelectedRecipe == null) continue;
                 var reserved = new HashSet<RawMaterialType>();
@@ -152,7 +165,9 @@ namespace Maptory.Factory
                 for (var input = 0; input < 2; input++)
                 {
                     var conveyor_position = machine.GetInputConveyorPosition(input);
-                    var item = items.FirstOrDefault(candidate => candidate.Position == conveyor_position);
+                    var item = items.FirstOrDefault(candidate =>
+                        candidate.Position == conveyor_position
+                        && !routed_items.Contains(candidate));
                     if (item == null || reserved.Contains(item.Material) || !machine.CanAccept(item.Material)) continue;
 
                     var required_direction = GridDirectionExtensions.FromDelta(machine.Forward);
@@ -161,13 +176,32 @@ namespace Maptory.Factory
 
                     item.TargetPosition = machine.GetInputPort(input);
                     item.ScaleAnimation = ItemScaleAnimation.Despawning;
-                    item.DestinationMachine = machine;
+                    item.DestinationConsumer = machine;
                     routed_items.Add(item);
                     reserved.Add(item.Material);
                 }
             }
+        }
 
-            return routed_items;
+        private void RouteErdaInjectorInputs(ISet<FactoryItemState> routed_items)
+        {
+            foreach (var injector in extraction_network.ErdaInjectors.Values)
+            {
+                var conveyor_position = injector.InputConveyorPosition;
+                var item = items.FirstOrDefault(candidate =>
+                    candidate.Position == conveyor_position
+                    && !routed_items.Contains(candidate));
+                if (item == null || !injector.CanAccept(item.Material)) continue;
+
+                var required_direction = GridDirectionExtensions.FromDelta(injector.Forward);
+                if (!conveyor_network.Conveyors.TryGetValue(conveyor_position, out var conveyor)
+                    || conveyor.Direction != required_direction) continue;
+
+                item.TargetPosition = injector.Center;
+                item.ScaleAnimation = ItemScaleAnimation.Despawning;
+                item.DestinationConsumer = injector;
+                routed_items.Add(item);
+            }
         }
 
         private Dictionary<FactoryItemState, Vector2Int> SelectDestinationWinners(IReadOnlyList<MoveProposal> proposals)
@@ -205,13 +239,32 @@ namespace Maptory.Factory
         private void ProduceItems()
         {
             ProduceExtractorItems();
-            foreach (var machine in extraction_network.DyeingMachines.Values)
+            ProduceRecipeMachineItems(extraction_network.DyeingMachines.Values);
+            ProduceRecipeMachineItems(extraction_network.Combiners.Values);
+            ProduceMonsters();
+        }
+
+        private void ProduceRecipeMachineItems(IEnumerable<IRecipeMachine> machines)
+        {
+            foreach (var machine in machines)
             {
                 if (!machine.CanCraft
                     || !conveyor_network.Conveyors.ContainsKey(machine.OutputConveyorPosition)
                     || IsOccupied(machine.OutputConveyorPosition)) continue;
 
                 SpawnItem(machine.Craft(), machine.OutputConveyorPosition);
+            }
+        }
+
+        private void ProduceMonsters()
+        {
+            foreach (var injector in extraction_network.ErdaInjectors.Values)
+            {
+                if (!injector.CanProduce) continue;
+                monsters.Add(new FactoryMonsterState(
+                    next_monster_id++,
+                    injector.Produce(),
+                    injector.OutputPosition));
             }
         }
 
