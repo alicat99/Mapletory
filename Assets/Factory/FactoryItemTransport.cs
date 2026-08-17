@@ -50,13 +50,12 @@ namespace Maptory.Factory
     {
         public const float STEP_DURATION = 0.45f;
         public const float SCALE_ANIMATION_DURATION = 0.12f;
-
-        private const int PRODUCTION_STEP_INTERVAL = 3;
+        public const float EXTRACTOR_PRODUCTION_INTERVAL = 1f;
 
         private readonly ConveyorNetwork conveyor_network;
         private readonly ExtractionNetwork extraction_network;
         private readonly FairMergeSelector merge_selector = new();
-        private readonly Dictionary<Vector2Int, int> production_steps = new();
+        private readonly Dictionary<Vector2Int, float> production_elapsed = new();
         private readonly List<FactoryItemState> items = new();
         private float elapsed_step_time;
         private int next_item_id;
@@ -98,11 +97,19 @@ namespace Maptory.Factory
             while (elapsed_step_time >= STEP_DURATION)
             {
                 elapsed_step_time -= STEP_DURATION;
-                Step();
+                StepTransport();
             }
+
+            AdvanceExtractorProduction(delta_time);
         }
 
         public void Step()
+        {
+            StepTransport();
+            AdvanceExtractorProduction(STEP_DURATION);
+        }
+
+        private void StepTransport()
         {
             CommitMoves();
             PlanConveyorMoves();
@@ -271,7 +278,6 @@ namespace Maptory.Factory
 
         private void ProduceItems()
         {
-            ProduceExtractorItems();
             ProduceRecipeMachineItems(extraction_network.DyeingMachines.Values);
             ProduceRecipeMachineItems(extraction_network.Combiners.Values);
             ProduceRecipeMachineItems(extraction_network.ProcessingMachines.Values);
@@ -325,14 +331,17 @@ namespace Maptory.Factory
             }
         }
 
-        private void ProduceExtractorItems()
+        private void AdvanceExtractorProduction(float delta_time)
         {
             foreach (var extractor in extraction_network.Extractors.Values)
             {
-                production_steps.TryGetValue(extractor.Center, out var steps);
-                steps++;
-                production_steps[extractor.Center] = steps;
-                if (steps < PRODUCTION_STEP_INTERVAL) continue;
+                production_elapsed.TryGetValue(extractor.Center, out var elapsed);
+                elapsed += delta_time;
+                if (elapsed < EXTRACTOR_PRODUCTION_INTERVAL)
+                {
+                    production_elapsed[extractor.Center] = elapsed;
+                    continue;
+                }
 
                 var forward = extractor.Direction.ToOffset();
                 if (TryTransferDirectly(
@@ -341,15 +350,21 @@ namespace Maptory.Factory
                     extractor.OutputPosition,
                     forward))
                 {
-                    production_steps[extractor.Center] = 0;
+                    production_elapsed[extractor.Center] = elapsed
+                        - EXTRACTOR_PRODUCTION_INTERVAL;
                     continue;
                 }
 
                 if (!conveyor_network.Conveyors.ContainsKey(extractor.OutputPosition)
-                    || IsOccupied(extractor.OutputPosition)) continue;
+                    || IsOccupied(extractor.OutputPosition))
+                {
+                    production_elapsed[extractor.Center] = EXTRACTOR_PRODUCTION_INTERVAL;
+                    continue;
+                }
 
                 SpawnItem(extractor.Material, extractor.OutputPosition);
-                production_steps[extractor.Center] = 0;
+                production_elapsed[extractor.Center] = elapsed
+                    - EXTRACTOR_PRODUCTION_INTERVAL;
             }
         }
 
@@ -429,7 +444,7 @@ namespace Maptory.Factory
         {
             if (building is ExtractorState extractor)
             {
-                production_steps.Remove(extractor.Center);
+                production_elapsed.Remove(extractor.Center);
             }
 
             if (building is not IItemConsumer consumer) return;

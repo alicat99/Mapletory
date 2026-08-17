@@ -98,6 +98,28 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
+        public void ExtractorProducesExactlyOneItemPerSecond()
+        {
+            var conveyors = new ConveyorNetwork();
+            conveyors.PlaceLine(new Vector2Int(2, 0), new Vector2Int(6, 0));
+            var extraction = CreateExtractionNetwork();
+            extraction.PlaceExtractor(Vector2Int.zero, GridDirection.Up);
+            var transport = new FactoryItemTransport(conveyors, extraction);
+
+            transport.Update(0.99f);
+            Assert.That(transport.Items, Is.Empty);
+
+            transport.Update(0.01f);
+            Assert.That(transport.Items.Count, Is.EqualTo(1));
+
+            transport.Update(0.99f);
+            Assert.That(transport.Items.Count, Is.EqualTo(1));
+
+            transport.Update(0.01f);
+            Assert.That(transport.Items.Count, Is.EqualTo(2));
+        }
+
+        [Test]
         public void StepProgressAdvancesLinearlyWithElapsedTime()
         {
             var transport = new FactoryItemTransport(
