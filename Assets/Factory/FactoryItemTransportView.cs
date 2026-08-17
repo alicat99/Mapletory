@@ -5,7 +5,7 @@ namespace Maptory.Factory
 {
     public sealed class FactoryItemTransportView : MonoBehaviour
     {
-        private static readonly Vector3 ITEM_SURFACE_OFFSET = new(0f, 0.5f, 0f);
+        private static readonly Vector3 ITEM_SURFACE_OFFSET = new(0f, 0.25f, 0f);
 
         private readonly Dictionary<int, SpriteRenderer> item_renderers = new();
 

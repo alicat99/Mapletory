@@ -83,6 +83,7 @@ namespace Maptory.Factory
                 preview_tilemap,
                 build_mode,
                 conveyor_network,
+                extraction_network,
                 tile_catalog,
                 map_size);
             extraction_network.ExtractorPlaced += OnExtractorPlaced;
@@ -125,7 +126,7 @@ namespace Maptory.Factory
                 new RawMaterialDeposit(RawMaterialType.Mushroom, new Vector2Int(41, 41)),
                 new RawMaterialDeposit(RawMaterialType.Snail, new Vector2Int(25, 25))
             };
-            return new ExtractionNetwork(deposits);
+            return new ExtractionNetwork(deposits, conveyor_network);
         }
 
         private void ConfigureCamera()

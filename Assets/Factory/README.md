@@ -17,16 +17,17 @@ Play Mode가 시작되면 다음을 확인한다.
 9. 파랑 염료 `(8, 8)`, 빨강 염료 `(41, 8)`, 노랑 염료 `(8, 41)`, 버섯 `(41, 41)`, 달팽이 `(25, 25)` 중심에 3×3 원재료가 표시된다.
 10. 두 번째 슬롯을 클릭하면 채굴기 건설 모드가 된다. 포인터를 이동하면 `ExtractorU`부터 시작하는 반투명 고스트가 셀 중심에 표시되고, 원재료 중심과 정확히 일치할 때만 정상 색으로 표시된다.
 11. 채굴기 건설 모드에서 `R`을 누르면 출력 방향이 `U → L → D → R → U` 순서로 반시계 회전한다. 원재료 중심을 좌클릭하면 해당 방향 채굴기가 설치되며 같은 원재료에는 두 번 설치할 수 없다.
-12. 채굴기 중심에서 출력 방향으로 두 칸 떨어진 셀에 컨베이어를 설치한다. 채굴기가 원재료에 대응하는 아이템을 첫 컨베이어 위에 0→1 스케일 애니메이션으로 생성한다. 생성이 끝나면 중앙 피벗 아이템의 바닥이 컨베이어 상판에 닿도록 0.5 월드 단위 높인 경로를 따라 0.45초마다 다음 컨베이어로 등속 이동한다.
-13. 두 컨베이어를 하나로 합쳐 아이템을 연속 공급하면 합류 승인이 입력별로 번갈아 적용된다. `Conveyor?A` 분배기에서는 `TrySelectNextOutput`의 라운드로빈 순서에 따라 출력들이 균등하게 선택된다.
-14. 채굴기 출구가 향하는 첫 컨베이어는 출구 방향을 외부 입력으로 판정한다. 따라서 U 방향 채굴기에서 나온 첫 컨베이어가 R 방향으로 꺾이면 `ConveyorUR`이 표시된다. 실제 컨베이어 입력까지 여러 개가 합류하면 기존 규칙대로 별도 합류 이미지를 사용하지 않는다.
-15. 원재료, 채굴기, 컨베이어, 이동 아이템은 모두 같은 Y 기반 정렬 규칙을 사용한다. 아이템은 매 프레임 보간된 격자 좌표로 정렬 순서를 다시 계산하므로 타일 경계를 지날 때도 자연스럽게 앞뒤가 바뀐다.
+12. 채굴기는 중심 기준 3×3 셀을 점유한다. 점유 셀에 컨베이어를 드래그하면 미리보기가 붉게 표시되고 선 전체가 설치되지 않는다. 반대로 기존 컨베이어 또는 다른 채굴기의 발자국과 3×3 영역이 한 칸이라도 겹치면 채굴기를 설치할 수 없다.
+13. 채굴기 중심에서 출력 방향으로 두 칸 떨어진 셀에 컨베이어를 설치한다. 채굴기가 원재료에 대응하는 아이템을 첫 컨베이어 위에 0→1 스케일 애니메이션으로 생성한다. 생성이 끝나면 `(0.5, 0.25)` 피벗을 기준으로 컨베이어 상판에 맞춘 경로를 따라 0.45초마다 다음 컨베이어로 등속 이동한다.
+14. 두 컨베이어를 하나로 합쳐 아이템을 연속 공급하면 합류 승인이 입력별로 번갈아 적용된다. `Conveyor?A` 분배기에서는 `TrySelectNextOutput`의 라운드로빈 순서에 따라 출력들이 균등하게 선택된다.
+15. 채굴기 출구가 향하는 첫 컨베이어는 출구 방향을 외부 입력으로 판정한다. 따라서 U 방향 채굴기에서 나온 첫 컨베이어가 R 방향으로 꺾이면 `ConveyorUR`이 표시된다. 실제 컨베이어 입력까지 여러 개가 합류하면 기존 규칙대로 별도 합류 이미지를 사용하지 않는다.
+16. 원재료, 채굴기, 컨베이어, 이동 아이템은 모두 같은 Y 기반 정렬 규칙을 사용한다. 아이템은 매 프레임 보간된 격자 좌표와 `(0.5, 0.25)` Sprite 피벗을 정렬 기준으로 사용하므로 타일 경계를 지날 때도 자연스럽게 앞뒤가 바뀐다.
 
-Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어 규칙과 함께 채굴기 중심 배치 제한, 반시계 회전, 출력 위치, 원재료별 Sprite 매핑, 출력 컨베이어 대기, 첫 컨베이어 생성과 이동, 선형 진행률, 채굴기 출구 입력 Sprite, 공정 합류 선택, Y 정렬 우선순위를 검증한다.
+Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어 규칙과 함께 채굴기 3×3 점유, 건물·컨베이어 중첩 방지, 반시계 회전, 출력 위치, 원재료별 Sprite 매핑, 출력 컨베이어 대기, 첫 컨베이어 생성과 이동, 선형 진행률, 채굴기 출구 입력 Sprite, 공정 합류 선택, Y 정렬 우선순위를 검증한다.
 
 ## 2. 기능 사용법
 
-`FactoryGame`은 맵 표현과 입력/UI 조립을 담당하는 Scene 진입점이다. Main Camera가 `MainCamera` 태그를 가지고 있어야 한다. 모든 Sprite는 `Art/Resources/Factory` 아래에서 이름으로 로드된다. `FactorySpriteImporter`는 Point 필터와 16 PPU를 적용하고, 컨베이어와 건물에는 `(0.5, 0.25)`, 원재료와 아이템에는 중앙 피벗을 사용한다. 월드 객체는 `FactorySorting`의 명시적 Y 깊이 순서를 공유한다.
+`FactoryGame`은 맵 표현과 입력/UI 조립을 담당하는 Scene 진입점이다. Main Camera가 `MainCamera` 태그를 가지고 있어야 한다. 모든 Sprite는 `Art/Resources/Factory` 아래에서 이름으로 로드된다. `FactorySpriteImporter`는 Point 필터와 16 PPU를 적용하고, 컨베이어·건물·아이템에는 `(0.5, 0.25)`, 원재료에는 중앙 피벗을 사용한다. 월드 객체는 `FactorySorting`의 명시적 Y 깊이 순서를 공유한다.
 
 다른 시뮬레이션 기능은 Unity 표현 계층 대신 `ConveyorNetwork`를 사용한다. `GridDirection`은 각 컨베이어가 아이템을 받아 이동시키는 기본 방향이다. 현재 칸의 출력 후보는 인접 칸 중 현재 칸에서 바깥을 향하는 컨베이어이며, 입력의 반대 방향은 후보에서 제외된다.
 
@@ -48,13 +49,13 @@ if (network.TrySelectNextOutput(new Vector2Int(4, 4), out var output_direction))
 채굴과 운송은 `ExtractionNetwork`와 `FactoryItemTransport`가 소유한다. 채굴기는 반드시 등록된 원재료 중심에만 배치하며 출력 셀은 중심에서 방향 오프셋의 두 배만큼 떨어져 있다.
 
 ```csharp
+var conveyors = new ConveyorNetwork();
 var extraction = new ExtractionNetwork(new[]
 {
     new RawMaterialDeposit(RawMaterialType.Mushroom, new Vector2Int(10, 10))
-});
+}, conveyors);
 extraction.PlaceExtractor(new Vector2Int(10, 10), GridDirection.Up);
 
-var conveyors = new ConveyorNetwork();
 conveyors.PlaceLine(new Vector2Int(12, 10), new Vector2Int(18, 10));
 conveyors.AddExternalInput(new Vector2Int(12, 10), GridDirection.Up);
 var transport = new FactoryItemTransport(conveyors, extraction);
@@ -68,12 +69,12 @@ transport.Update(Time.deltaTime);
 | `FactoryGame.cs` | 맵, 5종 고정 원재료, 건설 도구, 채굴·운송 시스템, UI와 카메라를 조립하는 Scene 진입점 |
 | `GridDirection.cs` | 4방향 값과 격자 오프셋, Sprite 코드, 반대 방향 및 반시계 회전 정의 |
 | `ConveyorNetwork.cs` | 컨베이어 방향 상태, 직선 배치/덮어쓰기, 채굴기 출구를 포함한 연결 분석, Sprite 이름과 출력 분배 순서 소유 |
-| `ExtractionNetwork.cs` | 원재료 종류·고정 중심, 채굴기 배치 가능 여부, 설치 상태·출력 위치와 설치 이벤트 소유 |
+| `ExtractionNetwork.cs` | 원재료 종류·고정 중심, 채굴기 3×3 점유와 중첩 검증, 설치 상태·출력 위치와 설치 이벤트 소유 |
 | `FactoryItemTransport.cs` | 채굴 생산 주기, 컨베이어 이동, 역압, 공정 합류와 분배 시뮬레이션 소유 |
 | `FactorySorting.cs` | 컨베이어·원재료·건물·아이템이 공유하는 결정적 Y/X 정렬 순서 계산 |
 | `FactoryBuildMode.cs` | 핫바 도구 선택과 `Esc` 해제를 단일 상태로 관리 |
 | `FactoryTileCatalog.cs` | 잔디, 컨베이어, 원재료, 채굴기, 아이템 Sprite와 미리보기 Tile 조회 제공 |
-| `ConveyorBuilder.cs` | 핫바가 켠 건설 모드에서 포인터를 격자에 투영하고 직선 미리보기와 배치를 수행하며 셀별 컨베이어 SpriteRenderer를 갱신 |
+| `ConveyorBuilder.cs` | 핫바가 켠 건설 모드에서 포인터를 격자에 투영하고 건물 점유를 검증한 직선 미리보기·배치를 수행하며 셀별 컨베이어 SpriteRenderer를 갱신 |
 | `ExtractorBuilder.cs` | 원재료 표현, 방향 고스트, 중심 일치 검증과 채굴기 SpriteRenderer 생성 |
 | `FactoryItemTransportView.cs` | 운송 상태를 선형 보간해 아이템 SpriteRenderer 위치·생성 스케일·실시간 깊이를 갱신 |
 | `FactoryHotbar.cs` | 화면 하단 10슬롯 UI, 컨베이어·채굴기 선택 상태와 도구 클릭 이벤트 제공 |

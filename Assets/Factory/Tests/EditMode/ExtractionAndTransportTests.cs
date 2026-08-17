@@ -21,6 +21,40 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
+        public void ExtractorFootprintOccupiesAllNineCells()
+        {
+            var network = CreateExtractionNetwork();
+            network.PlaceExtractor(Vector2Int.zero, GridDirection.Up);
+
+            Assert.That(network.IsBuildingOccupied(new Vector2Int(-1, -1)), Is.True);
+            Assert.That(network.IsBuildingOccupied(new Vector2Int(1, 1)), Is.True);
+            Assert.That(network.IsBuildingOccupied(new Vector2Int(2, 0)), Is.False);
+        }
+
+        [Test]
+        public void ExtractorCannotCoverExistingConveyor()
+        {
+            var conveyors = new ConveyorNetwork();
+            conveyors.SetConveyor(Vector2Int.right, GridDirection.Up);
+            var network = CreateExtractionNetwork(conveyors);
+
+            Assert.That(network.CanPlaceExtractor(Vector2Int.zero), Is.False);
+        }
+
+        [Test]
+        public void ExtractorCannotOverlapAnotherBuildingFootprint()
+        {
+            var network = new ExtractionNetwork(new[]
+            {
+                new RawMaterialDeposit(RawMaterialType.DyeBlue, Vector2Int.zero),
+                new RawMaterialDeposit(RawMaterialType.DyeRed, new Vector2Int(2, 0))
+            }, new ConveyorNetwork());
+            network.PlaceExtractor(Vector2Int.zero, GridDirection.Up);
+
+            Assert.That(network.CanPlaceExtractor(new Vector2Int(2, 0)), Is.False);
+        }
+
+        [Test]
         public void CounterClockwiseRotationFollowsScreenDirections()
         {
             Assert.That(GridDirection.Up.RotateCounterClockwise(), Is.EqualTo(GridDirection.Left));
@@ -122,12 +156,13 @@ namespace Maptory.Factory.Tests
             Assert.That(lower_y, Is.GreaterThan(higher_y));
         }
 
-        private static ExtractionNetwork CreateExtractionNetwork()
+        private static ExtractionNetwork CreateExtractionNetwork(
+            ConveyorNetwork conveyors = null)
         {
             return new ExtractionNetwork(new[]
             {
                 new RawMaterialDeposit(RawMaterialType.DyeBlue, Vector2Int.zero)
-            });
+            }, conveyors ?? new ConveyorNetwork());
         }
     }
 }

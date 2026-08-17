@@ -21,7 +21,9 @@ namespace Maptory.Factory.Editor
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.alphaIsTransparency = true;
 
-            if (assetPath.Contains("/Conveyors/") || assetPath.Contains("/Buildings/"))
+            if (assetPath.Contains("/Conveyors/")
+                || assetPath.Contains("/Buildings/")
+                || assetPath.Contains("/Items/"))
             {
                 var settings = new TextureImporterSettings();
                 importer.ReadTextureSettings(settings);

@@ -14,6 +14,7 @@ namespace Maptory.Factory
         private Tilemap preview_tilemap;
         private FactoryBuildMode build_mode;
         private ConveyorNetwork conveyor_network;
+        private ExtractionNetwork extraction_network;
         private FactoryTileCatalog tile_catalog;
         private readonly Dictionary<Vector2Int, SpriteRenderer> conveyor_renderers = new();
         private Vector2Int map_size;
@@ -28,6 +29,7 @@ namespace Maptory.Factory
             Tilemap preview,
             FactoryBuildMode mode,
             ConveyorNetwork network,
+            ExtractionNetwork extraction,
             FactoryTileCatalog catalog,
             Vector2Int size)
         {
@@ -37,6 +39,7 @@ namespace Maptory.Factory
             preview_tilemap = preview;
             build_mode = mode;
             conveyor_network = network;
+            extraction_network = extraction;
             tile_catalog = catalog;
             map_size = size;
             build_mode.Changed += OnBuildToolChanged;
@@ -101,10 +104,14 @@ namespace Maptory.Factory
 
         private void CompleteDrag()
         {
-            conveyor_network.PlaceLine(drag_start, drag_end);
+            if (!LineIntersectsBuilding())
+            {
+                conveyor_network.PlaceLine(drag_start, drag_end);
+                DrawConveyors();
+            }
+
             is_dragging = false;
             preview_tilemap.ClearAllTiles();
-            DrawConveyors();
         }
 
         private void DrawPreview()
@@ -113,6 +120,9 @@ namespace Maptory.Factory
             var direction = GridDirectionExtensions.FromDelta(drag_end - drag_start);
             var offset = direction.ToOffset();
             var length = Mathf.Abs(drag_end.x - drag_start.x) + Mathf.Abs(drag_end.y - drag_start.y);
+            preview_tilemap.color = LineIntersectsBuilding()
+                ? new Color(1f, 0.35f, 0.35f, 0.65f)
+                : new Color(1f, 1f, 1f, 0.65f);
 
             for (var index = 0; index <= length; index++)
             {
@@ -121,6 +131,23 @@ namespace Maptory.Factory
                 var position = drag_start + offset * index;
                 preview_tilemap.SetTile((Vector3Int)position, tile_catalog.GetConveyorTile(sprite_name));
             }
+        }
+
+        private bool LineIntersectsBuilding()
+        {
+            var direction = GridDirectionExtensions.FromDelta(drag_end - drag_start);
+            var offset = direction.ToOffset();
+            var length = Mathf.Abs(drag_end.x - drag_start.x) + Mathf.Abs(drag_end.y - drag_start.y);
+
+            for (var index = 0; index <= length; index++)
+            {
+                if (extraction_network.IsBuildingOccupied(drag_start + offset * index))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void DrawConveyors()
