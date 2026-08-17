@@ -16,35 +16,35 @@ namespace Maptory.Factory
         {
             if (delta.x > 0)
             {
-                return GridDirection.Right;
+                return GridDirection.Up;
             }
 
             if (delta.x < 0)
             {
-                return GridDirection.Left;
+                return GridDirection.Down;
             }
 
             if (delta.y > 0)
             {
-                return GridDirection.Up;
+                return GridDirection.Left;
             }
 
             if (delta.y < 0)
             {
-                return GridDirection.Down;
+                return GridDirection.Right;
             }
 
-            return GridDirection.Right;
+            return GridDirection.Up;
         }
 
         public static Vector2Int ToOffset(this GridDirection direction)
         {
             return direction switch
             {
-                GridDirection.Up => Vector2Int.up,
-                GridDirection.Right => Vector2Int.right,
-                GridDirection.Down => Vector2Int.down,
-                GridDirection.Left => Vector2Int.left,
+                GridDirection.Up => Vector2Int.right,
+                GridDirection.Right => Vector2Int.down,
+                GridDirection.Down => Vector2Int.left,
+                GridDirection.Left => Vector2Int.up,
                 _ => throw new System.ArgumentOutOfRangeException(nameof(direction))
             };
         }

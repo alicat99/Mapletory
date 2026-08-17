@@ -22,7 +22,7 @@ namespace Maptory.Factory
                 conveyor_tiles.Add(sprite.name, CreateTile(sprite));
             }
 
-            ConveyorIcon = conveyor_tiles["ConveyorRR"].sprite;
+            ConveyorIcon = conveyor_tiles["ConveyorUU"].sprite;
         }
 
         public Tile GetConveyorTile(string sprite_name)

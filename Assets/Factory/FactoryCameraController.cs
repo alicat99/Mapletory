@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Maptory.Factory
@@ -6,16 +7,19 @@ namespace Maptory.Factory
     public sealed class FactoryCameraController : MonoBehaviour
     {
         [SerializeField] private float movement_speed = 8f;
-        [SerializeField] private float zoom_speed = 0.015f;
+        [SerializeField] private float zoom_speed = 0.15f;
         [SerializeField] private float minimum_zoom = 3f;
         [SerializeField] private float maximum_zoom = 14f;
 
         private Camera controlled_camera;
+        private ConveyorBuilder conveyor_builder;
         private Bounds map_bounds;
+        private bool is_panning;
 
-        public void Initialize(Renderer ground_renderer)
+        public void Initialize(Renderer ground_renderer, ConveyorBuilder builder)
         {
             controlled_camera = GetComponent<Camera>();
+            conveyor_builder = builder;
             map_bounds = ground_renderer.bounds;
         }
 
@@ -29,6 +33,7 @@ namespace Maptory.Factory
             if (Mouse.current != null)
             {
                 ZoomCamera();
+                PanCamera();
             }
 
             ClampPosition();
@@ -53,6 +58,36 @@ namespace Maptory.Factory
                 controlled_camera.orthographicSize - scroll * zoom_speed,
                 minimum_zoom,
                 maximum_zoom);
+        }
+
+        private void PanCamera()
+        {
+            if (conveyor_builder.IsBuildMode)
+            {
+                is_panning = false;
+                return;
+            }
+
+            if (Mouse.current.leftButton.wasPressedThisFrame)
+            {
+                is_panning = EventSystem.current == null
+                    || !EventSystem.current.IsPointerOverGameObject();
+            }
+
+            if (!Mouse.current.leftButton.isPressed)
+            {
+                is_panning = false;
+                return;
+            }
+
+            if (!is_panning)
+            {
+                return;
+            }
+
+            var screen_delta = Mouse.current.delta.ReadValue();
+            var world_units_per_pixel = controlled_camera.orthographicSize * 2f / Screen.height;
+            transform.position -= new Vector3(screen_delta.x, screen_delta.y) * world_units_per_pixel;
         }
 
         private void ClampPosition()
