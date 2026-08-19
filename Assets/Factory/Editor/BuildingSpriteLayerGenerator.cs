@@ -17,11 +17,16 @@ namespace Maptory.Factory.Editor
             "Assets/Factory/Art/Resources/Factory/Buildings";
         private const string OUTPUT_DIRECTORY =
             SOURCE_DIRECTORY + "/Generated";
+        private const string RAW_MATERIAL_SOURCE_DIRECTORY =
+            "Assets/Factory/Art/Resources/Factory/RawMaterials";
+        private const string RAW_MATERIAL_OUTPUT_DIRECTORY =
+            RAW_MATERIAL_SOURCE_DIRECTORY + "/Generated";
 
         [MenuItem("Tools/Maptory/Regenerate Building Layers")]
         public static void GenerateAll()
         {
             Directory.CreateDirectory(OUTPUT_DIRECTORY);
+            Directory.CreateDirectory(RAW_MATERIAL_OUTPUT_DIRECTORY);
             var large_mask = LoadTexture(LARGE_MASK_PATH);
             var single_cell_mask = LoadTexture(SINGLE_CELL_MASK_PATH);
             var portal_mask = LoadTexture(PORTAL_MASK_PATH);
@@ -31,11 +36,22 @@ namespace Maptory.Factory.Editor
                 "*.png",
                 SearchOption.TopDirectoryOnly))
             {
-                GenerateLayers(
+                GenerateBuildingLayers(
                     source_path.Replace('\\', '/'),
                     large_mask,
                     single_cell_mask,
                     portal_mask);
+            }
+
+            foreach (var source_path in Directory.GetFiles(
+                RAW_MATERIAL_SOURCE_DIRECTORY,
+                "*.png",
+                SearchOption.TopDirectoryOnly))
+            {
+                GenerateLayers(
+                    source_path.Replace('\\', '/'),
+                    RAW_MATERIAL_OUTPUT_DIRECTORY,
+                    large_mask);
             }
 
             Object.DestroyImmediate(large_mask);
@@ -43,7 +59,7 @@ namespace Maptory.Factory.Editor
             Object.DestroyImmediate(portal_mask);
         }
 
-        private static void GenerateLayers(
+        private static void GenerateBuildingLayers(
             string source_path,
             Texture2D large_mask,
             Texture2D single_cell_mask,
@@ -56,11 +72,21 @@ namespace Maptory.Factory.Editor
                 : source.width == single_cell_mask.width
                     ? single_cell_mask
                     : large_mask;
+            Object.DestroyImmediate(source);
+            GenerateLayers(source_path, OUTPUT_DIRECTORY, mask);
+        }
+
+        private static void GenerateLayers(
+            string source_path,
+            string output_directory,
+            Texture2D mask)
+        {
+            var source = LoadTexture(source_path);
             if (source.width != mask.width || source.height != mask.height)
             {
                 Object.DestroyImmediate(source);
                 throw new InvalidDataException(
-                    $"Building and mask sizes differ: {source_path}");
+                    $"Sprite and mask sizes differ: {source_path}");
             }
 
             var source_pixels = source.GetPixels32();
@@ -85,8 +111,8 @@ namespace Maptory.Factory.Editor
             }
 
             var name = Path.GetFileNameWithoutExtension(source_path);
-            WriteTexture($"{OUTPUT_DIRECTORY}/{name}Lower.png", source.width, source.height, lower_pixels);
-            WriteTexture($"{OUTPUT_DIRECTORY}/{name}Upper.png", source.width, source.height, upper_pixels);
+            WriteTexture($"{output_directory}/{name}Lower.png", source.width, source.height, lower_pixels);
+            WriteTexture($"{output_directory}/{name}Upper.png", source.width, source.height, upper_pixels);
             Object.DestroyImmediate(source);
         }
 
@@ -137,6 +163,9 @@ namespace Maptory.Factory.Editor
                 || path == PORTAL_MASK_PATH
                 || (path.StartsWith(SOURCE_DIRECTORY + "/")
                     && !path.StartsWith(OUTPUT_DIRECTORY + "/")
+                    && path.EndsWith(".png"))
+                || (path.StartsWith(RAW_MATERIAL_SOURCE_DIRECTORY + "/")
+                    && !path.StartsWith(RAW_MATERIAL_OUTPUT_DIRECTORY + "/")
                     && path.EndsWith(".png"));
         }
     }

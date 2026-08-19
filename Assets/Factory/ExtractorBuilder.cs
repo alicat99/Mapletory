@@ -83,14 +83,38 @@ namespace Maptory.Factory
             var deposit_object = new GameObject($"Raw Material {deposit.Material}");
             deposit_object.transform.SetParent(world_root, false);
             deposit_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)deposit.Center);
-            var renderer = deposit_object.AddComponent<SpriteRenderer>();
-            renderer.sprite = tile_catalog.GetRawMaterialSprite(deposit.Material);
+            CreateDepositPart(
+                deposit_object.transform,
+                "Lower",
+                tile_catalog.GetRawMaterialLowerSprite(deposit.Material),
+                FactorySorting.CONVEYOR_SORTING_LAYER,
+                deposit.Center);
+            CreateDepositPart(
+                deposit_object.transform,
+                "Upper",
+                tile_catalog.GetRawMaterialUpperSprite(deposit.Material),
+                FactorySorting.ITEM_SORTING_LAYER,
+                deposit.Center);
+            deposit_views.Add(deposit, deposit_object);
+        }
+
+        private void CreateDepositPart(
+            Transform deposit,
+            string part_name,
+            Sprite sprite,
+            string sorting_layer,
+            Vector2Int center)
+        {
+            var part_object = new GameObject(part_name);
+            part_object.transform.SetParent(deposit, false);
+            var renderer = part_object.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
             renderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            renderer.sortingLayerName = sorting_layer;
             renderer.sortingOrder = FactorySorting.GetOrder(
-                deposit.Center,
+                center,
                 map_size,
                 FactorySorting.RESOURCE_LAYER);
-            deposit_views.Add(deposit, deposit_object);
         }
 
         private void RemoveDepositView(RawMaterialDeposit deposit)

@@ -221,6 +221,29 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
+        public void RawMaterialsHaveGeneratedLowerAndUpperSprites()
+        {
+            var catalog = new FactoryTileCatalog();
+            foreach (var material in new[]
+            {
+                RawMaterialType.DyeBlue,
+                RawMaterialType.DyeRed,
+                RawMaterialType.DyeYellow,
+                RawMaterialType.Mushroom,
+                RawMaterialType.Snail
+            })
+            {
+                var original = catalog.GetRawMaterialSprite(material);
+                var lower = catalog.GetRawMaterialLowerSprite(material);
+                var upper = catalog.GetRawMaterialUpperSprite(material);
+                Assert.That(lower, Is.Not.Null);
+                Assert.That(upper, Is.Not.Null);
+                Assert.That(lower.rect.size, Is.EqualTo(original.rect.size));
+                Assert.That(upper.pivot, Is.EqualTo(original.pivot));
+            }
+        }
+
+        [Test]
         public void UpDyeingMachineUsesSpecifiedPorts()
         {
             var machine = new DyeingMachineState(Vector2Int.zero, GridDirection.Up);
