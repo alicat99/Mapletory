@@ -26,15 +26,15 @@ namespace Maptory.Factory.Tests
             {
                 (RawMaterialType.MonsterSnailGreen, 50L, 1f, 0.1f),
                 (RawMaterialType.MonsterSnailRed, 100L, 2f, 0.2f),
-                (RawMaterialType.MonsterSnailBlue, 200L, 3f, 0.3f),
+                (RawMaterialType.MonsterSnailBlue, 400L, 3f, 0.3f),
                 (RawMaterialType.MonsterMushroomBlue, 500L, 5f, 0.5f),
-                (RawMaterialType.MonsterMushroomOrange, 1000L, 7f, 0.7f),
-                (RawMaterialType.MonsterMushroomGreen, 2000L, 10f, 1f),
-                (RawMaterialType.MonsterSpikeMushroomOrange, 5000L, 20f, 2f),
-                (RawMaterialType.MonsterSpikeMushroomGreen, 10000L, 30f, 3f)
+                (RawMaterialType.MonsterMushroomOrange, 1500L, 7f, 0.7f),
+                (RawMaterialType.MonsterMushroomGreen, 4500L, 10f, 1f),
+                (RawMaterialType.MonsterSpikeMushroomOrange, 7500L, 20f, 2f),
+                (RawMaterialType.MonsterSpikeMushroomGreen, 15000L, 30f, 3f)
             };
 
-            Assert.That(economy.MesoUpgradeCostCoefficient, Is.EqualTo(1.1f));
+            Assert.That(economy.MesoUpgradeCostCoefficient, Is.EqualTo(1.25f));
             Assert.That(economy.ProductionUpgradeCostCoefficient, Is.EqualTo(5f));
             foreach (var row in expected)
             {

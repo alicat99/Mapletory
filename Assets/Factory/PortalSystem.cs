@@ -52,7 +52,7 @@ namespace Maptory.Factory
     public sealed class PortalEconomy
     {
         private const int MESO_SCALE = 100;
-        private const float DEFAULT_MESO_COST_COEFFICIENT = 1.1f;
+        private const float DEFAULT_MESO_COST_COEFFICIENT = 1.25f;
         private const float DEFAULT_PRODUCTION_COST_COEFFICIENT = 5f;
 
         private readonly Dictionary<RawMaterialType, MonsterProgress> progress = new();
@@ -396,12 +396,12 @@ namespace Maptory.Factory
             {
                 RawMaterialType.MonsterSnailGreen => new MonsterBalance(1f, 0.1f, 50L),
                 RawMaterialType.MonsterSnailRed => new MonsterBalance(2f, 0.2f, 100L),
-                RawMaterialType.MonsterSnailBlue => new MonsterBalance(3f, 0.3f, 200L),
+                RawMaterialType.MonsterSnailBlue => new MonsterBalance(3f, 0.3f, 400L),
                 RawMaterialType.MonsterMushroomBlue => new MonsterBalance(5f, 0.5f, 500L),
-                RawMaterialType.MonsterMushroomOrange => new MonsterBalance(7f, 0.7f, 1000L),
-                RawMaterialType.MonsterMushroomGreen => new MonsterBalance(10f, 1f, 2000L),
-                RawMaterialType.MonsterSpikeMushroomOrange => new MonsterBalance(20f, 2f, 5000L),
-                RawMaterialType.MonsterSpikeMushroomGreen => new MonsterBalance(30f, 3f, 10000L),
+                RawMaterialType.MonsterMushroomOrange => new MonsterBalance(7f, 0.7f, 1500L),
+                RawMaterialType.MonsterMushroomGreen => new MonsterBalance(10f, 1f, 4500L),
+                RawMaterialType.MonsterSpikeMushroomOrange => new MonsterBalance(20f, 2f, 7500L),
+                RawMaterialType.MonsterSpikeMushroomGreen => new MonsterBalance(30f, 3f, 15000L),
                 _ => new MonsterBalance(1f, 0.1f, 50L)
             };
         }
