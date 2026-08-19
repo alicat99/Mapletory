@@ -25,11 +25,11 @@ MonoBehaviour:
     - id: trail_1
       monster: 23
       initially_unlocked: 0
-      unlock_meso_cost: 25
+      unlock_meso_cost: 50
     - id: trail_2
       monster: 21
       initially_unlocked: 0
-      unlock_meso_cost: 60
+      unlock_meso_cost: 300
   - id: stage_2
     display_name: "2\uC2A4\uD14C\uC774\uC9C0 \xB7 \uD5E4\uB124\uC2DC\uC2A4 \uC678\uACFD"
     unlock_meso_cost: 250
@@ -42,16 +42,16 @@ MonoBehaviour:
     - id: henesys_north_hill
       monster: 20
       initially_unlocked: 0
-      unlock_meso_cost: 150
+      unlock_meso_cost: 1000
     - id: spore_hill
       monster: 19
       initially_unlocked: 0
-      unlock_meso_cost: 250
+      unlock_meso_cost: 3000
     - id: orange_spike_mushroom_forest
       monster: 25
       initially_unlocked: 0
-      unlock_meso_cost: 500
+      unlock_meso_cost: 5000
     - id: green_spike_mushroom_forest
       monster: 26
       initially_unlocked: 0
-      unlock_meso_cost: 750
+      unlock_meso_cost: 10000

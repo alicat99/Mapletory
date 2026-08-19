@@ -19,6 +19,34 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
+        public void DefaultMonsterBalanceMatchesDesignTable()
+        {
+            var economy = new PortalEconomy();
+            var expected = new[]
+            {
+                (RawMaterialType.MonsterSnailGreen, 50L, 1f, 0.1f),
+                (RawMaterialType.MonsterSnailRed, 100L, 2f, 0.2f),
+                (RawMaterialType.MonsterSnailBlue, 200L, 3f, 0.3f),
+                (RawMaterialType.MonsterMushroomBlue, 500L, 5f, 0.5f),
+                (RawMaterialType.MonsterMushroomOrange, 1000L, 7f, 0.7f),
+                (RawMaterialType.MonsterMushroomGreen, 2000L, 10f, 1f),
+                (RawMaterialType.MonsterSpikeMushroomOrange, 5000L, 20f, 2f),
+                (RawMaterialType.MonsterSpikeMushroomGreen, 10000L, 30f, 3f)
+            };
+
+            Assert.That(economy.MesoUpgradeCostCoefficient, Is.EqualTo(1.1f));
+            Assert.That(economy.ProductionUpgradeCostCoefficient, Is.EqualTo(5f));
+            foreach (var row in expected)
+            {
+                Assert.That(economy.GetMesoUpgradeBaseCost(row.Item1), Is.EqualTo(row.Item2));
+                Assert.That(economy.GetProductionUpgradeBaseCost(row.Item1), Is.EqualTo(100L));
+                Assert.That(economy.GetBaseValue(row.Item1), Is.EqualTo(row.Item3));
+                Assert.That(economy.GetMesoBonusPerLevel(row.Item1), Is.EqualTo(row.Item4));
+                Assert.That(economy.GetProductionMultiplierPerLevel(row.Item1), Is.EqualTo(1.5f));
+            }
+        }
+
+        [Test]
         public void PortalOccupiesTwoByTwoCellsAndExposesEightInputs()
         {
             var network = new ExtractionNetwork(
@@ -61,7 +89,7 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
-        public void PortalAcceptsOnlySelectedItemAndPaysThreeMesoPerPair()
+        public void PortalAcceptsOnlySelectedItemAndPaysConfiguredValue()
         {
             var economy = new PortalEconomy();
             var portal = new PortalState(Vector2Int.zero, economy);
@@ -72,9 +100,9 @@ namespace Maptory.Factory.Tests
             Assert.That(portal.CanAccept(RawMaterialType.SnailRed), Is.False);
 
             portal.AddInput(RawMaterialType.MonsterSnailRed);
-            Assert.That(economy.TotalMeso, Is.EqualTo(1));
+            Assert.That(economy.TotalMeso, Is.EqualTo(2));
             portal.AddInput(RawMaterialType.MonsterSnailRed);
-            Assert.That(economy.TotalMeso, Is.EqualTo(3));
+            Assert.That(economy.TotalMeso, Is.EqualTo(4));
             Assert.That(economy.GetTotalItems(RawMaterialType.MonsterSnailRed), Is.EqualTo(2));
         }
 
@@ -102,7 +130,7 @@ namespace Maptory.Factory.Tests
                 transport.Step();
 
                 Assert.That(transport.Items, Is.Empty);
-                Assert.That(network.PortalEconomy.TotalMeso, Is.EqualTo(1));
+                Assert.That(network.PortalEconomy.TotalMeso, Is.EqualTo(2));
             }
         }
 
@@ -128,13 +156,19 @@ namespace Maptory.Factory.Tests
             transport.Step();
 
             Assert.That(transport.Items, Is.Empty);
-            Assert.That(network.PortalEconomy.TotalMeso, Is.EqualTo(1));
+            Assert.That(network.PortalEconomy.TotalMeso, Is.EqualTo(2));
         }
 
         [Test]
         public void PortalsShareMonsterProgressAndApplyBothUpgradeTypes()
         {
             var economy = new PortalEconomy();
+            var material = RawMaterialType.MonsterMushroomGreen;
+            economy.SetBaseValue(material, 1.5f);
+            economy.SetMesoBonusPerLevel(material, 0.5f);
+            economy.SetProductionMultiplierPerLevel(material, 1.25f);
+            economy.SetUpgradeBaseCosts(material, 20L, 20L);
+            economy.SetUpgradeCostCoefficients(1.1f, 2f);
             var first = new PortalState(Vector2Int.zero, economy);
             var second = new PortalState(new Vector2Int(4, 4), economy);
             first.SelectMaterial(RawMaterialType.MonsterMushroomGreen);
@@ -172,7 +206,7 @@ namespace Maptory.Factory.Tests
             Assert.That(economy.GetTotalItems(RawMaterialType.MonsterMushroomGreen),
                 Is.EqualTo(21));
             Assert.That(economy.GetUnitValue(RawMaterialType.MonsterSnailRed),
-                Is.EqualTo(1.5f).Within(0.001f));
+                Is.EqualTo(2f).Within(0.001f));
         }
 
         [Test]

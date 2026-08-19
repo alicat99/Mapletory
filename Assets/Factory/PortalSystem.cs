@@ -52,12 +52,8 @@ namespace Maptory.Factory
     public sealed class PortalEconomy
     {
         private const int MESO_SCALE = 100;
-        private const float DEFAULT_BASE_VALUE = 1.5f;
-        private const float DEFAULT_MESO_BONUS = 0.5f;
-        private const float DEFAULT_PRODUCTION_MULTIPLIER = 1.25f;
-        private const long DEFAULT_UPGRADE_BASE_COST = 20L;
-        private const float DEFAULT_MESO_COST_COEFFICIENT = 1.5f;
-        private const float DEFAULT_PRODUCTION_COST_COEFFICIENT = 2f;
+        private const float DEFAULT_MESO_COST_COEFFICIENT = 1.1f;
+        private const float DEFAULT_PRODUCTION_COST_COEFFICIENT = 5f;
 
         private readonly Dictionary<RawMaterialType, MonsterProgress> progress = new();
         private readonly Dictionary<RawMaterialType, MonsterBalance> balances = new();
@@ -387,11 +383,27 @@ namespace Maptory.Factory
         {
             if (!balances.TryGetValue(material, out var balance))
             {
-                balance = new MonsterBalance();
+                balance = CreateDefaultBalance(material);
                 balances.Add(material, balance);
             }
 
             return balance;
+        }
+
+        private static MonsterBalance CreateDefaultBalance(RawMaterialType material)
+        {
+            return material switch
+            {
+                RawMaterialType.MonsterSnailGreen => new MonsterBalance(1f, 0.1f, 50L),
+                RawMaterialType.MonsterSnailRed => new MonsterBalance(2f, 0.2f, 100L),
+                RawMaterialType.MonsterSnailBlue => new MonsterBalance(3f, 0.3f, 200L),
+                RawMaterialType.MonsterMushroomBlue => new MonsterBalance(5f, 0.5f, 500L),
+                RawMaterialType.MonsterMushroomOrange => new MonsterBalance(7f, 0.7f, 1000L),
+                RawMaterialType.MonsterMushroomGreen => new MonsterBalance(10f, 1f, 2000L),
+                RawMaterialType.MonsterSpikeMushroomOrange => new MonsterBalance(20f, 2f, 5000L),
+                RawMaterialType.MonsterSpikeMushroomGreen => new MonsterBalance(30f, 3f, 10000L),
+                _ => new MonsterBalance(1f, 0.1f, 50L)
+            };
         }
 
         private static long GetUnitValueUnits(MonsterProgress monster, MonsterBalance balance)
@@ -420,11 +432,24 @@ namespace Maptory.Factory
 
         private sealed class MonsterBalance
         {
-            public float BaseValue = DEFAULT_BASE_VALUE;
-            public float MesoBonusPerLevel = DEFAULT_MESO_BONUS;
-            public float ProductionMultiplierPerLevel = DEFAULT_PRODUCTION_MULTIPLIER;
-            public long MesoUpgradeBaseCost = DEFAULT_UPGRADE_BASE_COST;
-            public long ProductionUpgradeBaseCost = DEFAULT_UPGRADE_BASE_COST;
+            public float BaseValue;
+            public float MesoBonusPerLevel;
+            public float ProductionMultiplierPerLevel;
+            public long MesoUpgradeBaseCost;
+            public long ProductionUpgradeBaseCost;
+
+            public MonsterBalance()
+            {
+            }
+
+            public MonsterBalance(float base_value, float meso_bonus, long meso_cost)
+            {
+                BaseValue = base_value;
+                MesoBonusPerLevel = meso_bonus;
+                ProductionMultiplierPerLevel = 1.5f;
+                MesoUpgradeBaseCost = meso_cost;
+                ProductionUpgradeBaseCost = 100L;
+            }
         }
     }
 

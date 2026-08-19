@@ -32,6 +32,10 @@ namespace Maptory.Factory.Tests
                     RawMaterialType.MonsterSpikeMushroomOrange,
                     RawMaterialType.MonsterSpikeMushroomGreen
                 }));
+            Assert.That(config.Stages[0].HuntingGrounds.Select(ground => ground.UnlockMesoCost),
+                Is.EqualTo(new long[] { 0L, 50L, 300L }));
+            Assert.That(config.Stages[1].HuntingGrounds.Select(ground => ground.UnlockMesoCost),
+                Is.EqualTo(new long[] { 0L, 1000L, 3000L, 5000L, 10000L }));
             foreach (var stage in config.Stages)
             {
                 Assert.That(stage.HuntingGrounds.FindAll(ground => ground.InitiallyUnlocked).Count,
@@ -68,7 +72,7 @@ namespace Maptory.Factory.Tests
             var economy = new PortalEconomy();
             economy.ImportProgress(new PortalEconomyProgressData
             {
-                meso_units = 3000L,
+                meso_units = 6000L,
                 monsters =
                 {
                     new MonsterProgressData
@@ -86,11 +90,11 @@ namespace Maptory.Factory.Tests
                 });
 
             Assert.That(progression.TryUnlockHuntingGround("trail_1"), Is.True);
-            Assert.That(economy.TotalMeso, Is.EqualTo(5L));
+            Assert.That(economy.TotalMeso, Is.EqualTo(10L));
             Assert.That(economy.GetAvailableProduction(RawMaterialType.MonsterSnailRed), Is.EqualTo(10L));
 
             Assert.That(progression.TryUnlockHuntingGround("trail_1"), Is.True);
-            Assert.That(economy.TotalMeso, Is.EqualTo(5L));
+            Assert.That(economy.TotalMeso, Is.EqualTo(10L));
             Assert.That(economy.GetAvailableProduction(RawMaterialType.MonsterSnailRed), Is.EqualTo(10L));
         }
 
