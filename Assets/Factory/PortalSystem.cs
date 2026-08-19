@@ -36,6 +36,16 @@ namespace Maptory.Factory
         };
 
         public static IReadOnlyList<PortalSupplyOption> Options => OPTIONS;
+
+        public static PortalSupplyOption Get(RawMaterialType material)
+        {
+            foreach (var option in OPTIONS)
+            {
+                if (option.Material == material) return option;
+            }
+
+            throw new ArgumentException($"Unknown portal supply material: {material}");
+        }
     }
 
     public sealed class PortalEconomy
@@ -55,6 +65,7 @@ namespace Maptory.Factory
         public long MesoUpgradeBaseCost { get; private set; } = 20L;
         public long ProductionUpgradeBaseCost { get; private set; } = 20L;
         public int MaximumUpgradeLevel { get; private set; } = MAX_UPGRADE_LEVEL;
+        public event Action Changed;
 
         public void RecordSupply(RawMaterialType material)
         {
@@ -62,6 +73,7 @@ namespace Maptory.Factory
             monster.LifetimeProduction++;
             monster.AvailableProduction++;
             meso_units += GetUnitValueUnits(monster, GetBalance(material));
+            Changed?.Invoke();
         }
 
         public long GetTotalItems(RawMaterialType material)
@@ -121,37 +133,44 @@ namespace Maptory.Factory
         public void SetBaseValue(RawMaterialType material, float value)
         {
             GetBalance(material).BaseValue = Mathf.Max(0f, value);
+            Changed?.Invoke();
         }
 
         public void SetMesoBonusPerLevel(RawMaterialType material, float value)
         {
             GetBalance(material).MesoBonusPerLevel = Mathf.Max(0f, value);
+            Changed?.Invoke();
         }
 
         public void SetProductionMultiplierPerLevel(RawMaterialType material, float value)
         {
             GetBalance(material).ProductionMultiplierPerLevel = Mathf.Max(0.01f, value);
+            Changed?.Invoke();
         }
 
         public void SetMesoUpgradeLevel(RawMaterialType material, int level)
         {
             GetProgress(material).MesoUpgradeLevel = Mathf.Clamp(level, 0, MaximumUpgradeLevel);
+            Changed?.Invoke();
         }
 
         public void SetProductionUpgradeLevel(RawMaterialType material, int level)
         {
             GetProgress(material).ProductionUpgradeLevel = Mathf.Clamp(level, 0, MaximumUpgradeLevel);
+            Changed?.Invoke();
         }
 
         public void SetAvailableProduction(RawMaterialType material, long amount)
         {
             GetProgress(material).AvailableProduction = System.Math.Max(0L, amount);
+            Changed?.Invoke();
         }
 
         public void SetUpgradeCosts(long meso_base_cost, long production_base_cost)
         {
             MesoUpgradeBaseCost = System.Math.Max(1L, meso_base_cost);
             ProductionUpgradeBaseCost = System.Math.Max(1L, production_base_cost);
+            Changed?.Invoke();
         }
 
         public void SetMaximumUpgradeLevel(int level)
@@ -164,6 +183,38 @@ namespace Maptory.Factory
                     monster.ProductionUpgradeLevel,
                     MaximumUpgradeLevel);
             }
+            Changed?.Invoke();
+        }
+
+        public bool CanSpendMeso(long amount)
+        {
+            return amount >= 0L && meso_units >= amount * MESO_SCALE;
+        }
+
+        public bool TrySpendMeso(long amount)
+        {
+            if (!CanSpendMeso(amount)) return false;
+
+            meso_units -= amount * MESO_SCALE;
+            Changed?.Invoke();
+            return true;
+        }
+
+        public bool CanSpend(long meso, RawMaterialType material, long amount)
+        {
+            return CanSpendMeso(meso)
+                && amount >= 0L
+                && GetAvailableProduction(material) >= amount;
+        }
+
+        public bool TrySpend(long meso, RawMaterialType material, long amount)
+        {
+            if (!CanSpend(meso, material, amount)) return false;
+
+            meso_units -= meso * MESO_SCALE;
+            GetProgress(material).AvailableProduction -= amount;
+            Changed?.Invoke();
+            return true;
         }
 
         public long GetMesoUpgradeCost(RawMaterialType material)
@@ -201,6 +252,7 @@ namespace Maptory.Factory
             var monster = GetProgress(material);
             meso_units -= GetMesoUpgradeCost(material) * MESO_SCALE;
             monster.MesoUpgradeLevel++;
+            Changed?.Invoke();
             return true;
         }
 
@@ -211,7 +263,88 @@ namespace Maptory.Factory
             var monster = GetProgress(material);
             monster.AvailableProduction -= GetProductionUpgradeCost(material);
             monster.ProductionUpgradeLevel++;
+            Changed?.Invoke();
             return true;
+        }
+
+        public PortalEconomyProgressData ExportProgress()
+        {
+            var data = new PortalEconomyProgressData { meso_units = meso_units };
+            foreach (var option in PortalSupplyCatalog.Options)
+            {
+                var monster = GetProgress(option.Material);
+                data.monsters.Add(new MonsterProgressData
+                {
+                    material = option.Material,
+                    lifetime_production = monster.LifetimeProduction,
+                    available_production = monster.AvailableProduction,
+                    meso_upgrade_level = monster.MesoUpgradeLevel,
+                    production_upgrade_level = monster.ProductionUpgradeLevel
+                });
+            }
+            return data;
+        }
+
+        public void ImportProgress(PortalEconomyProgressData data)
+        {
+            progress.Clear();
+            meso_units = data.meso_units;
+            foreach (var saved in data.monsters)
+            {
+                progress.Add(saved.material, new MonsterProgress
+                {
+                    LifetimeProduction = saved.lifetime_production,
+                    AvailableProduction = saved.available_production,
+                    MesoUpgradeLevel = Mathf.Clamp(saved.meso_upgrade_level, 0, MaximumUpgradeLevel),
+                    ProductionUpgradeLevel = Mathf.Clamp(
+                        saved.production_upgrade_level,
+                        0,
+                        MaximumUpgradeLevel)
+                });
+            }
+        }
+
+        public PortalEconomySettingsData ExportSettings()
+        {
+            var data = new PortalEconomySettingsData
+            {
+                meso_upgrade_base_cost = MesoUpgradeBaseCost,
+                production_upgrade_base_cost = ProductionUpgradeBaseCost,
+                maximum_upgrade_level = MaximumUpgradeLevel
+            };
+            foreach (var option in PortalSupplyCatalog.Options)
+            {
+                var balance = GetBalance(option.Material);
+                data.monsters.Add(new MonsterBalanceData
+                {
+                    material = option.Material,
+                    base_value = balance.BaseValue,
+                    meso_bonus_per_level = balance.MesoBonusPerLevel,
+                    production_multiplier_per_level = balance.ProductionMultiplierPerLevel
+                });
+            }
+            return data;
+        }
+
+        public void ImportSettings(PortalEconomySettingsData data)
+        {
+            if (data.maximum_upgrade_level <= 0) return;
+
+            MesoUpgradeBaseCost = System.Math.Max(1L, data.meso_upgrade_base_cost);
+            ProductionUpgradeBaseCost = System.Math.Max(1L, data.production_upgrade_base_cost);
+            MaximumUpgradeLevel = Mathf.Clamp(data.maximum_upgrade_level, 1, MAX_UPGRADE_LEVEL);
+            balances.Clear();
+            foreach (var saved in data.monsters)
+            {
+                balances.Add(saved.material, new MonsterBalance
+                {
+                    BaseValue = Mathf.Max(0f, saved.base_value),
+                    MesoBonusPerLevel = Mathf.Max(0f, saved.meso_bonus_per_level),
+                    ProductionMultiplierPerLevel = Mathf.Max(
+                        0.01f,
+                        saved.production_multiplier_per_level)
+                });
+            }
         }
 
         public int CountAvailableProductionUpgrades()
@@ -273,6 +406,41 @@ namespace Maptory.Factory
         }
     }
 
+    [Serializable]
+    public sealed class PortalEconomyProgressData
+    {
+        public long meso_units;
+        public List<MonsterProgressData> monsters = new();
+    }
+
+    [Serializable]
+    public sealed class MonsterProgressData
+    {
+        public RawMaterialType material;
+        public long lifetime_production;
+        public long available_production;
+        public int meso_upgrade_level;
+        public int production_upgrade_level;
+    }
+
+    [Serializable]
+    public sealed class PortalEconomySettingsData
+    {
+        public long meso_upgrade_base_cost;
+        public long production_upgrade_base_cost;
+        public int maximum_upgrade_level;
+        public List<MonsterBalanceData> monsters = new();
+    }
+
+    [Serializable]
+    public sealed class MonsterBalanceData
+    {
+        public RawMaterialType material;
+        public float base_value;
+        public float meso_bonus_per_level;
+        public float production_multiplier_per_level;
+    }
+
     public readonly struct PortalInputPort
     {
         public Vector2Int ConveyorPosition { get; }
@@ -294,21 +462,31 @@ namespace Maptory.Factory
     {
         private readonly PortalEconomy economy;
         private readonly PortalInputPort[] input_ports;
+        private readonly Func<RawMaterialType, bool> material_allowed;
 
         public Vector2Int Anchor { get; }
         public Vector2 VisualCenter => Anchor + new Vector2(0.5f, 0.5f);
         public RawMaterialType? SelectedMaterial { get; private set; }
         public IReadOnlyList<PortalInputPort> InputPorts => input_ports;
 
-        public PortalState(Vector2Int anchor, PortalEconomy portal_economy)
+        public PortalState(
+            Vector2Int anchor,
+            PortalEconomy portal_economy,
+            Func<RawMaterialType, bool> is_material_allowed = null)
         {
             Anchor = anchor;
             economy = portal_economy;
+            material_allowed = is_material_allowed ?? (_ => true);
             input_ports = CreateInputPorts(anchor);
         }
 
         public void SelectMaterial(RawMaterialType material)
         {
+            if (!material_allowed(material))
+            {
+                throw new InvalidOperationException("The hunting ground is locked.");
+            }
+
             SelectedMaterial = material;
         }
 

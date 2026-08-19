@@ -548,6 +548,7 @@ namespace Maptory.Factory
         private readonly Dictionary<Vector2Int, ErdaInjectorState> erda_injectors = new();
         private readonly Dictionary<Vector2Int, PortalState> portals = new();
         private readonly ConveyorNetwork conveyor_network;
+        private readonly Func<RawMaterialType, bool> portal_material_allowed;
 
         public IReadOnlyDictionary<Vector2Int, RawMaterialDeposit> Deposits => deposits;
         public IReadOnlyDictionary<Vector2Int, ExtractorState> Extractors => extractors;
@@ -556,7 +557,7 @@ namespace Maptory.Factory
         public IReadOnlyDictionary<Vector2Int, ProcessingMachineState> ProcessingMachines => processing_machines;
         public IReadOnlyDictionary<Vector2Int, ErdaInjectorState> ErdaInjectors => erda_injectors;
         public IReadOnlyDictionary<Vector2Int, PortalState> Portals => portals;
-        public PortalEconomy PortalEconomy { get; } = new();
+        public PortalEconomy PortalEconomy { get; }
         public event Action<ExtractorState> ExtractorPlaced;
         public event Action<DyeingMachineState> DyeingMachinePlaced;
         public event Action<CombinerState> CombinerPlaced;
@@ -567,9 +568,15 @@ namespace Maptory.Factory
         public event Action<RawMaterialDeposit> DepositRemoved;
         public event Action<object> BuildingRemoved;
 
-        public ExtractionNetwork(IEnumerable<RawMaterialDeposit> fixed_deposits, ConveyorNetwork conveyors)
+        public ExtractionNetwork(
+            IEnumerable<RawMaterialDeposit> fixed_deposits,
+            ConveyorNetwork conveyors,
+            PortalEconomy portal_economy = null,
+            Func<RawMaterialType, bool> is_portal_material_allowed = null)
         {
             conveyor_network = conveyors;
+            PortalEconomy = portal_economy ?? new PortalEconomy();
+            portal_material_allowed = is_portal_material_allowed;
             foreach (var deposit in fixed_deposits)
             {
                 deposits.Add(deposit.Center, deposit);
@@ -793,7 +800,7 @@ namespace Maptory.Factory
                 throw new InvalidOperationException("Portal footprint is occupied.");
             }
 
-            var portal = new PortalState(anchor, PortalEconomy);
+            var portal = new PortalState(anchor, PortalEconomy, portal_material_allowed);
             portals.Add(anchor, portal);
             PortalPlaced?.Invoke(portal);
             return portal;

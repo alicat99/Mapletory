@@ -9,9 +9,11 @@
 3. `제거` 브러시로 컨베이어, 건물 또는 원재료를 지우고, `이동 아이템 제거`로 운송 중인 아이템을 정리한다.
 4. `몬스터` 탭에서 대상을 전환한 뒤 기본 가치, 레벨당 합연산 값, 레벨당 곱연산 계수, 현재 레벨과 사용 가능 생산량을 바꾼다. 최종 가치 요약과 포탈·업그레이드 UI가 즉시 갱신되어야 한다.
 5. `업그레이드` 탭에서 메소·누적 생산량 기본 비용과 최대 레벨을 변경하고 업그레이드 버튼의 비용·최대 레벨 상태가 즉시 반영되는지 확인한다.
-6. 다시 `F1`을 눌러 패널을 닫는다.
+6. `해금` 탭에서 스테이지와 사냥터를 순환하며 각 메소 비용, 필요 몬스터 재료와 수량을 변경한다.
+7. `변경사항 저장 후 처음부터 실행`을 누르면 변경한 설정은 유지되고 메소·업그레이드·스테이지·사냥터 진행은 초기화된 스테이지 선택 화면으로 재시작하는지 확인한다.
+8. 다시 `F1`을 눌러 패널을 닫는다.
 
-Edit Mode의 `Maptory.Factory.Tests`는 원재료 런타임 배치·제거 이벤트, 커스텀 몬스터 가치 계산과 기존 공장 규칙의 회귀를 검증한다. 디버그 값과 맵 편집 결과는 런타임 세션에만 유지된다.
+Edit Mode의 `Maptory.Factory.Tests`는 원재료 런타임 배치·제거 이벤트, 커스텀 몬스터 가치와 해금 설정의 저장·재적용, 기존 공장 규칙의 회귀를 검증한다. 맵 편집 결과는 런타임 세션에만 유지된다.
 
 ## 2. 기능 사용법
 
@@ -23,17 +25,17 @@ mapEditor.Initialize(camera, tilemap, grassTiles, mapSize, buildMode,
     conveyorBuilder, extractorBuilder, extractionNetwork,
     demolitionController, itemTransport);
 
-var debugPanel = FactoryDebugPanel.Create(canvas.transform, font, roundedSprite,
-    mapEditor, portalEconomy);
+var debugPanel = FactoryDebugPanel.Create(canvas.transform, catalog,
+    portalEconomy, mapEditor, progression, saveService);
 ```
 
-몬스터 밸런스는 `PortalEconomy.SetBaseItemValue`, `SetAdditiveValuePerLevel`, `SetProductionMultiplierPerLevel`로 바꾸며, 업그레이드 비용과 상한은 `SetUpgradeCosts`, `SetMaximumUpgradeLevel`로 바꾼다. 이 API는 디버그 UI와 동일한 정식 런타임 상태를 수정한다.
+몬스터 밸런스는 `PortalEconomy.SetBaseValue`, `SetMesoBonusPerLevel`, `SetProductionMultiplierPerLevel`로 바꾸며, 업그레이드 비용과 상한은 `SetUpgradeCosts`, `SetMaximumUpgradeLevel`로 바꾼다. 이 API는 디버그 UI와 동일한 정식 런타임 상태를 수정한다.
 
 ## 3. 코드 구조와 책임
 
 | 파일 | 책임 |
 |---|---|
-| `FactoryDebugPanel.cs` | `F1` 패널, 맵·몬스터·업그레이드 탭, 숫자 입력과 런타임 밸런스 적용 |
+| `FactoryDebugPanel.cs` | `F1` 패널, 맵·몬스터·업그레이드·해금 탭, 숫자 입력, 설정 저장과 새 게임 재시작 |
 | `FactoryDebugMapEditor.cs` | 잔디·원재료·제거·아이템 브러시 입력을 기존 맵·건설·운송 시스템에 연결 |
 
-디버그 도구는 별도의 복제 상태를 만들지 않고 `ExtractionNetwork`, `PortalEconomy`, `FactoryItemTransport` 등 정식 시스템의 공개 명령만 호출한다. UI는 디버그 입력을 소유하고, 월드 편집기는 좌클릭 좌표를 격자 명령으로 변환한다. 현재는 맵 크기 변경, 저장·불러오기와 런타임 변경값의 영속화를 지원하지 않는다.
+디버그 도구는 별도의 복제 상태를 만들지 않고 `ExtractionNetwork`, `PortalEconomy`, `FactoryProgression`, `FactoryItemTransport` 등 정식 시스템의 공개 명령만 호출한다. 명시적 재시작 버튼은 밸런스·해금 설정만 설정 세이브에 남기고 플레이 진행 세이브를 삭제한다. 현재는 맵 크기 변경과 맵 편집 결과의 영속화를 지원하지 않는다.

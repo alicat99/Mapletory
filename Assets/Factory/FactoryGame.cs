@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 namespace Maptory.Factory
@@ -23,10 +24,28 @@ namespace Maptory.Factory
         private RecipeSelectionPanel recipe_panel;
         private PortalSelectionPanel portal_panel;
         private ItemUpgradePanel item_upgrade_panel;
+        private FactoryContentConfig content_config;
+        private FactorySaveService save_service;
+        private FactoryProgression progression;
+        private PortalEconomy economy;
+        private FactoryStageDefinition current_stage;
 
         private void Awake()
         {
             tile_catalog = new FactoryTileCatalog();
+            InitializeProgression();
+
+            if (string.IsNullOrEmpty(FactoryStageSession.SelectedStageId)
+                || !progression.IsStageUnlocked(FactoryStageSession.SelectedStageId))
+            {
+                FactoryStageSession.Clear();
+                Camera.main.backgroundColor = new Color(0.035f, 0.055f, 0.04f);
+                StageSelectionPanel.Create(transform, tile_catalog, progression, EnterStage);
+                return;
+            }
+
+            current_stage = content_config.GetStage(FactoryStageSession.SelectedStageId);
+            grass_seed = current_stage.GrassSeed;
             conveyor_network = new ConveyorNetwork();
             extraction_network = CreateExtractionNetwork();
 
@@ -34,6 +53,38 @@ namespace Maptory.Factory
             FillGround();
             CreateConstructionControls();
             ConfigureCamera();
+            StageReturnButton.Create(transform, tile_catalog, current_stage.DisplayName, ReturnToStages);
+        }
+
+        private void InitializeProgression()
+        {
+            var config_asset = Resources.Load<FactoryContentConfig>(
+                "Factory/Progression/FactoryContentConfig");
+            content_config = config_asset.CreateRuntimeCopy();
+            save_service = new FactorySaveService();
+            economy = new PortalEconomy();
+            save_service.LoadSettings().Apply(content_config, economy);
+            progression = new FactoryProgression(
+                content_config,
+                economy,
+                save_service,
+                save_service.LoadProgress());
+        }
+
+        private void EnterStage(string stage_id)
+        {
+            if (!progression.IsStageUnlocked(stage_id)) return;
+
+            progression.Save();
+            FactoryStageSession.Select(stage_id);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+
+        private void ReturnToStages()
+        {
+            progression.Save();
+            FactoryStageSession.Clear();
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 
         private void CreateMap()
@@ -158,7 +209,11 @@ namespace Maptory.Factory
                 recipe_panel,
                 map_size);
 
-            portal_panel = PortalSelectionPanel.Create(transform, tile_catalog);
+            portal_panel = PortalSelectionPanel.Create(
+                transform,
+                tile_catalog,
+                progression,
+                current_stage);
             var portal_builder = gameObject.AddComponent<PortalBuilder>();
             portal_builder.Initialize(
                 Camera.main,
@@ -226,7 +281,9 @@ namespace Maptory.Factory
                 transform,
                 tile_catalog,
                 extraction_network.PortalEconomy,
-                debug_map_editor);
+                debug_map_editor,
+                progression,
+                save_service);
         }
 
         private void OnExtractorPlaced(ExtractorState extractor)
@@ -328,7 +385,11 @@ namespace Maptory.Factory
                 new RawMaterialDeposit(RawMaterialType.Mushroom, new Vector2Int(41, 41)),
                 new RawMaterialDeposit(RawMaterialType.Snail, new Vector2Int(25, 25))
             };
-            return new ExtractionNetwork(deposits, conveyor_network);
+            return new ExtractionNetwork(
+                deposits,
+                conveyor_network,
+                economy,
+                material => progression.IsMonsterUnlocked(current_stage.Id, material));
         }
 
         private void ConfigureCamera()

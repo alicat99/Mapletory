@@ -4,6 +4,7 @@ using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Maptory.Factory
@@ -24,6 +25,8 @@ namespace Maptory.Factory
         private FactoryTileCatalog catalog;
         private PortalEconomy economy;
         private FactoryDebugMapEditor map_editor;
+        private FactoryProgression progression;
+        private FactorySaveService save_service;
         private GameObject panel_root;
         private TMP_Text brush_label;
         private TMP_Text monster_name;
@@ -37,8 +40,17 @@ namespace Maptory.Factory
         private NumericField meso_cost_field;
         private NumericField production_cost_field;
         private NumericField maximum_level_field;
+        private TMP_Text stage_name;
+        private TMP_Text hunting_ground_name;
+        private TMP_Text requirement_material_name;
+        private TMP_Text unlock_summary;
+        private NumericField stage_unlock_cost_field;
+        private NumericField hunting_unlock_cost_field;
+        private NumericField requirement_amount_field;
         private int selected_page;
         private int selected_monster;
+        private int selected_stage;
+        private int selected_hunting_ground;
 
         public bool IsOpen => panel_root != null && panel_root.activeSelf;
 
@@ -46,7 +58,9 @@ namespace Maptory.Factory
             Transform parent,
             FactoryTileCatalog catalog,
             PortalEconomy economy,
-            FactoryDebugMapEditor map_editor)
+            FactoryDebugMapEditor map_editor,
+            FactoryProgression progression,
+            FactorySaveService save_service)
         {
             var canvas_object = new GameObject(
                 "Factory Debug UI",
@@ -69,6 +83,8 @@ namespace Maptory.Factory
             panel.catalog = catalog;
             panel.economy = economy;
             panel.map_editor = map_editor;
+            panel.progression = progression;
+            panel.save_service = save_service;
             panel.Build();
             return panel;
         }
@@ -130,13 +146,15 @@ namespace Maptory.Factory
             var close = CreateButton(panel_root.transform, "X", new Vector2(340f, -10f), new Vector2(34f, 34f));
             close.onClick.AddListener(Close);
 
-            CreateTab("맵", 0, 16f);
-            CreateTab("몬스터", 1, 140f);
-            CreateTab("업그레이드", 2, 264f);
+            CreateTab("맵", 0, 12f);
+            CreateTab("몬스터", 1, 104f);
+            CreateTab("업글", 2, 196f);
+            CreateTab("해금", 3, 288f);
 
             BuildMapPage();
             BuildMonsterPage();
             BuildUpgradePage();
+            BuildUnlockPage();
             map_editor.BrushChanged += OnBrushChanged;
 
             selected_page = 0;
@@ -151,7 +169,7 @@ namespace Maptory.Factory
                 panel_root.transform,
                 label,
                 new Vector2(x, -58f),
-                new Vector2(110f, 42f));
+                new Vector2(84f, 42f));
             button.onClick.AddListener(() => SetPage(index));
             tab_backgrounds.Add(button.GetComponent<Image>());
             tab_labels.Add(button.GetComponentInChildren<TMP_Text>());
@@ -302,6 +320,66 @@ namespace Maptory.Factory
             RefreshUpgradeFields();
         }
 
+        private void BuildUnlockPage()
+        {
+            var page = CreatePage("Unlock Page");
+            CreateText("스테이지", page.transform, 17f, TextAlignmentOptions.MidlineLeft,
+                Vector2.zero, new Vector2(100f, 36f), MUTED_COLOR);
+            var previous_stage = CreateButton(page.transform, "<", new Vector2(94f, 0f), new Vector2(38f, 36f));
+            previous_stage.onClick.AddListener(() => SelectStage(-1));
+            stage_name = CreateText("", page.transform, 18f, TextAlignmentOptions.Center,
+                new Vector2(136f, 0f), new Vector2(166f, 36f), TEXT_COLOR);
+            var next_stage = CreateButton(page.transform, ">", new Vector2(306f, 0f), new Vector2(38f, 36f));
+            next_stage.onClick.AddListener(() => SelectStage(1));
+
+            stage_unlock_cost_field = CreateIntegerField(page.transform, "스테이지 메소", -52f, value =>
+            {
+                SelectedStage.SetUnlockMesoCost(value);
+                RefreshUnlockFields();
+            });
+
+            CreateText("사냥터", page.transform, 17f, TextAlignmentOptions.MidlineLeft,
+                new Vector2(0f, -116f), new Vector2(100f, 36f), MUTED_COLOR);
+            var previous_ground = CreateButton(page.transform, "<", new Vector2(94f, -116f), new Vector2(38f, 36f));
+            previous_ground.onClick.AddListener(() => SelectHuntingGround(-1));
+            hunting_ground_name = CreateText("", page.transform, 17f, TextAlignmentOptions.Center,
+                new Vector2(136f, -116f), new Vector2(166f, 36f), TEXT_COLOR);
+            var next_ground = CreateButton(page.transform, ">", new Vector2(306f, -116f), new Vector2(38f, 36f));
+            next_ground.onClick.AddListener(() => SelectHuntingGround(1));
+
+            hunting_unlock_cost_field = CreateIntegerField(page.transform, "사냥터 메소", -168f, value =>
+            {
+                SelectedHuntingGround.SetUnlockMesoCost(value);
+                RefreshUnlockFields();
+            });
+
+            CreateText("필요 재료", page.transform, 17f, TextAlignmentOptions.MidlineLeft,
+                new Vector2(0f, -222f), new Vector2(100f, 42f), MUTED_COLOR);
+            var previous_material = CreateButton(page.transform, "<", new Vector2(104f, -222f), new Vector2(36f, 42f));
+            previous_material.onClick.AddListener(() => SelectRequirementMaterial(-1));
+            requirement_material_name = CreateText("", page.transform, 16f, TextAlignmentOptions.Center,
+                new Vector2(144f, -222f), new Vector2(156f, 42f), TEXT_COLOR);
+            var next_material = CreateButton(page.transform, ">", new Vector2(304f, -222f), new Vector2(36f, 42f));
+            next_material.onClick.AddListener(() => SelectRequirementMaterial(1));
+
+            requirement_amount_field = CreateIntegerField(page.transform, "필요 수량", -276f, value =>
+            {
+                SelectedHuntingGround.SetRequirement(SelectedHuntingGround.RequiredMaterial, value);
+                RefreshUnlockFields();
+            });
+
+            unlock_summary = CreateText("", page.transform, 16f, TextAlignmentOptions.TopLeft,
+                new Vector2(0f, -338f), new Vector2(350f, 70f), MUTED_COLOR);
+
+            var restart = CreateButton(
+                page.transform,
+                "변경사항 저장 후 처음부터 실행",
+                new Vector2(0f, -438f),
+                new Vector2(344f, 54f));
+            restart.onClick.AddListener(SaveSettingsAndRestart);
+            RefreshUnlockFields();
+        }
+
         private GameObject CreatePage(string name)
         {
             var page = CreateObject(name, panel_root.transform);
@@ -406,6 +484,72 @@ namespace Maptory.Factory
             map_editor.SetInputEnabled(IsOpen && index == 0);
             if (index == 1) RefreshMonsterFields();
             if (index == 2) RefreshUpgradeFields();
+            if (index == 3) RefreshUnlockFields();
+        }
+
+        private FactoryStageDefinition SelectedStage => progression.Config.Stages[selected_stage];
+        private HuntingGroundDefinition SelectedHuntingGround =>
+            SelectedStage.HuntingGrounds[selected_hunting_ground];
+
+        private void SelectStage(int offset)
+        {
+            var count = progression.Config.Stages.Count;
+            selected_stage = (selected_stage + offset + count) % count;
+            selected_hunting_ground = 0;
+            RefreshUnlockFields();
+        }
+
+        private void SelectHuntingGround(int offset)
+        {
+            var count = SelectedStage.HuntingGrounds.Count;
+            selected_hunting_ground = (selected_hunting_ground + offset + count) % count;
+            RefreshUnlockFields();
+        }
+
+        private void SelectRequirementMaterial(int offset)
+        {
+            var options = PortalSupplyCatalog.Options;
+            var index = 0;
+            for (var candidate = 0; candidate < options.Count; candidate++)
+            {
+                if (options[candidate].Material == SelectedHuntingGround.RequiredMaterial)
+                {
+                    index = candidate;
+                    break;
+                }
+            }
+
+            index = (index + offset + options.Count) % options.Count;
+            SelectedHuntingGround.SetRequirement(
+                options[index].Material,
+                SelectedHuntingGround.RequiredAmount);
+            RefreshUnlockFields();
+        }
+
+        private void RefreshUnlockFields()
+        {
+            if (stage_name == null) return;
+
+            var stage = SelectedStage;
+            var ground = SelectedHuntingGround;
+            stage_name.text = stage.DisplayName;
+            hunting_ground_name.text = ground.SupplyOption.SourceName;
+            requirement_material_name.text = ground.RequiredMaterial.ToKoreanName();
+            stage_unlock_cost_field.Set(stage.UnlockMesoCost);
+            hunting_unlock_cost_field.Set(ground.UnlockMesoCost);
+            requirement_amount_field.Set(ground.RequiredAmount);
+            unlock_summary.text = $"몬스터: {ground.SupplyOption.ItemLabel}\n"
+                + $"초기 해금: {(ground.InitiallyUnlocked ? "예" : "아니오")}";
+        }
+
+        private void SaveSettingsAndRestart()
+        {
+            var settings = new FactorySettingsData();
+            settings.Capture(progression.Config, economy);
+            save_service.SaveSettings(settings);
+            save_service.ResetProgress();
+            FactoryStageSession.Clear();
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 
         private void SelectMonster(int offset)
