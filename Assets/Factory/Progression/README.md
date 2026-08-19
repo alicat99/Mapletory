@@ -17,6 +17,8 @@ Edit Mode의 `ProgressionTests`는 기본 해금, 스테이지·사냥터 구매
 
 콘텐츠 값은 `Resources/Factory/Progression/FactoryContentConfig`의 `FactoryContentConfig` 에셋에서 편집한다. 각 `FactoryStageDefinition`은 스테이지 ID·표시명·메소 비용·맵 시드를, 각 `HuntingGroundDefinition`은 몬스터·초기 해금 여부·메소 비용을 정의한다. 1스테이지는 달팽이→빨간 달팽이→파란 달팽이, 2스테이지는 파란 버섯→주황 버섯→초록 버섯→주황 뿔버섯→초록 뿔버섯 순서다.
 
+기본 사냥터 해금 비용은 1스테이지가 `0 / 50 / 300`, 2스테이지가 `0 / 1,000 / 3,000 / 5,000 / 10,000` 메소다. 디버그에서 변경한 비용은 설정 세이브가 우선한다.
+
 ```csharp
 var configAsset = Resources.Load<FactoryContentConfig>(
     "Factory/Progression/FactoryContentConfig");
@@ -47,4 +49,4 @@ if (progression.CanUnlockHuntingGround("lith_harbor_outskirts"))
 | `StageSelectionPanel.cs` | 스테이지 목록·잠금·구매 팝업, 입장과 우측 상단 돌아가기 UI |
 | `Resources/Factory/Progression/FactoryContentConfig.asset` | 빌드에서 사용하는 2개 스테이지와 순서화된 사냥터·비용 원본 |
 
-`FactoryGame`은 저장 설정을 적용한 `PortalEconomy`와 `FactoryProgression`을 먼저 만든 뒤, 스테이지 선택 화면 또는 해당 스테이지의 공장 런타임을 조립한다. 입장과 돌아가기는 같은 Scene을 다시 로드해 스테이지 런타임을 분리한다. 현재 컨베이어·건물 배치 자체는 저장하지 않으므로 스테이지를 나갔다가 재입장하면 공장 맵은 초기 상태로 시작한다.
+`FactoryGame`은 저장 설정을 적용한 `PortalEconomy`와 `FactoryProgression`을 먼저 만든 뒤, 스테이지 선택 화면 또는 해당 스테이지의 공장 런타임을 조립한다. 입장과 돌아가기는 같은 Scene을 다시 로드해 스테이지 런타임을 분리한다. 돌아갈 때 디버그 밸런스·해금 비용과 잔디·원재료 맵은 자동 저장한다. 컨베이어·건물 배치는 아직 저장하지 않으므로 재입장 시 제거된다.

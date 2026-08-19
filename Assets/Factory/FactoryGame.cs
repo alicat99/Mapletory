@@ -30,6 +30,7 @@ namespace Maptory.Factory
         private FactoryProgression progression;
         private PortalEconomy economy;
         private FactoryStageDefinition current_stage;
+        private FactoryDebugMapEditor debug_map_editor;
 
         private void Awake()
         {
@@ -85,6 +86,7 @@ namespace Maptory.Factory
 
         private void ReturnToStages()
         {
+            SaveRuntimeSettings();
             progression.Save();
             FactoryStageSession.Clear();
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -289,7 +291,7 @@ namespace Maptory.Factory
                 extraction_network.PortalEconomy,
                 item_upgrade_panel);
 
-            var debug_map_editor = gameObject.AddComponent<FactoryDebugMapEditor>();
+            debug_map_editor = gameObject.AddComponent<FactoryDebugMapEditor>();
             debug_map_editor.Initialize(
                 Camera.main,
                 grid,
@@ -308,6 +310,15 @@ namespace Maptory.Factory
                 debug_map_editor,
                 progression,
                 save_service);
+        }
+
+        private void SaveRuntimeSettings()
+        {
+            if (current_stage == null || debug_map_editor == null) return;
+
+            factory_settings.Capture(content_config, economy);
+            factory_settings.SetMap(debug_map_editor.CaptureSettings());
+            save_service.SaveSettings(factory_settings);
         }
 
         private void OnExtractorPlaced(ExtractorState extractor)
