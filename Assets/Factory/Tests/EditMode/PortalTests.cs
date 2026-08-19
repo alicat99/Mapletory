@@ -12,10 +12,10 @@ namespace Maptory.Factory.Tests
             Assert.That(PortalSupplyCatalog.Options.Count, Is.EqualTo(7));
             Assert.That(
                 PortalSupplyCatalog.Options[0].SelectionLabel,
-                Is.EqualTo("[오솔길1 level1] 빨간 달팽이 · 공급 0/60"));
+                Is.EqualTo("[오솔길1 level1] 빨간 달팽이"));
             Assert.That(
                 PortalSupplyCatalog.Options[6].SelectionLabel,
-                Is.EqualTo("[꿈꾸는 오솔길 level1] 파란 버섯 · 공급 0/60"));
+                Is.EqualTo("[꿈꾸는 오솔길 level1] 파란 버섯"));
             Assert.That(
                 PortalSupplyCatalog.Options.Select(option => option.Material),
                 Is.EquivalentTo(ErdaInjectionRecipes.All.Values));
@@ -135,47 +135,47 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
-        public void PortalsShareTenSecondIntervalRateBySelectedMaterial()
+        public void PortalsShareMonsterProgressAndApplyBothUpgradeTypes()
         {
             var economy = new PortalEconomy();
             var first = new PortalState(Vector2Int.zero, economy);
             var second = new PortalState(new Vector2Int(4, 4), economy);
             first.SelectMaterial(RawMaterialType.MonsterMushroomGreen);
             second.SelectMaterial(RawMaterialType.MonsterMushroomGreen);
+            for (var index = 0; index < 20; index++)
+            {
+                var portal = index % 2 == 0 ? first : second;
+                portal.AddInput(RawMaterialType.MonsterMushroomGreen);
+            }
+
+            Assert.That(economy.TotalMeso, Is.EqualTo(30));
+            Assert.That(economy.GetTotalItems(RawMaterialType.MonsterMushroomGreen),
+                Is.EqualTo(20));
+            Assert.That(economy.GetAvailableProduction(RawMaterialType.MonsterMushroomGreen),
+                Is.EqualTo(20));
+            Assert.That(economy.TryPurchaseProductionUpgrade(
+                RawMaterialType.MonsterMushroomGreen), Is.True);
+            Assert.That(economy.GetProductionUpgradeLevel(
+                RawMaterialType.MonsterMushroomGreen), Is.EqualTo(1));
+            Assert.That(economy.GetAvailableProduction(RawMaterialType.MonsterMushroomGreen),
+                Is.Zero);
+            Assert.That(economy.GetUnitValue(RawMaterialType.MonsterMushroomGreen),
+                Is.EqualTo(1.88f).Within(0.001f));
+
+            Assert.That(economy.TryPurchaseMesoUpgrade(
+                RawMaterialType.MonsterMushroomGreen), Is.True);
+            Assert.That(economy.TotalMeso, Is.EqualTo(10));
+            Assert.That(economy.GetMesoUpgradeLevel(
+                RawMaterialType.MonsterMushroomGreen), Is.EqualTo(1));
+            Assert.That(economy.GetUnitValue(RawMaterialType.MonsterMushroomGreen),
+                Is.EqualTo(2.5f).Within(0.001f));
+
             first.AddInput(RawMaterialType.MonsterMushroomGreen);
-            economy.Update(1f);
-            second.AddInput(RawMaterialType.MonsterMushroomGreen);
-            economy.Update(1f);
-            first.AddInput(RawMaterialType.MonsterMushroomGreen);
-            economy.Update(1f);
-            second.AddInput(RawMaterialType.MonsterMushroomGreen);
-
-            var dense_rate = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
-            Assert.That(dense_rate, Is.EqualTo(60f).Within(0.001f));
-            Assert.That(dense_rate * PortalEconomy.MESO_PER_ITEM,
-                Is.EqualTo(90f).Within(0.001f));
-
-            economy.Update(11f);
-
-            var decayed_rate = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
-            var expected_decay = dense_rate * Mathf.Pow(0.5f, 11f / 6f);
-            Assert.That(decayed_rate, Is.EqualTo(expected_decay).Within(0.001f));
-
-            first.AddInput(RawMaterialType.MonsterMushroomGreen);
-            economy.Update(1f);
-            second.AddInput(RawMaterialType.MonsterMushroomGreen);
-            economy.Update(1f);
-            first.AddInput(RawMaterialType.MonsterMushroomGreen);
-
-            var sparse_rate = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
-            Assert.That(sparse_rate, Is.GreaterThan(decayed_rate));
-            Assert.That(sparse_rate, Is.LessThan(60f));
-
-            economy.Update(1f);
-            second.AddInput(RawMaterialType.MonsterMushroomGreen);
-
-            var replaced_rate = economy.GetItemsPerMinute(RawMaterialType.MonsterMushroomGreen);
-            Assert.That(replaced_rate, Is.EqualTo(60f).Within(0.001f));
+            Assert.That(economy.TotalMeso, Is.EqualTo(12));
+            Assert.That(economy.GetTotalItems(RawMaterialType.MonsterMushroomGreen),
+                Is.EqualTo(21));
+            Assert.That(economy.GetUnitValue(RawMaterialType.MonsterSnailRed),
+                Is.EqualTo(1.5f).Within(0.001f));
         }
 
         [Test]

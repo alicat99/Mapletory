@@ -9,7 +9,7 @@ namespace Maptory.Factory
         public RawMaterialType Material { get; }
         public string SourceName { get; }
         public string ItemLabel { get; }
-        public string SelectionLabel => $"[{SourceName} level1] {ItemLabel} · 공급 0/60";
+        public string SelectionLabel => $"[{SourceName} level1] {ItemLabel}";
 
         public PortalSupplyOption(
             RawMaterialType material,
@@ -40,88 +40,150 @@ namespace Maptory.Factory
 
     public sealed class PortalEconomy
     {
-        public const float MESO_PER_ITEM = 1.5f;
+        public const int MAX_UPGRADE_LEVEL = 20;
 
-        private const float MEASUREMENT_WINDOW = 10f;
-        private const float EMA_HALF_LIFE = 6f;
+        private const int MESO_SCALE = 100;
+        private const int BASE_VALUE_UNITS = 150;
+        private const int MESO_BONUS_UNITS = 50;
+        private const long MESO_UPGRADE_BASE_COST = 20L;
+        private const long PRODUCTION_UPGRADE_BASE_COST = 20L;
+        private const float PRODUCTION_MULTIPLIER = 1.25f;
 
-        private readonly Dictionary<RawMaterialType, SupplyMeter> meters = new();
-        private float elapsed_time;
-        private int pending_meso_halves;
+        private readonly Dictionary<RawMaterialType, MonsterProgress> progress = new();
+        private long meso_units;
 
-        public long TotalMeso { get; private set; }
+        public long TotalMeso => meso_units / MESO_SCALE;
 
         public void RecordSupply(RawMaterialType material)
         {
-            if (!meters.TryGetValue(material, out var meter))
-            {
-                meter = new SupplyMeter();
-                meters.Add(material, meter);
-            }
-
-            meter.InputTimes.Enqueue(elapsed_time);
-            meter.TotalItems++;
-            pending_meso_halves += 3;
-            TotalMeso += pending_meso_halves / 2;
-            pending_meso_halves %= 2;
-
-            RefreshMeter(meter, 0f);
-        }
-
-        public void Update(float delta_time)
-        {
-            elapsed_time += delta_time;
-            foreach (var meter in meters.Values)
-            {
-                RefreshMeter(meter, delta_time);
-            }
-        }
-
-        public float GetItemsPerMinute(RawMaterialType material)
-        {
-            return meters.TryGetValue(material, out var meter) ? meter.ItemsPerMinute : 0f;
+            var monster = GetProgress(material);
+            monster.LifetimeProduction++;
+            monster.AvailableProduction++;
+            meso_units += GetUnitValueUnits(monster);
         }
 
         public long GetTotalItems(RawMaterialType material)
         {
-            return meters.TryGetValue(material, out var meter) ? meter.TotalItems : 0L;
+            return GetProgress(material).LifetimeProduction;
         }
 
-        private void RefreshMeter(SupplyMeter meter, float delta_time)
+        public long GetAvailableProduction(RawMaterialType material)
         {
-            while (meter.InputTimes.Count > 0
-                && elapsed_time - meter.InputTimes.Peek() > MEASUREMENT_WINDOW)
+            return GetProgress(material).AvailableProduction;
+        }
+
+        public int GetMesoUpgradeLevel(RawMaterialType material)
+        {
+            return GetProgress(material).MesoUpgradeLevel;
+        }
+
+        public int GetProductionUpgradeLevel(RawMaterialType material)
+        {
+            return GetProgress(material).ProductionUpgradeLevel;
+        }
+
+        public float GetMesoBonus(RawMaterialType material)
+        {
+            return GetProgress(material).MesoUpgradeLevel
+                * MESO_BONUS_UNITS / (float)MESO_SCALE;
+        }
+
+        public float GetProductionMultiplier(RawMaterialType material)
+        {
+            return Mathf.Pow(PRODUCTION_MULTIPLIER, GetProgress(material).ProductionUpgradeLevel);
+        }
+
+        public float GetUnitValue(RawMaterialType material)
+        {
+            return GetUnitValueUnits(GetProgress(material)) / (float)MESO_SCALE;
+        }
+
+        public long GetMesoUpgradeCost(RawMaterialType material)
+        {
+            var level = GetProgress(material).MesoUpgradeLevel;
+            return level >= MAX_UPGRADE_LEVEL
+                ? 0L
+                : MESO_UPGRADE_BASE_COST * (level + 1L);
+        }
+
+        public long GetProductionUpgradeCost(RawMaterialType material)
+        {
+            var level = GetProgress(material).ProductionUpgradeLevel;
+            return level >= MAX_UPGRADE_LEVEL
+                ? 0L
+                : PRODUCTION_UPGRADE_BASE_COST << level;
+        }
+
+        public bool CanPurchaseMesoUpgrade(RawMaterialType material)
+        {
+            var cost = GetMesoUpgradeCost(material);
+            return cost > 0L && meso_units >= cost * MESO_SCALE;
+        }
+
+        public bool CanPurchaseProductionUpgrade(RawMaterialType material)
+        {
+            var cost = GetProductionUpgradeCost(material);
+            return cost > 0L && GetProgress(material).AvailableProduction >= cost;
+        }
+
+        public bool TryPurchaseMesoUpgrade(RawMaterialType material)
+        {
+            if (!CanPurchaseMesoUpgrade(material)) return false;
+
+            var monster = GetProgress(material);
+            meso_units -= GetMesoUpgradeCost(material) * MESO_SCALE;
+            monster.MesoUpgradeLevel++;
+            return true;
+        }
+
+        public bool TryPurchaseProductionUpgrade(RawMaterialType material)
+        {
+            if (!CanPurchaseProductionUpgrade(material)) return false;
+
+            var monster = GetProgress(material);
+            monster.AvailableProduction -= GetProductionUpgradeCost(material);
+            monster.ProductionUpgradeLevel++;
+            return true;
+        }
+
+        public int CountAvailableProductionUpgrades()
+        {
+            var count = 0;
+            foreach (var option in PortalSupplyCatalog.Options)
             {
-                meter.InputTimes.Dequeue();
+                if (CanPurchaseProductionUpgrade(option.Material)) count++;
             }
 
-            var raw_rate = CalculateRate(meter.InputTimes);
-            if (meter.InputTimes.Count >= 4)
+            return count;
+        }
+
+        private MonsterProgress GetProgress(RawMaterialType material)
+        {
+            if (!progress.TryGetValue(material, out var monster))
             {
-                meter.ItemsPerMinute = raw_rate;
-                return;
+                monster = new MonsterProgress();
+                progress.Add(material, monster);
             }
 
-            var alpha = 1f - Mathf.Exp(-Mathf.Log(2f) * delta_time / EMA_HALF_LIFE);
-            meter.ItemsPerMinute = Mathf.Lerp(meter.ItemsPerMinute, raw_rate, alpha);
+            return monster;
         }
 
-        private static float CalculateRate(Queue<float> input_times)
+        private static long GetUnitValueUnits(MonsterProgress monster)
         {
-            if (input_times.Count < 2) return 0f;
-
-            var times = input_times.ToArray();
-            var mean_interval = (times[^1] - times[0]) / (times.Length - 1);
-            if (mean_interval <= 0f) return 0f;
-
-            return 60f / mean_interval;
+            var additive_value = BASE_VALUE_UNITS
+                + monster.MesoUpgradeLevel * MESO_BONUS_UNITS;
+            var multiplier = Mathf.Pow(
+                PRODUCTION_MULTIPLIER,
+                monster.ProductionUpgradeLevel);
+            return (long)Math.Round(additive_value * multiplier);
         }
 
-        private sealed class SupplyMeter
+        private sealed class MonsterProgress
         {
-            public readonly Queue<float> InputTimes = new();
-            public long TotalItems;
-            public float ItemsPerMinute;
+            public long LifetimeProduction;
+            public long AvailableProduction;
+            public int MesoUpgradeLevel;
+            public int ProductionUpgradeLevel;
         }
     }
 

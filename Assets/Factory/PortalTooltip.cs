@@ -86,10 +86,8 @@ namespace Maptory.Factory
             }
 
             var material = portal.SelectedMaterial.Value;
-            var items_per_minute = economy.GetItemsPerMinute(material);
-            var meso_per_minute = items_per_minute * PortalEconomy.MESO_PER_ITEM;
-            label.text = $"{material.ToKoreanName()} {items_per_minute:0.0}/분 | "
-                + $"{meso_per_minute:0.0}메소/분";
+            var unit_value = economy.GetUnitValue(material);
+            label.text = $"{material.ToKoreanName()} | {unit_value:0.##}메소/개";
             FitWidth();
         }
 

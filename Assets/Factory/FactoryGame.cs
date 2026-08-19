@@ -22,6 +22,7 @@ namespace Maptory.Factory
         private ConveyorBuilder conveyor_builder;
         private RecipeSelectionPanel recipe_panel;
         private PortalSelectionPanel portal_panel;
+        private ItemUpgradePanel item_upgrade_panel;
 
         private void Awake()
         {
@@ -197,6 +198,18 @@ namespace Maptory.Factory
             build_mode.Changed += hotbar.SetSelectedTool;
             build_mode.DemolitionChanged += hotbar.SetDemolitionMode;
             MesoHud.Create(transform, tile_catalog, extraction_network.PortalEconomy);
+            item_upgrade_panel = ItemUpgradePanel.Create(
+                transform,
+                tile_catalog,
+                extraction_network.PortalEconomy);
+            item_upgrade_panel.SetOtherModalCheck(
+                () => (recipe_panel != null && recipe_panel.IsOpen)
+                    || (portal_panel != null && portal_panel.IsOpen));
+            ItemUpgradeShortcut.Create(
+                transform,
+                tile_catalog,
+                extraction_network.PortalEconomy,
+                item_upgrade_panel);
         }
 
         private void OnExtractorPlaced(ExtractorState extractor)
@@ -319,7 +332,8 @@ namespace Maptory.Factory
             controller.Initialize(
                 ground_tilemap.GetComponent<Renderer>(),
                 () => (recipe_panel != null && recipe_panel.IsOpen)
-                    || (portal_panel != null && portal_panel.IsOpen));
+                    || (portal_panel != null && portal_panel.IsOpen)
+                    || (item_upgrade_panel != null && item_upgrade_panel.IsOpen));
         }
 
         private Tilemap CreateTilemap(string object_name, int sorting_order, TilemapRenderer.Mode mode)

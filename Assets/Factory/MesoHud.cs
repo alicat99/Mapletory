@@ -70,7 +70,6 @@ namespace Maptory.Factory
 
         private void Update()
         {
-            economy.Update(Time.deltaTime);
             Refresh();
         }
 
