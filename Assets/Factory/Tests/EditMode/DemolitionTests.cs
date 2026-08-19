@@ -76,5 +76,23 @@ namespace Maptory.Factory.Tests
 
             Assert.That(transport.Items, Is.Empty);
         }
+
+        [Test]
+        public void DragDemolitionFillsEveryCellBetweenPointerFrames()
+        {
+            var cells = FactoryDemolitionController.GetLineCells(
+                new Vector2Int(2, 3),
+                new Vector2Int(7, 5));
+
+            Assert.That(cells[0], Is.EqualTo(new Vector2Int(2, 3)));
+            Assert.That(cells[^1], Is.EqualTo(new Vector2Int(7, 5)));
+            Assert.That(cells.Count, Is.EqualTo(6));
+            for (var index = 1; index < cells.Count; index++)
+            {
+                var delta = cells[index] - cells[index - 1];
+                Assert.That(Mathf.Abs(delta.x), Is.LessThanOrEqualTo(1));
+                Assert.That(Mathf.Abs(delta.y), Is.LessThanOrEqualTo(1));
+            }
+        }
     }
 }
