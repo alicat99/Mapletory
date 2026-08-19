@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Maptory.Factory.Tests
@@ -129,6 +130,12 @@ namespace Maptory.Factory.Tests
         [Test]
         public void StageSelectionEntersOnlyTheInitiallyUnlockedStage()
         {
+            var existing_event_system = GameObject.Find("EventSystem");
+            if (existing_event_system != null)
+            {
+                UnityEngine.Object.DestroyImmediate(existing_event_system);
+            }
+
             var root = new GameObject("UI Root");
             var config = LoadConfig();
             var progression = new FactoryProgression(
@@ -140,6 +147,11 @@ namespace Maptory.Factory.Tests
                 progression,
                 stage_id => entered_stage = stage_id);
 
+            var event_system = GameObject.Find("EventSystem");
+            Assert.That(event_system, Is.Not.Null);
+            Assert.That(event_system.GetComponent<EventSystem>(), Is.Not.Null);
+            Assert.That(event_system.GetComponent<BaseInputModule>(), Is.Not.Null);
+
             var enter_buttons = root.GetComponentsInChildren<Button>(true)
                 .Where(button => button.name == "Button 입장")
                 .ToArray();
@@ -149,6 +161,26 @@ namespace Maptory.Factory.Tests
             enter_buttons[1].onClick.Invoke();
             Assert.That(entered_stage, Is.EqualTo("stage_1"));
             UnityEngine.Object.DestroyImmediate(root);
+            UnityEngine.Object.DestroyImmediate(event_system);
+        }
+
+        [Test]
+        public void EconomyChangesWaitForAutosaveInsteadOfWritingImmediately()
+        {
+            var save = new MemorySave();
+            var economy = new PortalEconomy();
+            var progression = new FactoryProgression(
+                LoadConfig(), economy, save, new FactoryProgressData());
+
+            economy.RecordSupply(RawMaterialType.MonsterSnailRed);
+
+            Assert.That(progression.NeedsSave, Is.True);
+            Assert.That(save.LastProgress, Is.Null);
+            progression.Save();
+            Assert.That(progression.NeedsSave, Is.False);
+            Assert.That(save.LastProgress.economy.monsters.Single(
+                monster => monster.material == RawMaterialType.MonsterSnailRed)
+                .lifetime_production, Is.EqualTo(1L));
         }
 
         [Test]

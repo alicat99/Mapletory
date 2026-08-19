@@ -33,6 +33,8 @@ namespace Maptory.Factory
             FactoryProgression progression,
             Action<string> enter_stage)
         {
+            FactoryUiEventSystem.EnsureExists();
+
             var canvas_object = new GameObject(
                 "Stage Selection UI",
                 typeof(RectTransform),

@@ -4,7 +4,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 namespace Maptory.Factory
@@ -31,7 +30,7 @@ namespace Maptory.Factory
             Sprite processing_machine_icon,
             Sprite portal_icon)
         {
-            EnsureEventSystem();
+            FactoryUiEventSystem.EnsureExists();
 
             var canvas_object = new GameObject(
                 "Factory Hotbar",
@@ -218,18 +217,6 @@ namespace Maptory.Factory
             button.onClick.AddListener(() => ToolClicked?.Invoke(tool));
 
             tool_slots.Add(tool, slot_image);
-        }
-
-        private static void EnsureEventSystem()
-        {
-            if (EventSystem.current != null)
-            {
-                return;
-            }
-
-            var event_system = new GameObject("EventSystem", typeof(EventSystem));
-            var input_module = event_system.AddComponent<InputSystemUIInputModule>();
-            input_module.AssignDefaultActions();
         }
 
         private static GameObject CreateUiObject(string object_name, Transform parent)

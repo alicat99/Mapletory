@@ -11,7 +11,7 @@
 5. 조건을 만족해 구매하면 메소와 사용 가능 생산량이 한 번만 차감되고 사냥터 행이 즉시 선택 가능 상태로 바뀌는지 확인한다.
 6. Play Mode를 다시 시작해 스테이지·사냥터 해금, 메소와 몬스터 진행도가 복원되는지 확인한다.
 
-Edit Mode의 `ProgressionTests`는 기본 해금, 스테이지·사냥터 구매 원자성, 중복 구매, 부족 조건의 부분 차감 방지, 잠긴 몬스터 직접 선택 차단, 설정 직렬화와 UI 잠금 상태를 검증한다.
+Edit Mode의 `ProgressionTests`는 기본 해금, 스테이지·사냥터 구매 원자성, 중복 구매, 부족 조건의 부분 차감 방지, 잠긴 몬스터 직접 선택 차단, 설정 직렬화, 선택 화면의 UI 입력 시스템과 자동 저장 지연을 검증한다.
 
 ## 2. 기능 사용법
 
@@ -26,6 +26,7 @@ var economy = new PortalEconomy();
 save.LoadSettings().Apply(config, economy);
 var progression = new FactoryProgression(
     config, economy, save, save.LoadProgress());
+gameObject.AddComponent<FactoryProgressAutosave>().Initialize(progression);
 
 if (progression.CanUnlockHuntingGround("lith_harbor_outskirts"))
 {
@@ -42,6 +43,7 @@ if (progression.CanUnlockHuntingGround("lith_harbor_outskirts"))
 | `FactoryContentConfig.cs` | ScriptableObject 기반 스테이지·사냥터 정의와 런타임 편집 가능한 비용·요구량 |
 | `FactorySaveService.cs` | PlayerPrefs JSON에 진행 데이터와 디버그 설정 오버라이드를 분리 저장·불러오기 |
 | `FactoryProgression.cs` | 해금 상태, 구매 검증·원자적 소비, 저장 요청과 현재 스테이지 세션 소유 |
+| `FactoryProgressAutosave.cs` | 변경된 진행 데이터를 2초 간격 및 앱 비활성화·종료 시 저장 |
 | `StageSelectionPanel.cs` | 스테이지 목록·잠금·구매 팝업, 입장과 우측 상단 돌아가기 UI |
 | `Resources/Factory/Progression/FactoryContentConfig.asset` | 빌드에서 사용하는 기본 스테이지·사냥터 비용과 조건 원본 |
 

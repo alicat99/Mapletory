@@ -11,9 +11,11 @@ namespace Maptory.Factory
         private readonly HashSet<string> unlocked_stages;
         private readonly HashSet<string> unlocked_hunting_grounds;
         private bool defer_save;
+        private bool needs_save;
 
         public FactoryContentConfig Config => config;
         public PortalEconomy Economy => economy;
+        public bool NeedsSave => needs_save;
         public event Action Changed;
 
         public FactoryProgression(
@@ -105,12 +107,13 @@ namespace Maptory.Factory
                 unlocked_hunting_grounds = new List<string>(unlocked_hunting_grounds),
                 economy = economy.ExportProgress()
             });
+            needs_save = false;
             Changed?.Invoke();
         }
 
         private void OnEconomyChanged()
         {
-            if (!defer_save) Save();
+            if (!defer_save) needs_save = true;
         }
     }
 

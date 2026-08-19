@@ -200,6 +200,8 @@ if (economy.CanPurchaseProductionUpgrade(RawMaterialType.MonsterSnailRed))
 | `FactoryCameraController.cs` | 키보드 이동, UI 바깥 우클릭 패닝·휠 확대/축소와 맵 범위 제한을 담당하고 선택 모달 입력 차단 함수를 적용 |
 | `DebugTools/FactoryDebugPanel.cs` | F1 런타임 디버그 UI, 맵·몬스터·업그레이드·해금 설정과 설정 저장 후 새 게임 재시작 |
 | `Progression/FactoryContentConfig.cs` | ScriptableObject 기반 스테이지·사냥터 비용과 조건 정의 |
+| `Progression/FactoryProgressAutosave.cs` | 빈번한 생산 이벤트를 모아 주기적으로 진행 데이터를 저장 |
+| `FactoryUiEventSystem.cs` | 스테이지 선택과 공장 UI가 공유하는 Input System UI 입력 초기화 |
 | `Progression/FactorySaveService.cs` | 플레이 진행과 디버그 설정을 분리한 PlayerPrefs JSON 저장 |
 | `Progression/FactoryProgression.cs` | 해금 상태·구매 검증·원자적 재화 소비와 스테이지 세션 소유 |
 | `Progression/StageSelectionPanel.cs` | 스테이지 목록·구매·입장과 공장 우측 상단 돌아가기 UI |

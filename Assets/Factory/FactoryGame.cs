@@ -69,6 +69,7 @@ namespace Maptory.Factory
                 economy,
                 save_service,
                 save_service.LoadProgress());
+            gameObject.AddComponent<FactoryProgressAutosave>().Initialize(progression);
         }
 
         private void EnterStage(string stage_id)
