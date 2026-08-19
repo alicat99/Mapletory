@@ -76,9 +76,9 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
-        public void ErdaInjectorUsesOneCellAndProducesAllSevenTransportItems()
+        public void ErdaInjectorUsesOneCellAndProducesAllNineTransportItems()
         {
-            Assert.That(ErdaInjectionRecipes.All.Count, Is.EqualTo(7));
+            Assert.That(ErdaInjectionRecipes.All.Count, Is.EqualTo(9));
             Assert.That(
                 ErdaInjectionRecipes.GetResult(RawMaterialType.SpikeMushroomBlue),
                 Is.EqualTo(RawMaterialType.MonsterSpikeMushroomBlue));

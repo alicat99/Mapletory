@@ -39,14 +39,14 @@ namespace Maptory.Factory
         private NumericField available_production_field;
         private NumericField meso_cost_field;
         private NumericField production_cost_field;
-        private NumericField maximum_level_field;
+        private NumericField meso_coefficient_field;
+        private NumericField production_coefficient_field;
+        private TMP_Text upgrade_monster_name;
         private TMP_Text stage_name;
         private TMP_Text hunting_ground_name;
-        private TMP_Text requirement_material_name;
         private TMP_Text unlock_summary;
         private NumericField stage_unlock_cost_field;
         private NumericField hunting_unlock_cost_field;
-        private NumericField requirement_amount_field;
         private int selected_page;
         private int selected_monster;
         private int selected_stage;
@@ -109,7 +109,7 @@ namespace Maptory.Factory
 
         private void Update()
         {
-            if (Keyboard.current != null && Keyboard.current.f1Key.wasPressedThisFrame)
+            if (Keyboard.current != null && Keyboard.current.f2Key.wasPressedThisFrame)
             {
                 Toggle();
             }
@@ -135,7 +135,7 @@ namespace Maptory.Factory
             panel_rect.sizeDelta = new Vector2(390f, 670f);
 
             CreateText(
-                "런타임 디버그 [F1]",
+                "런타임 디버그 [F2]",
                 panel_root.transform,
                 26f,
                 TextAlignmentOptions.MidlineLeft,
@@ -283,39 +283,58 @@ namespace Maptory.Factory
         private void BuildUpgradePage()
         {
             var page = CreatePage("Upgrade Page");
-            CreateText(
-                "전역 비용과 최대 레벨",
+            var previous = CreateButton(page.transform, "<", new Vector2(0f, 0f), new Vector2(42f, 38f));
+            previous.onClick.AddListener(() => SelectMonster(-1));
+            upgrade_monster_name = CreateText(
+                "",
                 page.transform,
                 20f,
-                TextAlignmentOptions.MidlineLeft,
-                Vector2.zero,
-                new Vector2(350f, 34f),
+                TextAlignmentOptions.Center,
+                new Vector2(50f, 0f),
+                new Vector2(248f, 38f),
                 TEXT_COLOR);
+            var next = CreateButton(page.transform, ">", new Vector2(306f, 0f), new Vector2(42f, 38f));
+            next.onClick.AddListener(() => SelectMonster(1));
 
             meso_cost_field = CreateIntegerField(page.transform, "메소 기본 비용", -54f, value =>
             {
-                economy.SetUpgradeCosts(value, economy.ProductionUpgradeBaseCost);
+                economy.SetUpgradeBaseCosts(
+                    SelectedMaterial,
+                    value,
+                    economy.GetProductionUpgradeBaseCost(SelectedMaterial));
                 RefreshUpgradeFields();
             });
             production_cost_field = CreateIntegerField(page.transform, "생산량 기본 비용", -108f, value =>
             {
-                economy.SetUpgradeCosts(economy.MesoUpgradeBaseCost, value);
+                economy.SetUpgradeBaseCosts(
+                    SelectedMaterial,
+                    economy.GetMesoUpgradeBaseCost(SelectedMaterial),
+                    value);
                 RefreshUpgradeFields();
             });
-            maximum_level_field = CreateIntegerField(page.transform, "최대 레벨", -162f, value =>
+            meso_coefficient_field = CreateFloatField(page.transform, "메소 비용 계수", -162f, value =>
             {
-                economy.SetMaximumUpgradeLevel((int)value);
+                economy.SetUpgradeCostCoefficients(
+                    value,
+                    economy.ProductionUpgradeCostCoefficient);
+                RefreshUpgradeFields();
+            });
+            production_coefficient_field = CreateFloatField(page.transform, "생산량 비용 계수", -216f, value =>
+            {
+                economy.SetUpgradeCostCoefficients(
+                    economy.MesoUpgradeCostCoefficient,
+                    value);
                 RefreshUpgradeFields();
             });
 
             CreateText(
-                "개체 가치 계산\n(기본 가치 + 합연산 × 메소 Lv)\n× 곱연산^(생산 Lv)\n\n"
-                + "효과 수치는 몬스터 탭에서 종류별로 조정합니다.\n변경값은 이후 포탈 입력부터 적용됩니다.",
+                "다음 강화 비용 = 기본 비용 × 계수^현재 레벨\n"
+                + "기본 비용은 몬스터마다 다르게 설정됩니다.\n최대 레벨 제한은 없습니다.",
                 page.transform,
                 17f,
                 TextAlignmentOptions.TopLeft,
-                new Vector2(0f, -232f),
-                new Vector2(350f, 190f),
+                new Vector2(0f, -286f),
+                new Vector2(350f, 126f),
                 MUTED_COLOR);
             RefreshUpgradeFields();
         }
@@ -353,28 +372,13 @@ namespace Maptory.Factory
                 RefreshUnlockFields();
             });
 
-            CreateText("필요 재료", page.transform, 17f, TextAlignmentOptions.MidlineLeft,
-                new Vector2(0f, -222f), new Vector2(100f, 42f), MUTED_COLOR);
-            var previous_material = CreateButton(page.transform, "<", new Vector2(104f, -222f), new Vector2(36f, 42f));
-            previous_material.onClick.AddListener(() => SelectRequirementMaterial(-1));
-            requirement_material_name = CreateText("", page.transform, 16f, TextAlignmentOptions.Center,
-                new Vector2(144f, -222f), new Vector2(156f, 42f), TEXT_COLOR);
-            var next_material = CreateButton(page.transform, ">", new Vector2(304f, -222f), new Vector2(36f, 42f));
-            next_material.onClick.AddListener(() => SelectRequirementMaterial(1));
-
-            requirement_amount_field = CreateIntegerField(page.transform, "필요 수량", -276f, value =>
-            {
-                SelectedHuntingGround.SetRequirement(SelectedHuntingGround.RequiredMaterial, value);
-                RefreshUnlockFields();
-            });
-
             unlock_summary = CreateText("", page.transform, 16f, TextAlignmentOptions.TopLeft,
-                new Vector2(0f, -338f), new Vector2(350f, 70f), MUTED_COLOR);
+                new Vector2(0f, -232f), new Vector2(350f, 70f), MUTED_COLOR);
 
             var restart = CreateButton(
                 page.transform,
                 "변경사항 저장 후 처음부터 실행",
-                new Vector2(0f, -438f),
+                new Vector2(0f, -330f),
                 new Vector2(344f, 54f));
             restart.onClick.AddListener(SaveSettingsAndRestart);
             RefreshUnlockFields();
@@ -506,26 +510,6 @@ namespace Maptory.Factory
             RefreshUnlockFields();
         }
 
-        private void SelectRequirementMaterial(int offset)
-        {
-            var options = PortalSupplyCatalog.Options;
-            var index = 0;
-            for (var candidate = 0; candidate < options.Count; candidate++)
-            {
-                if (options[candidate].Material == SelectedHuntingGround.RequiredMaterial)
-                {
-                    index = candidate;
-                    break;
-                }
-            }
-
-            index = (index + offset + options.Count) % options.Count;
-            SelectedHuntingGround.SetRequirement(
-                options[index].Material,
-                SelectedHuntingGround.RequiredAmount);
-            RefreshUnlockFields();
-        }
-
         private void RefreshUnlockFields()
         {
             if (stage_name == null) return;
@@ -534,18 +518,18 @@ namespace Maptory.Factory
             var ground = SelectedHuntingGround;
             stage_name.text = stage.DisplayName;
             hunting_ground_name.text = ground.SupplyOption.SourceName;
-            requirement_material_name.text = ground.RequiredMaterial.ToKoreanName();
             stage_unlock_cost_field.Set(stage.UnlockMesoCost);
             hunting_unlock_cost_field.Set(ground.UnlockMesoCost);
-            requirement_amount_field.Set(ground.RequiredAmount);
             unlock_summary.text = $"몬스터: {ground.SupplyOption.ItemLabel}\n"
-                + $"초기 해금: {(ground.InitiallyUnlocked ? "예" : "아니오")}";
+                + $"초기 해금: {(ground.InitiallyUnlocked ? "예" : "아니오")}\n"
+                + "해금 조건: 메소만 사용";
         }
 
         private void SaveSettingsAndRestart()
         {
-            var settings = new FactorySettingsData();
+            var settings = save_service.LoadSettings();
             settings.Capture(progression.Config, economy);
+            settings.SetMap(map_editor.CaptureSettings());
             save_service.SaveSettings(settings);
             save_service.ResetProgress();
             FactoryStageSession.Clear();
@@ -574,6 +558,7 @@ namespace Maptory.Factory
             production_level_field.Set(economy.GetProductionUpgradeLevel(option.Material));
             available_production_field.Set(economy.GetAvailableProduction(option.Material));
             RefreshMonsterSummary();
+            RefreshUpgradeFields();
         }
 
         private void RefreshMonsterSummary()
@@ -589,9 +574,12 @@ namespace Maptory.Factory
         {
             if (meso_cost_field == null) return;
 
-            meso_cost_field.Set(economy.MesoUpgradeBaseCost);
-            production_cost_field.Set(economy.ProductionUpgradeBaseCost);
-            maximum_level_field.Set(economy.MaximumUpgradeLevel);
+            var option = PortalSupplyCatalog.Options[selected_monster];
+            upgrade_monster_name.text = option.ItemLabel;
+            meso_cost_field.Set(economy.GetMesoUpgradeBaseCost(option.Material));
+            production_cost_field.Set(economy.GetProductionUpgradeBaseCost(option.Material));
+            meso_coefficient_field.Set(economy.MesoUpgradeCostCoefficient);
+            production_coefficient_field.Set(economy.ProductionUpgradeCostCoefficient);
         }
 
         private void OnBrushChanged(FactoryDebugBrush brush)

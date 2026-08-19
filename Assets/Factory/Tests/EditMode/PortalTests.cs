@@ -7,18 +7,15 @@ namespace Maptory.Factory.Tests
     public sealed class PortalTests
     {
         [Test]
-        public void SupplyCatalogUsesSevenProducedMonsterItems()
+        public void SupplyCatalogUsesEightStageMonsterItems()
         {
-            Assert.That(PortalSupplyCatalog.Options.Count, Is.EqualTo(7));
+            Assert.That(PortalSupplyCatalog.Options.Count, Is.EqualTo(8));
             Assert.That(
                 PortalSupplyCatalog.Options[0].SelectionLabel,
-                Is.EqualTo("[오솔길1 level1] 빨간 달팽이"));
+                Is.EqualTo("[리스항구 외곽 level1] 달팽이"));
             Assert.That(
-                PortalSupplyCatalog.Options[6].SelectionLabel,
-                Is.EqualTo("[꿈꾸는 오솔길 level1] 파란 버섯"));
-            Assert.That(
-                PortalSupplyCatalog.Options.Select(option => option.Material),
-                Is.EquivalentTo(ErdaInjectionRecipes.All.Values));
+                PortalSupplyCatalog.Options[7].SelectionLabel,
+                Is.EqualTo("[초록 뿔버섯 숲 level1] 초록 뿔버섯"));
         }
 
         [Test]
@@ -189,15 +186,19 @@ namespace Maptory.Factory.Tests
             economy.SetMesoUpgradeLevel(material, 2);
             economy.SetProductionUpgradeLevel(material, 1);
             economy.SetAvailableProduction(material, 123);
-            economy.SetUpgradeCosts(7, 11);
+            economy.SetUpgradeBaseCosts(material, 7, 11);
+            economy.SetUpgradeCostCoefficients(3f, 2f);
 
             Assert.That(economy.GetUnitValue(material), Is.EqualTo(12f).Within(0.001f));
             Assert.That(economy.GetAvailableProduction(material), Is.EqualTo(123));
-            Assert.That(economy.GetMesoUpgradeCost(material), Is.EqualTo(21));
+            Assert.That(economy.GetMesoUpgradeCost(material), Is.EqualTo(63));
             Assert.That(economy.GetProductionUpgradeCost(material), Is.EqualTo(22));
 
             economy.RecordSupply(material);
             Assert.That(economy.TotalMeso, Is.EqualTo(12));
+
+            economy.SetMesoUpgradeLevel(material, 100);
+            Assert.That(economy.GetMesoUpgradeLevel(material), Is.EqualTo(100));
         }
 
         [Test]

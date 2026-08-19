@@ -10,12 +10,28 @@ namespace Maptory.Factory.Tests
     public sealed class ProgressionTests
     {
         [Test]
-        public void ContentConfigDefinesThreeStagesAndOneInitialGroundPerStage()
+        public void ContentConfigDefinesTwoOrderedStagesAndOneInitialGroundPerStage()
         {
             var config = LoadConfig();
 
-            Assert.That(config.Stages.Count, Is.EqualTo(3));
+            Assert.That(config.Stages.Count, Is.EqualTo(2));
             Assert.That(config.Stages[0].UnlockMesoCost, Is.Zero);
+            Assert.That(config.Stages[0].HuntingGrounds.Select(ground => ground.Monster),
+                Is.EqualTo(new[]
+                {
+                    RawMaterialType.MonsterSnailGreen,
+                    RawMaterialType.MonsterSnailRed,
+                    RawMaterialType.MonsterSnailBlue
+                }));
+            Assert.That(config.Stages[1].HuntingGrounds.Select(ground => ground.Monster),
+                Is.EqualTo(new[]
+                {
+                    RawMaterialType.MonsterMushroomBlue,
+                    RawMaterialType.MonsterMushroomOrange,
+                    RawMaterialType.MonsterMushroomGreen,
+                    RawMaterialType.MonsterSpikeMushroomOrange,
+                    RawMaterialType.MonsterSpikeMushroomGreen
+                }));
             foreach (var stage in config.Stages)
             {
                 Assert.That(stage.HuntingGrounds.FindAll(ground => ground.InitiallyUnlocked).Count,
@@ -69,28 +85,28 @@ namespace Maptory.Factory.Tests
                     economy = economy.ExportProgress()
                 });
 
-            Assert.That(progression.TryUnlockHuntingGround("lith_harbor_outskirts"), Is.True);
+            Assert.That(progression.TryUnlockHuntingGround("trail_1"), Is.True);
             Assert.That(economy.TotalMeso, Is.EqualTo(5L));
-            Assert.That(economy.GetAvailableProduction(RawMaterialType.MonsterSnailRed), Is.Zero);
+            Assert.That(economy.GetAvailableProduction(RawMaterialType.MonsterSnailRed), Is.EqualTo(10L));
 
-            Assert.That(progression.TryUnlockHuntingGround("lith_harbor_outskirts"), Is.True);
+            Assert.That(progression.TryUnlockHuntingGround("trail_1"), Is.True);
             Assert.That(economy.TotalMeso, Is.EqualTo(5L));
-            Assert.That(economy.GetAvailableProduction(RawMaterialType.MonsterSnailRed), Is.Zero);
+            Assert.That(economy.GetAvailableProduction(RawMaterialType.MonsterSnailRed), Is.EqualTo(10L));
         }
 
         [Test]
-        public void MissingRequirementDoesNotPartiallyChargeMeso()
+        public void InsufficientMesoDoesNotPartiallyUnlockHuntingGround()
         {
             var config = LoadConfig();
-            var economy = CreateEconomyWithMeso(30L);
+            var economy = CreateEconomyWithMeso(20L);
             var progression = new FactoryProgression(
                 config, economy, new MemorySave(), new FactoryProgressData
                 {
                     economy = economy.ExportProgress()
                 });
 
-            Assert.That(progression.TryUnlockHuntingGround("lith_harbor_outskirts"), Is.False);
-            Assert.That(economy.TotalMeso, Is.EqualTo(30L));
+            Assert.That(progression.TryUnlockHuntingGround("trail_1"), Is.False);
+            Assert.That(economy.TotalMeso, Is.EqualTo(20L));
         }
 
         [Test]
@@ -107,24 +123,49 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
-        public void DebugSettingsRoundTripKeepsUnlockCostsAndRequirements()
+        public void DebugSettingsRoundTripKeepsUnlockEconomyAndMapValues()
         {
             var source = LoadConfig();
             var source_economy = new PortalEconomy();
             source.GetStage("stage_2").SetUnlockMesoCost(777L);
-            source.GetHuntingGround("lith_harbor_outskirts").SetRequirement(
-                RawMaterialType.MonsterMushroomBlue,
-                42L);
+            source.GetHuntingGround("trail_1").SetUnlockMesoCost(42L);
+            source_economy.SetBaseValue(RawMaterialType.MonsterSnailGreen, 9f);
+            source_economy.SetUpgradeBaseCosts(
+                RawMaterialType.MonsterSnailGreen,
+                123L,
+                456L);
+            source_economy.SetUpgradeCostCoefficients(1.7f, 2.3f);
             var settings = new FactorySettingsData();
             settings.Capture(source, source_economy);
+            settings.SetMap(new FactoryMapSettingsData
+            {
+                stage_id = "stage_1",
+                width = 2,
+                height = 1,
+                grass_tiles = { 0, 1 },
+                deposits =
+                {
+                    new DepositSettingsData
+                    {
+                        material = RawMaterialType.Snail,
+                        x = 4,
+                        y = 5
+                    }
+                }
+            });
 
             var target = LoadConfig();
-            settings.Apply(target, new PortalEconomy());
+            var target_economy = new PortalEconomy();
+            settings.Apply(target, target_economy);
 
             Assert.That(target.GetStage("stage_2").UnlockMesoCost, Is.EqualTo(777L));
-            var ground = target.GetHuntingGround("lith_harbor_outskirts");
-            Assert.That(ground.RequiredMaterial, Is.EqualTo(RawMaterialType.MonsterMushroomBlue));
-            Assert.That(ground.RequiredAmount, Is.EqualTo(42L));
+            Assert.That(target.GetHuntingGround("trail_1").UnlockMesoCost, Is.EqualTo(42L));
+            Assert.That(target_economy.GetBaseValue(RawMaterialType.MonsterSnailGreen), Is.EqualTo(9f));
+            Assert.That(target_economy.GetMesoUpgradeBaseCost(
+                RawMaterialType.MonsterSnailGreen), Is.EqualTo(123L));
+            Assert.That(target_economy.MesoUpgradeCostCoefficient, Is.EqualTo(1.7f));
+            Assert.That(settings.GetMap("stage_1").grass_tiles, Is.EqualTo(new[] { 0, 1 }));
+            Assert.That(settings.GetMap("stage_1").deposits[0].x, Is.EqualTo(4));
         }
 
         [Test]
@@ -199,10 +240,11 @@ namespace Maptory.Factory.Tests
                 material => progression.IsMonsterUnlocked("stage_1", material)));
 
             var buttons = root.GetComponentsInChildren<Button>(true);
-            Assert.That(buttons.Single(button => button.name == "trail_1").interactable, Is.True);
             Assert.That(buttons.Single(button => button.name == "lith_harbor_outskirts").interactable,
+                Is.True);
+            Assert.That(buttons.Single(button => button.name == "trail_1").interactable,
                 Is.False);
-            Assert.That(buttons.Single(button => button.name == "Unlock lith_harbor_outskirts")
+            Assert.That(buttons.Single(button => button.name == "Unlock trail_1")
                 .gameObject.activeSelf, Is.True);
             Assert.That(panel.RowCount, Is.EqualTo(3));
             UnityEngine.Object.DestroyImmediate(root);

@@ -26,6 +26,7 @@ namespace Maptory.Factory
         private ItemUpgradePanel item_upgrade_panel;
         private FactoryContentConfig content_config;
         private FactorySaveService save_service;
+        private FactorySettingsData factory_settings;
         private FactoryProgression progression;
         private PortalEconomy economy;
         private FactoryStageDefinition current_stage;
@@ -63,7 +64,8 @@ namespace Maptory.Factory
             content_config = config_asset.CreateRuntimeCopy();
             save_service = new FactorySaveService();
             economy = new PortalEconomy();
-            save_service.LoadSettings().Apply(content_config, economy);
+            factory_settings = save_service.LoadSettings();
+            factory_settings.Apply(content_config, economy);
             progression = new FactoryProgression(
                 content_config,
                 economy,
@@ -114,6 +116,26 @@ namespace Maptory.Factory
 
         private void FillGround()
         {
+            var saved_map = factory_settings.GetMap(current_stage.Id);
+            if (saved_map != null
+                && saved_map.width == map_width
+                && saved_map.height == map_height
+                && saved_map.grass_tiles.Count == map_width * map_height)
+            {
+                for (var y = 0; y < map_height; y++)
+                {
+                    for (var x = 0; x < map_width; x++)
+                    {
+                        var tile_index = saved_map.grass_tiles[y * map_width + x];
+                        ground_tilemap.SetTile(
+                            new Vector3Int(x, y),
+                            tile_index == 1 ? tile_catalog.Grass02 : tile_catalog.Grass01);
+                    }
+                }
+                ground_tilemap.CompressBounds();
+                return;
+            }
+
             var random = new System.Random(grass_seed);
 
             for (var y = 0; y < map_height; y++)
@@ -277,7 +299,8 @@ namespace Maptory.Factory
                 extraction_network,
                 demolition,
                 item_transport,
-                map_size);
+                map_size,
+                current_stage.Id);
             FactoryDebugPanel.Create(
                 transform,
                 tile_catalog,
@@ -378,14 +401,19 @@ namespace Maptory.Factory
 
         private ExtractionNetwork CreateExtractionNetwork()
         {
-            var deposits = new[]
+            var saved_map = factory_settings.GetMap(current_stage.Id);
+            var deposits = saved_map == null
+                ? new[]
             {
                 new RawMaterialDeposit(RawMaterialType.DyeBlue, new Vector2Int(8, 8)),
                 new RawMaterialDeposit(RawMaterialType.DyeRed, new Vector2Int(41, 8)),
                 new RawMaterialDeposit(RawMaterialType.DyeYellow, new Vector2Int(8, 41)),
                 new RawMaterialDeposit(RawMaterialType.Mushroom, new Vector2Int(41, 41)),
                 new RawMaterialDeposit(RawMaterialType.Snail, new Vector2Int(25, 25))
-            };
+            }
+                : saved_map.deposits.ConvertAll(deposit => new RawMaterialDeposit(
+                    deposit.material,
+                    new Vector2Int(deposit.x, deposit.y))).ToArray();
             return new ExtractionNetwork(
                 deposits,
                 conveyor_network,

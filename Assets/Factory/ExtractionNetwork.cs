@@ -14,7 +14,7 @@ namespace Maptory.Factory
         Horn,
         MonsterMushroomBlue, MonsterMushroomGreen, MonsterMushroomOrange,
         MonsterSnailBlue, MonsterSnailGreen, MonsterSnailRed,
-        MonsterSpikeMushroomBlue
+        MonsterSpikeMushroomBlue, MonsterSpikeMushroomOrange, MonsterSpikeMushroomGreen
     }
 
     public static class RawMaterialTypeExtensions
@@ -26,6 +26,12 @@ namespace Maptory.Factory
 
         public static string ToItemSpriteName(this RawMaterialType material)
         {
+            if (material == RawMaterialType.MonsterSpikeMushroomOrange
+                || material == RawMaterialType.MonsterSpikeMushroomGreen)
+            {
+                return RawMaterialType.MonsterSpikeMushroomBlue.ToString();
+            }
+
             return material == RawMaterialType.Snail ? "SnailGreen" : material.ToString();
         }
 
@@ -58,6 +64,8 @@ namespace Maptory.Factory
                 RawMaterialType.MonsterSnailGreen => "초록 달팽이 몬스터",
                 RawMaterialType.MonsterSnailRed => "빨간 달팽이 몬스터",
                 RawMaterialType.MonsterSpikeMushroomBlue => "파란 뿔버섯 몬스터",
+                RawMaterialType.MonsterSpikeMushroomOrange => "주황 뿔버섯 몬스터",
+                RawMaterialType.MonsterSpikeMushroomGreen => "초록 뿔버섯 몬스터",
                 _ => throw new ArgumentOutOfRangeException(nameof(material))
             };
         }

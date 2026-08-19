@@ -26,13 +26,14 @@ namespace Maptory.Factory
     {
         private static readonly PortalSupplyOption[] OPTIONS =
         {
-            new(RawMaterialType.MonsterSnailRed, "오솔길1", "빨간 달팽이"),
             new(RawMaterialType.MonsterSnailGreen, "리스항구 외곽", "달팽이"),
-            new(RawMaterialType.MonsterMushroomGreen, "포자언덕", "초록 버섯"),
+            new(RawMaterialType.MonsterSnailRed, "오솔길1", "빨간 달팽이"),
             new(RawMaterialType.MonsterSnailBlue, "오솔길2", "파란 달팽이"),
+            new(RawMaterialType.MonsterMushroomBlue, "꿈꾸는 오솔길", "파란 버섯"),
             new(RawMaterialType.MonsterMushroomOrange, "헤네시스 북쪽언덕", "주황 버섯"),
-            new(RawMaterialType.MonsterSpikeMushroomBlue, "뿔버섯 숲", "파란 뿔버섯"),
-            new(RawMaterialType.MonsterMushroomBlue, "꿈꾸는 오솔길", "파란 버섯")
+            new(RawMaterialType.MonsterMushroomGreen, "포자언덕", "초록 버섯"),
+            new(RawMaterialType.MonsterSpikeMushroomOrange, "주황 뿔버섯 숲", "주황 뿔버섯"),
+            new(RawMaterialType.MonsterSpikeMushroomGreen, "초록 뿔버섯 숲", "초록 뿔버섯")
         };
 
         public static IReadOnlyList<PortalSupplyOption> Options => OPTIONS;
@@ -50,21 +51,23 @@ namespace Maptory.Factory
 
     public sealed class PortalEconomy
     {
-        public const int MAX_UPGRADE_LEVEL = 20;
-
         private const int MESO_SCALE = 100;
         private const float DEFAULT_BASE_VALUE = 1.5f;
         private const float DEFAULT_MESO_BONUS = 0.5f;
         private const float DEFAULT_PRODUCTION_MULTIPLIER = 1.25f;
+        private const long DEFAULT_UPGRADE_BASE_COST = 20L;
+        private const float DEFAULT_MESO_COST_COEFFICIENT = 1.5f;
+        private const float DEFAULT_PRODUCTION_COST_COEFFICIENT = 2f;
 
         private readonly Dictionary<RawMaterialType, MonsterProgress> progress = new();
         private readonly Dictionary<RawMaterialType, MonsterBalance> balances = new();
         private long meso_units;
 
         public long TotalMeso => meso_units / MESO_SCALE;
-        public long MesoUpgradeBaseCost { get; private set; } = 20L;
-        public long ProductionUpgradeBaseCost { get; private set; } = 20L;
-        public int MaximumUpgradeLevel { get; private set; } = MAX_UPGRADE_LEVEL;
+        public float MesoUpgradeCostCoefficient { get; private set; } =
+            DEFAULT_MESO_COST_COEFFICIENT;
+        public float ProductionUpgradeCostCoefficient { get; private set; } =
+            DEFAULT_PRODUCTION_COST_COEFFICIENT;
         public event Action Changed;
 
         public void RecordSupply(RawMaterialType material)
@@ -130,6 +133,16 @@ namespace Maptory.Factory
             return GetBalance(material).ProductionMultiplierPerLevel;
         }
 
+        public long GetMesoUpgradeBaseCost(RawMaterialType material)
+        {
+            return GetBalance(material).MesoUpgradeBaseCost;
+        }
+
+        public long GetProductionUpgradeBaseCost(RawMaterialType material)
+        {
+            return GetBalance(material).ProductionUpgradeBaseCost;
+        }
+
         public void SetBaseValue(RawMaterialType material, float value)
         {
             GetBalance(material).BaseValue = Mathf.Max(0f, value);
@@ -150,13 +163,13 @@ namespace Maptory.Factory
 
         public void SetMesoUpgradeLevel(RawMaterialType material, int level)
         {
-            GetProgress(material).MesoUpgradeLevel = Mathf.Clamp(level, 0, MaximumUpgradeLevel);
+            GetProgress(material).MesoUpgradeLevel = Mathf.Max(0, level);
             Changed?.Invoke();
         }
 
         public void SetProductionUpgradeLevel(RawMaterialType material, int level)
         {
-            GetProgress(material).ProductionUpgradeLevel = Mathf.Clamp(level, 0, MaximumUpgradeLevel);
+            GetProgress(material).ProductionUpgradeLevel = Mathf.Max(0, level);
             Changed?.Invoke();
         }
 
@@ -166,29 +179,27 @@ namespace Maptory.Factory
             Changed?.Invoke();
         }
 
-        public void SetUpgradeCosts(long meso_base_cost, long production_base_cost)
+        public void SetUpgradeBaseCosts(
+            RawMaterialType material,
+            long meso_base_cost,
+            long production_base_cost)
         {
-            MesoUpgradeBaseCost = System.Math.Max(1L, meso_base_cost);
-            ProductionUpgradeBaseCost = System.Math.Max(1L, production_base_cost);
+            var balance = GetBalance(material);
+            balance.MesoUpgradeBaseCost = System.Math.Max(1L, meso_base_cost);
+            balance.ProductionUpgradeBaseCost = System.Math.Max(1L, production_base_cost);
             Changed?.Invoke();
         }
 
-        public void SetMaximumUpgradeLevel(int level)
+        public void SetUpgradeCostCoefficients(float meso, float production)
         {
-            MaximumUpgradeLevel = Mathf.Clamp(level, 1, MAX_UPGRADE_LEVEL);
-            foreach (var monster in progress.Values)
-            {
-                monster.MesoUpgradeLevel = Mathf.Min(monster.MesoUpgradeLevel, MaximumUpgradeLevel);
-                monster.ProductionUpgradeLevel = Mathf.Min(
-                    monster.ProductionUpgradeLevel,
-                    MaximumUpgradeLevel);
-            }
+            MesoUpgradeCostCoefficient = Mathf.Max(1f, meso);
+            ProductionUpgradeCostCoefficient = Mathf.Max(1f, production);
             Changed?.Invoke();
         }
 
         public bool CanSpendMeso(long amount)
         {
-            return amount >= 0L && meso_units >= amount * MESO_SCALE;
+            return amount >= 0L && amount <= meso_units / MESO_SCALE;
         }
 
         public bool TrySpendMeso(long amount)
@@ -220,29 +231,30 @@ namespace Maptory.Factory
         public long GetMesoUpgradeCost(RawMaterialType material)
         {
             var level = GetProgress(material).MesoUpgradeLevel;
-            return level >= MaximumUpgradeLevel
-                ? 0L
-                : MesoUpgradeBaseCost * (level + 1L);
+            return CalculateUpgradeCost(
+                GetBalance(material).MesoUpgradeBaseCost,
+                MesoUpgradeCostCoefficient,
+                level);
         }
 
         public long GetProductionUpgradeCost(RawMaterialType material)
         {
             var level = GetProgress(material).ProductionUpgradeLevel;
-            return level >= MaximumUpgradeLevel
-                ? 0L
-                : ProductionUpgradeBaseCost << level;
+            return CalculateUpgradeCost(
+                GetBalance(material).ProductionUpgradeBaseCost,
+                ProductionUpgradeCostCoefficient,
+                level);
         }
 
         public bool CanPurchaseMesoUpgrade(RawMaterialType material)
         {
-            var cost = GetMesoUpgradeCost(material);
-            return cost > 0L && meso_units >= cost * MESO_SCALE;
+            return CanSpendMeso(GetMesoUpgradeCost(material));
         }
 
         public bool CanPurchaseProductionUpgrade(RawMaterialType material)
         {
             var cost = GetProductionUpgradeCost(material);
-            return cost > 0L && GetProgress(material).AvailableProduction >= cost;
+            return GetProgress(material).AvailableProduction >= cost;
         }
 
         public bool TryPurchaseMesoUpgrade(RawMaterialType material)
@@ -295,11 +307,8 @@ namespace Maptory.Factory
                 {
                     LifetimeProduction = saved.lifetime_production,
                     AvailableProduction = saved.available_production,
-                    MesoUpgradeLevel = Mathf.Clamp(saved.meso_upgrade_level, 0, MaximumUpgradeLevel),
-                    ProductionUpgradeLevel = Mathf.Clamp(
-                        saved.production_upgrade_level,
-                        0,
-                        MaximumUpgradeLevel)
+                    MesoUpgradeLevel = Mathf.Max(0, saved.meso_upgrade_level),
+                    ProductionUpgradeLevel = Mathf.Max(0, saved.production_upgrade_level)
                 });
             }
         }
@@ -308,9 +317,9 @@ namespace Maptory.Factory
         {
             var data = new PortalEconomySettingsData
             {
-                meso_upgrade_base_cost = MesoUpgradeBaseCost,
-                production_upgrade_base_cost = ProductionUpgradeBaseCost,
-                maximum_upgrade_level = MaximumUpgradeLevel
+                configured = true,
+                meso_cost_coefficient = MesoUpgradeCostCoefficient,
+                production_cost_coefficient = ProductionUpgradeCostCoefficient
             };
             foreach (var option in PortalSupplyCatalog.Options)
             {
@@ -320,7 +329,9 @@ namespace Maptory.Factory
                     material = option.Material,
                     base_value = balance.BaseValue,
                     meso_bonus_per_level = balance.MesoBonusPerLevel,
-                    production_multiplier_per_level = balance.ProductionMultiplierPerLevel
+                    production_multiplier_per_level = balance.ProductionMultiplierPerLevel,
+                    meso_upgrade_base_cost = balance.MesoUpgradeBaseCost,
+                    production_upgrade_base_cost = balance.ProductionUpgradeBaseCost
                 });
             }
             return data;
@@ -328,11 +339,10 @@ namespace Maptory.Factory
 
         public void ImportSettings(PortalEconomySettingsData data)
         {
-            if (data.maximum_upgrade_level <= 0) return;
+            if (!data.configured) return;
 
-            MesoUpgradeBaseCost = System.Math.Max(1L, data.meso_upgrade_base_cost);
-            ProductionUpgradeBaseCost = System.Math.Max(1L, data.production_upgrade_base_cost);
-            MaximumUpgradeLevel = Mathf.Clamp(data.maximum_upgrade_level, 1, MAX_UPGRADE_LEVEL);
+            MesoUpgradeCostCoefficient = Mathf.Max(1f, data.meso_cost_coefficient);
+            ProductionUpgradeCostCoefficient = Mathf.Max(1f, data.production_cost_coefficient);
             balances.Clear();
             foreach (var saved in data.monsters)
             {
@@ -342,7 +352,11 @@ namespace Maptory.Factory
                     MesoBonusPerLevel = Mathf.Max(0f, saved.meso_bonus_per_level),
                     ProductionMultiplierPerLevel = Mathf.Max(
                         0.01f,
-                        saved.production_multiplier_per_level)
+                        saved.production_multiplier_per_level),
+                    MesoUpgradeBaseCost = System.Math.Max(1L, saved.meso_upgrade_base_cost),
+                    ProductionUpgradeBaseCost = System.Math.Max(
+                        1L,
+                        saved.production_upgrade_base_cost)
                 });
             }
         }
@@ -390,6 +404,12 @@ namespace Maptory.Factory
             return (long)Math.Round(additive_value * multiplier * MESO_SCALE);
         }
 
+        private static long CalculateUpgradeCost(long base_cost, float coefficient, int level)
+        {
+            var cost = base_cost * Math.Pow(coefficient, level);
+            return cost >= long.MaxValue ? long.MaxValue : (long)Math.Ceiling(cost);
+        }
+
         private sealed class MonsterProgress
         {
             public long LifetimeProduction;
@@ -403,6 +423,8 @@ namespace Maptory.Factory
             public float BaseValue = DEFAULT_BASE_VALUE;
             public float MesoBonusPerLevel = DEFAULT_MESO_BONUS;
             public float ProductionMultiplierPerLevel = DEFAULT_PRODUCTION_MULTIPLIER;
+            public long MesoUpgradeBaseCost = DEFAULT_UPGRADE_BASE_COST;
+            public long ProductionUpgradeBaseCost = DEFAULT_UPGRADE_BASE_COST;
         }
     }
 
@@ -426,9 +448,9 @@ namespace Maptory.Factory
     [Serializable]
     public sealed class PortalEconomySettingsData
     {
-        public long meso_upgrade_base_cost;
-        public long production_upgrade_base_cost;
-        public int maximum_upgrade_level;
+        public bool configured;
+        public float meso_cost_coefficient;
+        public float production_cost_coefficient;
         public List<MonsterBalanceData> monsters = new();
     }
 
@@ -439,6 +461,8 @@ namespace Maptory.Factory
         public float base_value;
         public float meso_bonus_per_level;
         public float production_multiplier_per_level;
+        public long meso_upgrade_base_cost;
+        public long production_upgrade_base_cost;
     }
 
     public readonly struct PortalInputPort

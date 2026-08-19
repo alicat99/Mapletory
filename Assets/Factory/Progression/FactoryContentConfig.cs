@@ -84,42 +84,28 @@ namespace Maptory.Factory
         [SerializeField] private RawMaterialType monster;
         [SerializeField] private bool initially_unlocked;
         [SerializeField] private long unlock_meso_cost;
-        [SerializeField] private RawMaterialType required_material;
-        [SerializeField] private long required_amount;
 
         public string Id => id;
         public RawMaterialType Monster => monster;
         public bool InitiallyUnlocked => initially_unlocked;
         public long UnlockMesoCost => unlock_meso_cost;
-        public RawMaterialType RequiredMaterial => required_material;
-        public long RequiredAmount => required_amount;
         public PortalSupplyOption SupplyOption => PortalSupplyCatalog.Get(monster);
 
         public HuntingGroundDefinition(
             string hunting_ground_id,
             RawMaterialType result_monster,
             bool unlocked,
-            long meso_cost,
-            RawMaterialType material,
-            long amount)
+            long meso_cost)
         {
             id = hunting_ground_id;
             monster = result_monster;
             initially_unlocked = unlocked;
             unlock_meso_cost = meso_cost;
-            required_material = material;
-            required_amount = amount;
         }
 
         public void SetUnlockMesoCost(long value)
         {
             unlock_meso_cost = Math.Max(0L, value);
-        }
-
-        public void SetRequirement(RawMaterialType material, long amount)
-        {
-            required_material = material;
-            required_amount = Math.Max(0L, amount);
         }
     }
 }

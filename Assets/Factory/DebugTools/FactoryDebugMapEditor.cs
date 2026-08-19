@@ -31,6 +31,7 @@ namespace Maptory.Factory
         private FactoryDemolitionController demolition;
         private FactoryItemTransport item_transport;
         private Vector2Int map_size;
+        private string stage_id;
         private Vector2Int last_cell;
         private bool input_enabled;
         private bool has_last_cell;
@@ -47,7 +48,8 @@ namespace Maptory.Factory
             ExtractionNetwork extraction,
             FactoryDemolitionController demolition_controller,
             FactoryItemTransport transport,
-            Vector2Int size)
+            Vector2Int size,
+            string current_stage_id)
         {
             main_camera = camera;
             grid = map_grid;
@@ -58,6 +60,7 @@ namespace Maptory.Factory
             demolition = demolition_controller;
             item_transport = transport;
             map_size = size;
+            stage_id = current_stage_id;
             build_mode.Changed += OnBuildToolChanged;
             build_mode.DemolitionChanged += OnDemolitionChanged;
         }
@@ -80,6 +83,36 @@ namespace Maptory.Factory
         public void ClearAllItems()
         {
             item_transport.ClearItems();
+        }
+
+        public FactoryMapSettingsData CaptureSettings()
+        {
+            var settings = new FactoryMapSettingsData
+            {
+                stage_id = stage_id,
+                width = map_size.x,
+                height = map_size.y
+            };
+            for (var y = 0; y < map_size.y; y++)
+            {
+                for (var x = 0; x < map_size.x; x++)
+                {
+                    var tile = ground_tilemap.GetTile(new Vector3Int(x, y));
+                    settings.grass_tiles.Add(tile == catalog.Grass02 ? 1 : 0);
+                }
+            }
+
+            foreach (var deposit in extraction_network.Deposits)
+            {
+                var state = deposit.Value;
+                settings.deposits.Add(new DepositSettingsData
+                {
+                    material = state.Material,
+                    x = state.Center.x,
+                    y = state.Center.y
+                });
+            }
+            return settings;
         }
 
         private void Update()

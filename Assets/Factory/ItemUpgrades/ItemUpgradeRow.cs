@@ -133,7 +133,6 @@ namespace Maptory.Factory
             var level = category == ItemUpgradeCategory.Meso
                 ? economy.GetMesoUpgradeLevel(material)
                 : economy.GetProductionUpgradeLevel(material);
-            var maximum = level >= economy.MaximumUpgradeLevel;
             var available = category == ItemUpgradeCategory.Meso
                 ? economy.CanPurchaseMesoUpgrade(material)
                 : economy.CanPurchaseProductionUpgrade(material);
@@ -141,17 +140,13 @@ namespace Maptory.Factory
             if (category == ItemUpgradeCategory.Meso)
             {
                 detail_label.text = $"Lv.{level} · 합연산 보너스 +{economy.GetMesoBonus(material):0.##}메소";
-                cost_label.text = maximum
-                    ? "최대 레벨"
-                    : $"{economy.GetMesoUpgradeCost(material):N0} 메소";
+                cost_label.text = $"{economy.GetMesoUpgradeCost(material):N0} 메소";
             }
             else
             {
                 detail_label.text = $"Lv.{level} · 개체 가치 ×{economy.GetProductionMultiplier(material):0.##}";
-                cost_label.text = maximum
-                    ? "최대 레벨"
-                    : $"{economy.GetAvailableProduction(material):N0} / "
-                        + $"{economy.GetProductionUpgradeCost(material):N0}";
+                cost_label.text = $"{economy.GetAvailableProduction(material):N0} / "
+                    + $"{economy.GetProductionUpgradeCost(material):N0}";
             }
 
             border.color = available ? AVAILABLE_COLOR : CARD_COLOR;
@@ -160,7 +155,7 @@ namespace Maptory.Factory
             upgrade_label.color = available
                 ? new Color(0.1f, 0.11f, 0.09f, 1f)
                 : MUTED_TEXT_COLOR;
-            upgrade_label.text = maximum ? "완료" : available ? "강화" : "부족";
+            upgrade_label.text = available ? "강화" : "부족";
         }
 
         public void SetIcon(Sprite sprite)

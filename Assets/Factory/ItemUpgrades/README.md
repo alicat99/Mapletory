@@ -36,7 +36,7 @@ if (economy.CanPurchaseProductionUpgrade(monster))
 var value_per_item = economy.GetUnitValue(monster);
 ```
 
-메소 업그레이드는 기본 가치에 레벨당 0.5메소를 더하고, 생산량 업그레이드는 합연산 결과에 레벨당 1.25배를 적용한다. 메소 비용은 `20 × 다음 레벨`, 생산량 비용은 `20 × 2^현재 레벨`이며 각 카테고리 최대 레벨은 20이다.
+메소 업그레이드는 기본 가치에 몬스터별 레벨당 합연산 값을 더하고, 생산량 업그레이드는 그 결과에 몬스터별 레벨당 배율을 적용한다. 다음 비용은 `몬스터별 기본 비용 × 비용 계수^현재 레벨`이며 최대 레벨 제한은 없다. 메소와 생산량 비용 계수는 각각 독립적으로 설정한다.
 
 런타임 UI는 `ItemUpgradePanel.Create`로 만들고 다른 모달의 열림 상태를 `SetOtherModalCheck`에 연결한다. `ItemUpgradeShortcut.Create`는 같은 `PortalEconomy`와 패널을 받아 좌측 버튼과 알림 배지를 만든다. `FactoryGame`이 이 초기화 순서를 담당한다.
 
@@ -50,4 +50,4 @@ var value_per_item = economy.GetUnitValue(monster);
 
 진행 상태와 계산은 `PortalSystem.cs`의 `PortalEconomy`가 소유하고 이 폴더의 코드는 표현과 입력만 담당한다. `FactoryGame`은 포탈 선택·레시피 선택과 업그레이드 패널이 동시에 열리지 않도록 연결하되, 카메라 입력 차단에는 포탈·레시피 모달만 포함한다.
 
-현재 업그레이드 진행도는 저장되지 않으며 게임 실행을 종료하면 초기화된다. 비용과 효과 상수는 프로토타입 밸런스 값이다.
+업그레이드 진행도는 진행 세이브에, 몬스터별 기본 비용·효과와 두 비용 계수는 디버그 설정 세이브에 저장된다.

@@ -64,10 +64,7 @@ namespace Maptory.Factory
         {
             var ground = config.GetHuntingGround(hunting_ground_id);
             return IsHuntingGroundUnlocked(hunting_ground_id)
-                || economy.CanSpend(
-                    ground.UnlockMesoCost,
-                    ground.RequiredMaterial,
-                    ground.RequiredAmount);
+                || economy.CanSpendMeso(ground.UnlockMesoCost);
         }
 
         public bool TryUnlockHuntingGround(string hunting_ground_id)
@@ -76,10 +73,7 @@ namespace Maptory.Factory
             if (IsHuntingGroundUnlocked(hunting_ground_id)) return true;
 
             defer_save = true;
-            var purchased = economy.TrySpend(
-                    ground.UnlockMesoCost,
-                    ground.RequiredMaterial,
-                    ground.RequiredAmount);
+            var purchased = economy.TrySpendMeso(ground.UnlockMesoCost);
             defer_save = false;
             if (!purchased) return false;
 

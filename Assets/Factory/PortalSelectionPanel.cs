@@ -24,7 +24,6 @@ namespace Maptory.Factory
         private TMP_Text unlock_title;
         private TMP_Text unlock_monster;
         private TMP_Text unlock_meso;
-        private TMP_Text unlock_material;
         private TMP_Text unlock_status;
         private Button confirm_unlock;
         private HuntingGroundDefinition pending_ground;
@@ -130,7 +129,7 @@ namespace Maptory.Factory
             foreach (var option in PortalSupplyCatalog.Options)
             {
                 all.Add(new HuntingGroundDefinition(option.Material.ToString(), option.Material,
-                    true, 0L, option.Material, 0L));
+                    true, 0L));
             }
             return all;
         }
@@ -177,7 +176,7 @@ namespace Maptory.Factory
             var rect = popup.GetComponent<RectTransform>();
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(500f, 350f);
+            rect.sizeDelta = new Vector2(500f, 310f);
             popup.AddComponent<Image>().color = PANEL_COLOR;
 
             unlock_title = CreateText("", popup.transform, 28f, TextAlignmentOptions.Center,
@@ -186,17 +185,15 @@ namespace Maptory.Factory
                 new Vector2(40f, -79f), new Vector2(420f, 36f), Color.white);
             unlock_meso = CreateText("", popup.transform, 19f, TextAlignmentOptions.MidlineLeft,
                 new Vector2(52f, -132f), new Vector2(396f, 34f), Color.white);
-            unlock_material = CreateText("", popup.transform, 19f, TextAlignmentOptions.MidlineLeft,
-                new Vector2(52f, -174f), new Vector2(396f, 34f), Color.white);
             unlock_status = CreateText("", popup.transform, 17f, TextAlignmentOptions.Center,
-                new Vector2(52f, -219f), new Vector2(396f, 42f), Color.white);
+                new Vector2(52f, -178f), new Vector2(396f, 42f), Color.white);
 
             var cancel = CreateButton("Cancel Unlock", popup.transform, "취소", 19f, LOCKED_COLOR, Color.white);
-            SetRect(cancel.GetComponent<RectTransform>(), new Vector2(50f, -282f), new Vector2(180f, 50f));
+            SetRect(cancel.GetComponent<RectTransform>(), new Vector2(50f, -242f), new Vector2(180f, 50f));
             cancel.onClick.AddListener(() => unlock_popup.SetActive(false));
             confirm_unlock = CreateButton("Confirm Unlock", popup.transform, "해금", 19f,
                 new Color(0.42f, 0.34f, 0.12f, 1f), Color.white);
-            SetRect(confirm_unlock.GetComponent<RectTransform>(), new Vector2(270f, -282f), new Vector2(180f, 50f));
+            SetRect(confirm_unlock.GetComponent<RectTransform>(), new Vector2(270f, -242f), new Vector2(180f, 50f));
             confirm_unlock.onClick.AddListener(ConfirmUnlock);
             unlock_popup.SetActive(false);
         }
@@ -206,24 +203,15 @@ namespace Maptory.Factory
             if (pending_ground == null) return;
 
             var meso_ready = progression.Economy.CanSpendMeso(pending_ground.UnlockMesoCost);
-            var current_material = progression.Economy.GetAvailableProduction(pending_ground.RequiredMaterial);
-            var material_ready = current_material >= pending_ground.RequiredAmount;
             unlock_title.text = pending_ground.SupplyOption.SourceName + " 해금";
             unlock_monster.text = $"사용 가능 몬스터: {pending_ground.SupplyOption.ItemLabel}";
             unlock_meso.text = $"메소  {progression.Economy.TotalMeso:N0} / {pending_ground.UnlockMesoCost:N0}";
             unlock_meso.color = meso_ready ? Color.white : ERROR_COLOR;
-            unlock_material.text = $"{pending_ground.RequiredMaterial.ToKoreanName()}  "
-                + $"{current_material:N0} / {pending_ground.RequiredAmount:N0}";
-            unlock_material.color = material_ready ? Color.white : ERROR_COLOR;
-
-            var missing = new List<string>();
-            if (!meso_ready) missing.Add("메소 부족");
-            if (!material_ready) missing.Add("재료 부족");
-            unlock_status.text = missing.Count == 0
-                ? "조건을 만족했습니다. 구매 시 두 재화가 함께 차감됩니다."
-                : string.Join(" · ", missing);
-            unlock_status.color = missing.Count == 0 ? Color.white : ERROR_COLOR;
-            confirm_unlock.interactable = missing.Count == 0;
+            unlock_status.text = meso_ready
+                ? "해금 시 메소가 차감됩니다."
+                : "메소 부족";
+            unlock_status.color = meso_ready ? Color.white : ERROR_COLOR;
+            confirm_unlock.interactable = meso_ready;
         }
 
         private void ConfirmUnlock()

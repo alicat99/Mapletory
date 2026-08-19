@@ -18,55 +18,40 @@ MonoBehaviour:
     unlock_meso_cost: 0
     grass_seed: 74021
     hunting_grounds:
-    - id: trail_1
-      monster: 23
-      initially_unlocked: 1
-      unlock_meso_cost: 0
-      required_material: 23
-      required_amount: 0
     - id: lith_harbor_outskirts
       monster: 22
+      initially_unlocked: 1
+      unlock_meso_cost: 0
+    - id: trail_1
+      monster: 23
       initially_unlocked: 0
       unlock_meso_cost: 25
-      required_material: 23
-      required_amount: 10
-    - id: spore_hill
-      monster: 19
+    - id: trail_2
+      monster: 21
       initially_unlocked: 0
       unlock_meso_cost: 60
-      required_material: 22
-      required_amount: 15
   - id: stage_2
     display_name: "2\uC2A4\uD14C\uC774\uC9C0 \xB7 \uD5E4\uB124\uC2DC\uC2A4 \uC678\uACFD"
     unlock_meso_cost: 250
     grass_seed: 91837
     hunting_grounds:
-    - id: trail_2
-      monster: 21
-      initially_unlocked: 1
-      unlock_meso_cost: 0
-      required_material: 21
-      required_amount: 0
-    - id: henesys_north_hill
-      monster: 20
-      initially_unlocked: 0
-      unlock_meso_cost: 150
-      required_material: 21
-      required_amount: 20
-  - id: stage_3
-    display_name: "3\uC2A4\uD14C\uC774\uC9C0 \xB7 \uAE4A\uC740 \uC232"
-    unlock_meso_cost: 1000
-    grass_seed: 126499
-    hunting_grounds:
     - id: dreaming_trail
       monster: 18
       initially_unlocked: 1
       unlock_meso_cost: 0
-      required_material: 18
-      required_amount: 0
-    - id: spike_mushroom_forest
-      monster: 24
+    - id: henesys_north_hill
+      monster: 20
+      initially_unlocked: 0
+      unlock_meso_cost: 150
+    - id: spore_hill
+      monster: 19
+      initially_unlocked: 0
+      unlock_meso_cost: 250
+    - id: orange_spike_mushroom_forest
+      monster: 25
       initially_unlocked: 0
       unlock_meso_cost: 500
-      required_material: 18
-      required_amount: 30
+    - id: green_spike_mushroom_forest
+      monster: 26
+      initially_unlocked: 0
+      unlock_meso_cost: 750

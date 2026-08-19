@@ -59,6 +59,7 @@ namespace Maptory.Factory
     public sealed class FactorySettingsData
     {
         public List<StageSettingsData> stages = new();
+        public List<FactoryMapSettingsData> maps = new();
         public PortalEconomySettingsData economy = new();
 
         public void Capture(FactoryContentConfig config, PortalEconomy portal_economy)
@@ -76,9 +77,7 @@ namespace Maptory.Factory
                     stage_data.hunting_grounds.Add(new HuntingGroundSettingsData
                     {
                         id = ground.Id,
-                        unlock_meso_cost = ground.UnlockMesoCost,
-                        required_material = ground.RequiredMaterial,
-                        required_amount = ground.RequiredAmount
+                        unlock_meso_cost = ground.UnlockMesoCost
                     });
                 }
                 stages.Add(stage_data);
@@ -97,11 +96,21 @@ namespace Maptory.Factory
                 {
                     var ground = config.GetHuntingGround(ground_data.id);
                     ground.SetUnlockMesoCost(ground_data.unlock_meso_cost);
-                    ground.SetRequirement(ground_data.required_material, ground_data.required_amount);
                 }
             }
 
             portal_economy.ImportSettings(economy);
+        }
+
+        public FactoryMapSettingsData GetMap(string stage_id)
+        {
+            return maps.Find(map => map.stage_id == stage_id);
+        }
+
+        public void SetMap(FactoryMapSettingsData map)
+        {
+            maps.RemoveAll(saved => saved.stage_id == map.stage_id);
+            maps.Add(map);
         }
     }
 
@@ -118,7 +127,23 @@ namespace Maptory.Factory
     {
         public string id;
         public long unlock_meso_cost;
-        public RawMaterialType required_material;
-        public long required_amount;
+    }
+
+    [Serializable]
+    public sealed class FactoryMapSettingsData
+    {
+        public string stage_id;
+        public int width;
+        public int height;
+        public List<int> grass_tiles = new();
+        public List<DepositSettingsData> deposits = new();
+    }
+
+    [Serializable]
+    public sealed class DepositSettingsData
+    {
+        public RawMaterialType material;
+        public int x;
+        public int y;
     }
 }
