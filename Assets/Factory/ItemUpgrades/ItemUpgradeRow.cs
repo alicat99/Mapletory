@@ -64,7 +64,7 @@ namespace Maptory.Factory
             row.icon = CreateObject("Icon", inner.transform).AddComponent<Image>();
             row.icon.preserveAspect = true;
             row.icon.raycastTarget = false;
-            SetRect(row.icon.rectTransform, new Vector2(10f, -7f), new Vector2(54f, 54f));
+            SetRect(row.icon.rectTransform, new Vector2(8f, -9f), new Vector2(50f, 50f));
 
             row.name_label = CreateText(
                 "Name",
@@ -72,8 +72,8 @@ namespace Maptory.Factory
                 catalog,
                 21f,
                 TextAlignmentOptions.MidlineLeft,
-                new Vector2(76f, -7f),
-                new Vector2(326f, 28f),
+                new Vector2(68f, -7f),
+                new Vector2(236f, 28f),
                 new Color(0.94f, 0.94f, 0.91f, 1f));
             row.detail_label = CreateText(
                 "Details",
@@ -81,8 +81,8 @@ namespace Maptory.Factory
                 catalog,
                 16f,
                 TextAlignmentOptions.MidlineLeft,
-                new Vector2(76f, -34f),
-                new Vector2(326f, 24f),
+                new Vector2(68f, -34f),
+                new Vector2(236f, 24f),
                 new Color(0.7f, 0.72f, 0.68f, 1f));
             row.cost_label = CreateText(
                 "Cost",
@@ -90,8 +90,8 @@ namespace Maptory.Factory
                 catalog,
                 17f,
                 TextAlignmentOptions.MidlineRight,
-                new Vector2(408f, -8f),
-                new Vector2(190f, 50f),
+                new Vector2(306f, -8f),
+                new Vector2(112f, 50f),
                 new Color(0.9f, 0.9f, 0.86f, 1f));
 
             var button_object = CreateRounded(
@@ -102,8 +102,8 @@ namespace Maptory.Factory
                 5f);
             SetRect(
                 button_object.GetComponent<RectTransform>(),
-                new Vector2(612f, -10f),
-                new Vector2(120f, 44f));
+                new Vector2(428f, -10f),
+                new Vector2(108f, 44f));
             row.upgrade_background = button_object.GetComponent<Image>();
             row.upgrade_button = button_object.AddComponent<Button>();
             row.upgrade_button.targetGraphic = row.upgrade_background;
@@ -111,7 +111,7 @@ namespace Maptory.Factory
                 "Label",
                 button_object.transform,
                 catalog,
-                19f,
+                18f,
                 TextAlignmentOptions.Center,
                 Vector2.zero,
                 Vector2.zero,
@@ -133,7 +133,7 @@ namespace Maptory.Factory
             var level = category == ItemUpgradeCategory.Meso
                 ? economy.GetMesoUpgradeLevel(material)
                 : economy.GetProductionUpgradeLevel(material);
-            var maximum = level >= PortalEconomy.MAX_UPGRADE_LEVEL;
+            var maximum = level >= economy.MaximumUpgradeLevel;
             var available = category == ItemUpgradeCategory.Meso
                 ? economy.CanPurchaseMesoUpgrade(material)
                 : economy.CanPurchaseProductionUpgrade(material);

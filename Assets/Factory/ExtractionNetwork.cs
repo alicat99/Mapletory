@@ -563,6 +563,8 @@ namespace Maptory.Factory
         public event Action<ProcessingMachineState> ProcessingMachinePlaced;
         public event Action<ErdaInjectorState> ErdaInjectorPlaced;
         public event Action<PortalState> PortalPlaced;
+        public event Action<RawMaterialDeposit> DepositPlaced;
+        public event Action<RawMaterialDeposit> DepositRemoved;
         public event Action<object> BuildingRemoved;
 
         public ExtractionNetwork(IEnumerable<RawMaterialDeposit> fixed_deposits, ConveyorNetwork conveyors)
@@ -577,6 +579,39 @@ namespace Maptory.Factory
         public bool CanPlaceExtractor(Vector2Int center)
         {
             return deposits.ContainsKey(center) && IsFootprintClear(center, true);
+        }
+
+        public bool CanPlaceDeposit(Vector2Int center)
+        {
+            return IsFootprintClear(center, false);
+        }
+
+        public RawMaterialDeposit PlaceDeposit(RawMaterialType material, Vector2Int center)
+        {
+            if (!CanPlaceDeposit(center))
+            {
+                throw new InvalidOperationException("Raw material footprint is occupied.");
+            }
+
+            var deposit = new RawMaterialDeposit(material, center);
+            deposits.Add(center, deposit);
+            DepositPlaced?.Invoke(deposit);
+            return deposit;
+        }
+
+        public RawMaterialDeposit RemoveDeposit(Vector2Int position)
+        {
+            foreach (var deposit in new List<RawMaterialDeposit>(deposits.Values))
+            {
+                if (!IsInsideFootprint(position, deposit.Center)) continue;
+
+                if (extractors.ContainsKey(deposit.Center)) RemoveBuilding(deposit.Center);
+                deposits.Remove(deposit.Center);
+                DepositRemoved?.Invoke(deposit);
+                return deposit;
+            }
+
+            return null;
         }
 
         public bool CanPlaceDyeingMachine(Vector2Int center)

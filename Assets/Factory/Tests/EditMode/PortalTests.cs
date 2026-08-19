@@ -179,6 +179,52 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
+        public void DebugBalanceValuesRecalculateFutureMonsterValue()
+        {
+            var economy = new PortalEconomy();
+            var material = RawMaterialType.MonsterSnailRed;
+            economy.SetBaseValue(material, 4f);
+            economy.SetMesoBonusPerLevel(material, 2f);
+            economy.SetProductionMultiplierPerLevel(material, 1.5f);
+            economy.SetMesoUpgradeLevel(material, 2);
+            economy.SetProductionUpgradeLevel(material, 1);
+            economy.SetAvailableProduction(material, 123);
+            economy.SetUpgradeCosts(7, 11);
+
+            Assert.That(economy.GetUnitValue(material), Is.EqualTo(12f).Within(0.001f));
+            Assert.That(economy.GetAvailableProduction(material), Is.EqualTo(123));
+            Assert.That(economy.GetMesoUpgradeCost(material), Is.EqualTo(21));
+            Assert.That(economy.GetProductionUpgradeCost(material), Is.EqualTo(22));
+
+            economy.RecordSupply(material);
+            Assert.That(economy.TotalMeso, Is.EqualTo(12));
+        }
+
+        [Test]
+        public void RuntimeDepositsUsePlacementAndRemovalEvents()
+        {
+            var network = new ExtractionNetwork(
+                new RawMaterialDeposit[0],
+                new ConveyorNetwork());
+            RawMaterialDeposit placed = null;
+            RawMaterialDeposit removed = null;
+            network.DepositPlaced += deposit => placed = deposit;
+            network.DepositRemoved += deposit => removed = deposit;
+
+            var deposit_state = network.PlaceDeposit(
+                RawMaterialType.Mushroom,
+                new Vector2Int(8, 8));
+
+            Assert.That(placed, Is.SameAs(deposit_state));
+            Assert.That(network.CanPlaceDeposit(new Vector2Int(9, 8)), Is.False);
+
+            network.RemoveDeposit(new Vector2Int(9, 8));
+
+            Assert.That(removed, Is.SameAs(deposit_state));
+            Assert.That(network.Deposits, Is.Empty);
+        }
+
+        [Test]
         public void PortalSpritesUseBuildingPivotAndDedicatedLayers()
         {
             var catalog = new FactoryTileCatalog();

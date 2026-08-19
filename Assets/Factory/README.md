@@ -7,7 +7,7 @@
 Play Mode가 시작되면 다음을 확인한다.
 
 1. 16×8 픽셀 잔디 두 종류가 무작위로 섞인 50×50 등각 Tilemap이 표시된다. 각 셀의 월드 크기는 1×0.5이므로 타일의 세로:가로 비율은 1:2이다.
-2. 화면 아래에 10칸 핫바가 있고 첫 슬롯부터 컨베이어, 채굴기, 염색기, 조합기, 에르다 주입기, 가공기계 아이콘이 순서대로 표시된다.
+2. 화면 아래에 10칸 핫바가 있고 첫 슬롯부터 컨베이어, 채굴기, 염색기, 조합기, 에르다 주입기, 가공기계 아이콘이 순서대로 표시된다. 상단 숫자키 `1`~`9`, `0`은 각각 1~10번째 슬롯을 클릭한 것과 같은 선택·해제 동작을 하며 빈 슬롯은 무시한다.
 3. 첫 슬롯을 클릭하면 테두리가 노란색으로 바뀌며 건설 모드가 된다.
 4. 컨베이어·채굴기·염색기·조합기·에르다 주입기·가공기계 중 하나의 건설 도구를 선택하면 각 설치 셀 중심을 둘러싸는 마름모 경계에 화면상 약 1픽셀 굵기의 낮은 알파 검은색 격자선이 표시되고, 도구를 해제하면 사라진다. 격자는 맵 크기와 무관하게 꼭짓점 4개의 단일 메시로 그려진다.
 5. 잔디 위에서 마우스 왼쪽 버튼을 누른 채 드래그하면 더 긴 축을 기준으로 수평 또는 수직 직선 미리보기만 표시된다. 버튼을 놓으면 컨베이어가 설치된다.
@@ -44,12 +44,14 @@ Play Mode가 시작되면 다음을 확인한다.
 36. 선택 후 월드 툴팁은 `<아이템> | x메소/개`로 바뀐다. 포탈에 공급한 수량은 몬스터 종류별 누적 생산량과 업그레이드에 쓸 수 있는 생산량에 함께 더해지며, 같은 몬스터를 선택한 모든 포탈이 하나의 진행도를 공유한다.
 37. 포탈은 `BuildingLowerMaskPortal.png` 전용 마스크로 Lower/Upper Sprite를 만들며 기존 건물과 같은 `ConveyorLevel`/`ItemLevel`, `(0.5, 0.25)` 피벗 및 Y 기반 정렬 규칙을 사용한다.
 38. 추출기·염색기·조합기·가공기계·에르다 주입기의 출력 방향에 다음 공장이나 포탈의 입력 포트가 바로 닿아 있으면 중간 컨베이어 없이 생산물이 빠른 이동·스케일 아웃으로 전달된다. 공장끼리는 진행 방향이 같아야 하며, 포탈은 맞닿은 면의 모든 방향 입력을 사용한다. 다음 목적지가 해당 아이템을 받을 수 없으면 생산물은 이전 공장에 대기한다.
-39. `X`를 누르면 현재 건설 도구가 해제되고 철거 모드가 켜진다. 철거 중에는 하단 핫바 전체가 어두워지고 입력을 받지 않으며 격자선이 유지된다. 컨베이어를 좌클릭하면 해당 칸과 그 위의 운송 아이템이 제거되고, 건물의 점유 칸 중 어느 곳이든 좌클릭하면 건물 전체·미선택 툴팁·입출력 연결과 해당 건물로 이동 중인 아이템이 제거된다. `X`를 다시 누르거나 `Esc`를 누르면 철거 모드가 끝난다.
-40. 화면 좌측의 `아이템 업그레이드 [U]` 버튼 또는 `U`를 누르면 성장 전용 업그레이드 창이 열린다. 모달이 열려 있는 동안 카메라 이동·우클릭 패닝·휠 줌은 비활성화되고 `Esc`로 닫힌다.
+39. `X`를 누르면 현재 건설 도구가 해제되고 철거 모드가 켜진다. 철거 중에는 하단 핫바 전체가 어두워지고 입력을 받지 않으며 격자선이 유지된다. 컨베이어를 좌클릭하거나 좌클릭 드래그하면 포인터 프레임 사이의 모든 셀을 보간해 연속 제거한다. 건물의 점유 칸을 지나면 건물 전체·미선택 툴팁·입출력 연결과 해당 건물로 이동 중인 아이템이 제거된다. `X`를 다시 누르거나 `Esc`를 누르면 철거 모드가 끝난다.
+40. 화면 좌측의 `아이템 업그레이드 [U]` 버튼 또는 `U`를 누르면 화면 오른쪽의 폭 620 성장 패널이 열린다. 전체 화면 음영은 없으며 패널 바깥에서 키보드 이동·우클릭 패닝·휠 줌을 계속 사용할 수 있다. 패널 내부 휠은 목록 스크롤에만 사용하고 `Esc`로 창을 닫는다.
 41. 상단의 책갈피형 `메소`와 `누적 생산량` 탭을 바꾸면 아래 세로 스크롤 목록의 7종 몬스터 행이 즉시 갱신된다. 각 행은 아이콘, 이름, 레벨·효과, 비용, 강화 가능 상태를 한 줄에 표시하며 한 화면에서 여러 대상을 빠르게 비교하고 반복 강화할 수 있다.
 42. 메소 업그레이드는 메소를 소비해 개체 기본 가치에 레벨당 0.5메소를 합연산한다. 누적 생산량 업그레이드는 해당 몬스터의 사용 가능한 생산량을 소비해 개체 가치에 레벨당 1.25배를 곱연산한다. 두 업그레이드는 각각 최대 20레벨이며, 생산량 업그레이드가 가능해지면 좌측 단축 버튼에 가능한 몬스터 수 배지가 표시된다. 업그레이드는 자동 실행되지 않고 사용자가 행의 `강화` 버튼을 눌러야 적용된다.
+43. `F1`을 누르면 화면 왼쪽에 전체 화면 음영 없는 런타임 디버그 패널이 열린다. `맵` 탭은 잔디 두 종류 페인트, 5종 원재료 배치, 셀 제거, 셀/전체 이동 아이템 제거를 제공하며 월드에서 좌클릭 드래그로 적용한다. 건물과 컨베이어는 기존 핫바 또는 숫자키로 배치한다.
+44. 디버그 `몬스터` 탭은 7종 몬스터를 순환 선택해 기본 가치, 레벨당 합연산 값, 레벨당 곱연산 계수, 두 현재 레벨과 사용 가능 생산량을 즉시 수정한다. `업그레이드` 탭은 두 기본 비용과 최대 레벨을 조정한다. 변경된 최종 가치는 포탈 툴팁과 업그레이드 패널에 즉시 반영되고 이후 포탈 입력부터 메소 계산에 적용된다.
 
-Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 맵 크기와 무관한 격자 메시, 염색기와 조합기의 포트·점유·레시피·생산, 가공기계의 중앙 1입력·1출력과 뿔 생산, 조합기의 뿔버섯 생산, 에르다 주입기의 1×1 점유와 7종 운송 아이템 변환·출력 대기·후속 이동, 포탈의 2×2 점유·8방향 입력·선택 품목 필터·메소·몬스터별 누적 생산량·두 업그레이드 계산, 업그레이드 창의 행 생성·탭 전환·다른 모달과의 배타성, 철거 모드 상태 전환·건물 발자국 제거·컨베이어 및 외부 연결 제거·이동 중 아이템 취소, 세 마스크로 생성한 Lower/Upper Sprite 및 런타임 에셋을 검증한다.
+Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 맵 크기와 무관한 격자 메시, 염색기와 조합기의 포트·점유·레시피·생산, 가공기계의 중앙 1입력·1출력과 뿔 생산, 조합기의 뿔버섯 생산, 에르다 주입기의 1×1 점유와 7종 운송 아이템 변환·출력 대기·후속 이동, 포탈의 2×2 점유·8방향 입력·선택 품목 필터·메소·몬스터별 동적 밸런스와 두 업그레이드 계산, 우측 업그레이드 창·숫자키 핫바, 원재료 런타임 배치/제거 이벤트, 철거 모드의 건물·컨베이어·이동 아이템 제거와 드래그 셀 보간, 세 마스크로 생성한 Lower/Upper Sprite 및 런타임 에셋을 검증한다.
 
 ## 2. 기능 사용법
 
@@ -80,7 +82,7 @@ if (network.TrySelectNextOutput(new Vector2Int(4, 4), out var output_direction))
 
 공장 출력 위치가 다음 공장이나 포탈의 입력 포트와 바로 맞닿으면 `FactoryItemTransport`가 컨베이어 대신 해당 소비자를 목적지로 예약한다. 아이템은 생산 공장의 출력 포트에서 목적지 입력 포트로 이동하며, 목적지가 받을 수 있을 때만 생산 측 재료를 소비한다.
 
-철거 입력은 `FactoryBuildMode.IsDemolitionMode`가 소유한다. 코드에서 모드를 바꾸려면 `ToggleDemolitionMode` 또는 `SetDemolitionMode`를 사용한다. `ExtractionNetwork.RemoveBuilding`은 클릭 셀이 속한 건물 상태를 반환하고 `BuildingRemoved`를 발행하며, `ConveyorNetwork.RemoveConveyor`는 단일 컨베이어 상태를 제거한다. 런타임 화면 제거와 운송 취소는 `FactoryDemolitionController`가 조립한다.
+철거 입력은 `FactoryBuildMode.IsDemolitionMode`가 소유한다. 코드에서 모드를 바꾸려면 `ToggleDemolitionMode` 또는 `SetDemolitionMode`를 사용한다. `ExtractionNetwork.RemoveBuilding`은 클릭 셀이 속한 건물 상태를 반환하고 `BuildingRemoved`를 발행하며, `ConveyorNetwork.RemoveConveyor`는 단일 컨베이어 상태를 제거한다. 런타임 화면 제거와 운송 취소는 `FactoryDemolitionController`가 조립하고 `GetLineCells`로 프레임 사이 포인터 셀을 빠짐없이 보간한다.
 
 ```csharp
 var conveyors = new ConveyorNetwork();
@@ -168,11 +170,11 @@ if (economy.CanPurchaseProductionUpgrade(RawMaterialType.MonsterSnailRed))
 | `ConveyorNetwork.cs` | 컨베이어 방향 상태, 직선 배치/덮어쓰기, 건물 입출력을 포함한 연결 분석, Sprite 이름과 출력 분배 순서 소유 |
 | `ExtractionNetwork.cs` | 아이템·가변 재료 공용 레시피 계약, 원재료와 채굴기·염색기·조합기·가공기계·에르다 주입기 상태, 3×3/1×1 점유와 포트 좌표, 설치 이벤트 소유 |
 | `FactoryItemTransport.cs` | 채굴 생산, 공장 간 직접 전달, 염색·조합·가공·에르다·포탈 입력 소비와 출력, 컨베이어 이동·역압·합류·분배 시뮬레이션 소유 |
-| `PortalSystem.cs` | 7종 몬스터 공급 선택 항목, 2×2 포탈 상태와 입력 포트, 메소 지갑·몬스터별 생산량·합연산/곱연산 업그레이드 상태 소유 |
+| `PortalSystem.cs` | 7종 몬스터 공급 선택 항목, 2×2 포탈 상태와 입력 포트, 메소 지갑·몬스터별 생산량·런타임 조정 가능한 합연산/곱연산 업그레이드 상태 소유 |
 | `ErdaInjectionRecipes.cs` | 에르다 주입기가 받는 7종 재료와 대응하는 몬스터 운송 아이템 정의 |
 | `FactorySorting.cs` | 컨베이어·아이템 레벨 Sorting Layer 이름, 결정적 Y/X 정렬 순서와 높이 Z를 포함한 투명 정렬 축 정의 |
 | `FactoryBuildMode.cs` | 핫바 건설 도구, `X` 철거 모드와 `Esc` 해제를 단일 상태로 관리 |
-| `FactoryDemolitionController.cs` | `X` 철거 입력, 클릭 셀의 컨베이어·건물 뷰 제거와 상태 시스템 연결 |
+| `FactoryDemolitionController.cs` | `X` 철거 입력, 드래그 셀 보간, 컨베이어·건물 뷰 제거와 상태 시스템 연결 |
 | `ConstructionGridOverlay.cs` | 건설 모드 동안 맵 크기와 무관한 단일 메시와 화면 픽셀 굵기 셰이더로 아이소메트릭 격자선을 표시 |
 | `Art/Resources/Factory/Construction/ConstructionGridOverlay.shader` | 단일 메시의 보간된 격자 좌표로 셀 경계와 화면상 일정한 선 굵기를 계산 |
 | `FactoryTileCatalog.cs` | 잔디, 컨베이어, 원재료, 건물 원본·Lower·Upper, 일반·몬스터 아이템·UI Sprite와 런타임 TMP 폰트 조회 제공 |
@@ -188,12 +190,14 @@ if (economy.CanPurchaseProductionUpgrade(RawMaterialType.MonsterSnailRed))
 | `PortalSelectionPanel.cs` | 참조 화면을 따르는 8행 공급 품목 선택 모달과 즉시 선택 처리 |
 | `PortalTooltip.cs` | 포탈의 미선택 안내 또는 선택 몬스터와 현재 개체 가치 월드 UI 표시 |
 | `MesoHud.cs` | 화면 좌측 상단 `<누적량> 메소` 표시 |
-| `ItemUpgrades/ItemUpgradePanel.cs` | 책갈피형 카테고리 탭, 세로 스크롤 목록, 모달 입력과 업그레이드 요청 조립 |
+| `ItemUpgrades/ItemUpgradePanel.cs` | 오른쪽 비모달 성장 패널, 책갈피형 카테고리 탭, 세로 스크롤 목록과 업그레이드 요청 조립 |
 | `ItemUpgrades/ItemUpgradeRow.cs` | 몬스터별 아이콘·레벨·효과·비용·강화 가능 상태 표시와 구매 입력 |
 | `ItemUpgrades/ItemUpgradeShortcut.cs` | 좌측 `U` 단축 버튼과 생산량 강화 가능 몬스터 수 알림 배지 표시 |
 | `FactoryItemTransportView.cs` | 운송 상태를 선형 보간해 아이템 위치·빠른 입출력 스케일·실시간 깊이를 갱신하고 소비된 렌더러 제거 |
-| `FactoryHotbar.cs` | 화면 하단 10슬롯 UI, 일곱 건설 도구의 선택 상태와 클릭 이벤트 제공 |
-| `FactoryCameraController.cs` | 키보드 이동, 우클릭 패닝, 휠 확대/축소와 맵 범위 제한을 담당하고 모달 입력 차단 함수를 적용 |
+| `FactoryHotbar.cs` | 화면 하단 10슬롯 UI, 숫자키 1~0 입력, 일곱 건설 도구의 선택 상태와 공용 클릭 이벤트 제공 |
+| `FactoryCameraController.cs` | 키보드 이동, UI 바깥 우클릭 패닝·휠 확대/축소와 맵 범위 제한을 담당하고 선택 모달 입력 차단 함수를 적용 |
+| `DebugTools/FactoryDebugPanel.cs` | F1 런타임 디버그 UI, 맵·몬스터·업그레이드 탭과 숫자 필드 적용 |
+| `DebugTools/FactoryDebugMapEditor.cs` | 잔디·원재료·제거·아이템 브러시를 기존 상태와 표현 이벤트에 연결 |
 | `Editor/FactorySpriteImporter.cs` | 기능 전용 픽셀 아트의 Sprite import 설정 고정 |
 | `Editor/BuildingSpriteLayerGenerator.cs` | 3×3/1×1/포탈 전용 하단 마스크를 선택해 Lower/Upper PNG로 전처리하고 변경 시 재생성 |
 | `Tests/EditMode/ConveyorNetworkTests.cs` | 컨베이어 연결 및 분배 규칙의 Edit Mode 회귀 테스트 |
@@ -203,8 +207,8 @@ if (economy.CanPurchaseProductionUpgrade(RawMaterialType.MonsterSnailRed))
 | `Tests/EditMode/ProcessingMachineTests.cs` | 가공기계 중앙 포트·뿔 생산, 조합기 뿔버섯 레시피와 신규 Sprite 검증 |
 | `Tests/EditMode/PortalTests.cs` | 포탈 2×2 점유·8개 입력·운송 소비·품목 필터·메소·몬스터별 공유 생산량·두 업그레이드·Sprite 검증 |
 | `Tests/EditMode/ItemUpgradeUiTests.cs` | 업그레이드 행 구성·책갈피 탭 전환과 다른 모달이 열린 동안의 진입 차단 검증 |
-| `Tests/EditMode/DemolitionTests.cs` | 철거 모드 상태, 건물 발자국 제거, 컨베이어 연결 제거와 이동 중 아이템 취소 검증 |
+| `Tests/EditMode/DemolitionTests.cs` | 철거 모드 상태, 건물 발자국 제거, 컨베이어 연결 제거, 이동 중 아이템 취소와 드래그 셀 보간 검증 |
 
 `ConveyorNetwork`와 `ExtractionNetwork`가 영속 가능한 게임 상태를 소유한다. `FactoryItemTransport`는 두 네트워크만 참조하고 Unity UI나 Renderer에 의존하지 않는다. 건설 Builder와 `FactoryItemTransportView`가 입력과 표현을 담당하며 레시피 UI는 선택 결과만 `DyeingMachineState`에 전달한다.
 
-현재 저장은 구현되어 있지 않다. 에르다 결과는 별도 월드 개체가 아니라 기존 아이템 운송 상태를 사용하므로 막힌 끝 X 규칙과 라운드로빈 합류·분배를 그대로 따른다. 메소, 몬스터별 생산량과 업그레이드 레벨은 런타임 세션 상태이며 저장되지 않는다.
+현재 저장은 구현되어 있지 않다. 에르다 결과는 별도 월드 개체가 아니라 기존 아이템 운송 상태를 사용하므로 막힌 끝 X 규칙과 라운드로빈 합류·분배를 그대로 따른다. 메소, 몬스터별 생산량, 업그레이드 레벨·밸런스와 디버그 맵 변경은 런타임 세션 상태이며 저장되지 않는다.

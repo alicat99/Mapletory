@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -8,6 +9,8 @@ namespace Maptory.Factory
     {
         private static readonly Color VALID_GHOST_COLOR = new(1f, 1f, 1f, 0.6f);
         private static readonly Color INVALID_GHOST_COLOR = new(1f, 0.35f, 0.35f, 0.45f);
+
+        private readonly Dictionary<RawMaterialDeposit, GameObject> deposit_views = new();
 
         private Camera main_camera;
         private Grid grid;
@@ -39,6 +42,8 @@ namespace Maptory.Factory
             DrawDeposits();
             CreateGhost();
             build_mode.Changed += OnBuildToolChanged;
+            extraction_network.DepositPlaced += DrawDeposit;
+            extraction_network.DepositRemoved += RemoveDepositView;
         }
 
         private void Update()
@@ -69,17 +74,30 @@ namespace Maptory.Factory
         {
             foreach (var deposit in extraction_network.Deposits.Values)
             {
-                var deposit_object = new GameObject($"Raw Material {deposit.Material}");
-                deposit_object.transform.SetParent(world_root, false);
-                deposit_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)deposit.Center);
-                var renderer = deposit_object.AddComponent<SpriteRenderer>();
-                renderer.sprite = tile_catalog.GetRawMaterialSprite(deposit.Material);
-                renderer.spriteSortPoint = SpriteSortPoint.Pivot;
-                renderer.sortingOrder = FactorySorting.GetOrder(
-                    deposit.Center,
-                    map_size,
-                    FactorySorting.RESOURCE_LAYER);
+                DrawDeposit(deposit);
             }
+        }
+
+        private void DrawDeposit(RawMaterialDeposit deposit)
+        {
+            var deposit_object = new GameObject($"Raw Material {deposit.Material}");
+            deposit_object.transform.SetParent(world_root, false);
+            deposit_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)deposit.Center);
+            var renderer = deposit_object.AddComponent<SpriteRenderer>();
+            renderer.sprite = tile_catalog.GetRawMaterialSprite(deposit.Material);
+            renderer.spriteSortPoint = SpriteSortPoint.Pivot;
+            renderer.sortingOrder = FactorySorting.GetOrder(
+                deposit.Center,
+                map_size,
+                FactorySorting.RESOURCE_LAYER);
+            deposit_views.Add(deposit, deposit_object);
+        }
+
+        private void RemoveDepositView(RawMaterialDeposit deposit)
+        {
+            if (!deposit_views.Remove(deposit, out var view)) return;
+
+            Destroy(view);
         }
 
         private void CreateGhost()

@@ -63,6 +63,8 @@ namespace Maptory.Factory
 
         private void ZoomCamera()
         {
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
+
             var scroll = Mouse.current.scroll.ReadValue().y;
             controlled_camera.orthographicSize = Mathf.Clamp(
                 controlled_camera.orthographicSize - scroll * zoom_speed,

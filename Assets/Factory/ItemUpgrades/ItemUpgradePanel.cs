@@ -116,14 +116,13 @@ namespace Maptory.Factory
         {
             blocker = CreateObject("Blocker", transform);
             Stretch(blocker.GetComponent<RectTransform>());
-            blocker.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.62f);
 
             var panel = CreateRounded("Panel", blocker.transform, PANEL_COLOR, 2f);
             var panel_rect = panel.GetComponent<RectTransform>();
-            panel_rect.anchorMin = panel_rect.anchorMax = new Vector2(0.5f, 0.5f);
-            panel_rect.pivot = new Vector2(0.5f, 0.5f);
-            panel_rect.anchoredPosition = Vector2.zero;
-            panel_rect.sizeDelta = new Vector2(820f, 570f);
+            panel_rect.anchorMin = panel_rect.anchorMax = new Vector2(1f, 0.5f);
+            panel_rect.pivot = new Vector2(1f, 0.5f);
+            panel_rect.anchoredPosition = new Vector2(-24f, 0f);
+            panel_rect.sizeDelta = new Vector2(620f, 570f);
 
             CreateText(
                 "아이템 업그레이드",
@@ -131,15 +130,15 @@ namespace Maptory.Factory
                 30f,
                 TextAlignmentOptions.MidlineLeft,
                 new Vector2(22f, -10f),
-                new Vector2(400f, 44f),
+                new Vector2(290f, 44f),
                 new Color(0.92f, 0.92f, 0.89f, 1f));
             resource_summary = CreateText(
                 "",
                 panel.transform,
                 19f,
                 TextAlignmentOptions.MidlineRight,
-                new Vector2(452f, -12f),
-                new Vector2(286f, 40f),
+                new Vector2(322f, -12f),
+                new Vector2(210f, 40f),
                 new Color(1f, 0.85f, 0.22f, 1f));
 
             var close = CreateButton(
@@ -151,7 +150,7 @@ namespace Maptory.Factory
                 new Color(0.9f, 0.9f, 0.87f, 1f));
             SetRect(
                 close.GetComponent<RectTransform>(),
-                new Vector2(760f, -8f),
+                new Vector2(558f, -8f),
                 new Vector2(42f, 42f));
             close.onClick.AddListener(Close);
 
@@ -159,7 +158,7 @@ namespace Maptory.Factory
             SetRect(
                 list_frame.GetComponent<RectTransform>(),
                 new Vector2(20f, -96f),
-                new Vector2(780f, 454f));
+                new Vector2(580f, 454f));
             BuildScrollView(list_frame.transform);
 
             meso_tab = CreateTab(panel.transform, "메소", 20f, ItemUpgradeCategory.Meso);
@@ -180,7 +179,7 @@ namespace Maptory.Factory
             SetRect(
                 viewport.GetComponent<RectTransform>(),
                 new Vector2(12f, -12f),
-                new Vector2(756f, 430f));
+                new Vector2(556f, 430f));
             viewport.AddComponent<RectMask2D>();
 
             var content = CreateObject("Content", viewport.transform);

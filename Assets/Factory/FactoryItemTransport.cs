@@ -76,6 +76,11 @@ namespace Maptory.Factory
             items.RemoveAll(item => item.Position == position || item.TargetPosition == position);
         }
 
+        public void ClearItems()
+        {
+            items.Clear();
+        }
+
         public FactoryItemState SpawnItem(RawMaterialType material, Vector2Int conveyor_position)
         {
             if (!conveyor_network.Conveyors.ContainsKey(conveyor_position))

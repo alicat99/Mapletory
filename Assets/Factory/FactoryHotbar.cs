@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
@@ -16,6 +18,7 @@ namespace Maptory.Factory
         public event Action<FactoryBuildTool> ToolClicked;
 
         private readonly Dictionary<FactoryBuildTool, Image> tool_slots = new();
+        private readonly List<FactoryBuildTool> slot_tools = new();
         private CanvasGroup canvas_group;
 
         public static FactoryHotbar Create(
@@ -75,6 +78,22 @@ namespace Maptory.Factory
             canvas_group.blocksRaycasts = !active;
         }
 
+        public void SelectSlot(int index)
+        {
+            if (index < 0 || index >= slot_tools.Count) return;
+
+            var tool = slot_tools[index];
+            if (tool != FactoryBuildTool.None) ToolClicked?.Invoke(tool);
+        }
+
+        private void Update()
+        {
+            if (Keyboard.current == null || IsEditingText()) return;
+
+            var index = ReadNumberKey();
+            if (index >= 0) SelectSlot(index);
+        }
+
         private void Build(
             Sprite conveyor_icon,
             Sprite extractor_icon,
@@ -127,8 +146,32 @@ namespace Maptory.Factory
 
             for (var index = 0; index < 10; index++)
             {
+                slot_tools.Add(index < tools.Length ? tools[index] : FactoryBuildTool.None);
                 CreateSlot(panel.transform, index, tools, icons);
             }
+        }
+
+        private static int ReadNumberKey()
+        {
+            if (Keyboard.current.digit1Key.wasPressedThisFrame) return 0;
+            if (Keyboard.current.digit2Key.wasPressedThisFrame) return 1;
+            if (Keyboard.current.digit3Key.wasPressedThisFrame) return 2;
+            if (Keyboard.current.digit4Key.wasPressedThisFrame) return 3;
+            if (Keyboard.current.digit5Key.wasPressedThisFrame) return 4;
+            if (Keyboard.current.digit6Key.wasPressedThisFrame) return 5;
+            if (Keyboard.current.digit7Key.wasPressedThisFrame) return 6;
+            if (Keyboard.current.digit8Key.wasPressedThisFrame) return 7;
+            if (Keyboard.current.digit9Key.wasPressedThisFrame) return 8;
+            if (Keyboard.current.digit0Key.wasPressedThisFrame) return 9;
+            return -1;
+        }
+
+        private static bool IsEditingText()
+        {
+            var selected = EventSystem.current == null
+                ? null
+                : EventSystem.current.currentSelectedGameObject;
+            return selected != null && selected.GetComponent<TMP_InputField>() != null;
         }
 
         private void CreateSlot(

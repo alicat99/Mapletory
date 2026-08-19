@@ -210,6 +210,23 @@ namespace Maptory.Factory
                 tile_catalog,
                 extraction_network.PortalEconomy,
                 item_upgrade_panel);
+
+            var debug_map_editor = gameObject.AddComponent<FactoryDebugMapEditor>();
+            debug_map_editor.Initialize(
+                Camera.main,
+                grid,
+                ground_tilemap,
+                tile_catalog,
+                build_mode,
+                extraction_network,
+                demolition,
+                item_transport,
+                map_size);
+            FactoryDebugPanel.Create(
+                transform,
+                tile_catalog,
+                extraction_network.PortalEconomy,
+                debug_map_editor);
         }
 
         private void OnExtractorPlaced(ExtractorState extractor)
@@ -332,8 +349,7 @@ namespace Maptory.Factory
             controller.Initialize(
                 ground_tilemap.GetComponent<Renderer>(),
                 () => (recipe_panel != null && recipe_panel.IsOpen)
-                    || (portal_panel != null && portal_panel.IsOpen)
-                    || (item_upgrade_panel != null && item_upgrade_panel.IsOpen));
+                    || (portal_panel != null && portal_panel.IsOpen));
         }
 
         private Tilemap CreateTilemap(string object_name, int sorting_order, TilemapRenderer.Mode mode)

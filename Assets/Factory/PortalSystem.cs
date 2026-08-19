@@ -43,23 +43,25 @@ namespace Maptory.Factory
         public const int MAX_UPGRADE_LEVEL = 20;
 
         private const int MESO_SCALE = 100;
-        private const int BASE_VALUE_UNITS = 150;
-        private const int MESO_BONUS_UNITS = 50;
-        private const long MESO_UPGRADE_BASE_COST = 20L;
-        private const long PRODUCTION_UPGRADE_BASE_COST = 20L;
-        private const float PRODUCTION_MULTIPLIER = 1.25f;
+        private const float DEFAULT_BASE_VALUE = 1.5f;
+        private const float DEFAULT_MESO_BONUS = 0.5f;
+        private const float DEFAULT_PRODUCTION_MULTIPLIER = 1.25f;
 
         private readonly Dictionary<RawMaterialType, MonsterProgress> progress = new();
+        private readonly Dictionary<RawMaterialType, MonsterBalance> balances = new();
         private long meso_units;
 
         public long TotalMeso => meso_units / MESO_SCALE;
+        public long MesoUpgradeBaseCost { get; private set; } = 20L;
+        public long ProductionUpgradeBaseCost { get; private set; } = 20L;
+        public int MaximumUpgradeLevel { get; private set; } = MAX_UPGRADE_LEVEL;
 
         public void RecordSupply(RawMaterialType material)
         {
             var monster = GetProgress(material);
             monster.LifetimeProduction++;
             monster.AvailableProduction++;
-            meso_units += GetUnitValueUnits(monster);
+            meso_units += GetUnitValueUnits(monster, GetBalance(material));
         }
 
         public long GetTotalItems(RawMaterialType material)
@@ -85,33 +87,99 @@ namespace Maptory.Factory
         public float GetMesoBonus(RawMaterialType material)
         {
             return GetProgress(material).MesoUpgradeLevel
-                * MESO_BONUS_UNITS / (float)MESO_SCALE;
+                * GetBalance(material).MesoBonusPerLevel;
         }
 
         public float GetProductionMultiplier(RawMaterialType material)
         {
-            return Mathf.Pow(PRODUCTION_MULTIPLIER, GetProgress(material).ProductionUpgradeLevel);
+            return Mathf.Pow(
+                GetBalance(material).ProductionMultiplierPerLevel,
+                GetProgress(material).ProductionUpgradeLevel);
         }
 
         public float GetUnitValue(RawMaterialType material)
         {
-            return GetUnitValueUnits(GetProgress(material)) / (float)MESO_SCALE;
+            return GetUnitValueUnits(GetProgress(material), GetBalance(material))
+                / (float)MESO_SCALE;
+        }
+
+        public float GetBaseValue(RawMaterialType material)
+        {
+            return GetBalance(material).BaseValue;
+        }
+
+        public float GetMesoBonusPerLevel(RawMaterialType material)
+        {
+            return GetBalance(material).MesoBonusPerLevel;
+        }
+
+        public float GetProductionMultiplierPerLevel(RawMaterialType material)
+        {
+            return GetBalance(material).ProductionMultiplierPerLevel;
+        }
+
+        public void SetBaseValue(RawMaterialType material, float value)
+        {
+            GetBalance(material).BaseValue = Mathf.Max(0f, value);
+        }
+
+        public void SetMesoBonusPerLevel(RawMaterialType material, float value)
+        {
+            GetBalance(material).MesoBonusPerLevel = Mathf.Max(0f, value);
+        }
+
+        public void SetProductionMultiplierPerLevel(RawMaterialType material, float value)
+        {
+            GetBalance(material).ProductionMultiplierPerLevel = Mathf.Max(0.01f, value);
+        }
+
+        public void SetMesoUpgradeLevel(RawMaterialType material, int level)
+        {
+            GetProgress(material).MesoUpgradeLevel = Mathf.Clamp(level, 0, MaximumUpgradeLevel);
+        }
+
+        public void SetProductionUpgradeLevel(RawMaterialType material, int level)
+        {
+            GetProgress(material).ProductionUpgradeLevel = Mathf.Clamp(level, 0, MaximumUpgradeLevel);
+        }
+
+        public void SetAvailableProduction(RawMaterialType material, long amount)
+        {
+            GetProgress(material).AvailableProduction = System.Math.Max(0L, amount);
+        }
+
+        public void SetUpgradeCosts(long meso_base_cost, long production_base_cost)
+        {
+            MesoUpgradeBaseCost = System.Math.Max(1L, meso_base_cost);
+            ProductionUpgradeBaseCost = System.Math.Max(1L, production_base_cost);
+        }
+
+        public void SetMaximumUpgradeLevel(int level)
+        {
+            MaximumUpgradeLevel = Mathf.Clamp(level, 1, MAX_UPGRADE_LEVEL);
+            foreach (var monster in progress.Values)
+            {
+                monster.MesoUpgradeLevel = Mathf.Min(monster.MesoUpgradeLevel, MaximumUpgradeLevel);
+                monster.ProductionUpgradeLevel = Mathf.Min(
+                    monster.ProductionUpgradeLevel,
+                    MaximumUpgradeLevel);
+            }
         }
 
         public long GetMesoUpgradeCost(RawMaterialType material)
         {
             var level = GetProgress(material).MesoUpgradeLevel;
-            return level >= MAX_UPGRADE_LEVEL
+            return level >= MaximumUpgradeLevel
                 ? 0L
-                : MESO_UPGRADE_BASE_COST * (level + 1L);
+                : MesoUpgradeBaseCost * (level + 1L);
         }
 
         public long GetProductionUpgradeCost(RawMaterialType material)
         {
             var level = GetProgress(material).ProductionUpgradeLevel;
-            return level >= MAX_UPGRADE_LEVEL
+            return level >= MaximumUpgradeLevel
                 ? 0L
-                : PRODUCTION_UPGRADE_BASE_COST << level;
+                : ProductionUpgradeBaseCost << level;
         }
 
         public bool CanPurchaseMesoUpgrade(RawMaterialType material)
@@ -168,14 +236,25 @@ namespace Maptory.Factory
             return monster;
         }
 
-        private static long GetUnitValueUnits(MonsterProgress monster)
+        private MonsterBalance GetBalance(RawMaterialType material)
         {
-            var additive_value = BASE_VALUE_UNITS
-                + monster.MesoUpgradeLevel * MESO_BONUS_UNITS;
+            if (!balances.TryGetValue(material, out var balance))
+            {
+                balance = new MonsterBalance();
+                balances.Add(material, balance);
+            }
+
+            return balance;
+        }
+
+        private static long GetUnitValueUnits(MonsterProgress monster, MonsterBalance balance)
+        {
+            var additive_value = balance.BaseValue
+                + monster.MesoUpgradeLevel * balance.MesoBonusPerLevel;
             var multiplier = Mathf.Pow(
-                PRODUCTION_MULTIPLIER,
+                balance.ProductionMultiplierPerLevel,
                 monster.ProductionUpgradeLevel);
-            return (long)Math.Round(additive_value * multiplier);
+            return (long)Math.Round(additive_value * multiplier * MESO_SCALE);
         }
 
         private sealed class MonsterProgress
@@ -184,6 +263,13 @@ namespace Maptory.Factory
             public long AvailableProduction;
             public int MesoUpgradeLevel;
             public int ProductionUpgradeLevel;
+        }
+
+        private sealed class MonsterBalance
+        {
+            public float BaseValue = DEFAULT_BASE_VALUE;
+            public float MesoBonusPerLevel = DEFAULT_MESO_BONUS;
+            public float ProductionMultiplierPerLevel = DEFAULT_PRODUCTION_MULTIPLIER;
         }
     }
 
