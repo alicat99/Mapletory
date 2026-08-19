@@ -100,6 +100,7 @@ namespace Maptory.Factory
         Vector2Int Center { get; }
         Vector2Int Forward { get; }
         IRecipe SelectedRecipe { get; }
+        IReadOnlyCollection<RawMaterialType> StoredMaterials { get; }
         int InputCount { get; }
         bool CanCraft { get; }
         Vector2Int OutputConveyorPosition { get; }
@@ -441,6 +442,9 @@ namespace Maptory.Factory
         public int InputCount => 1;
         public Vector2Int Forward => Direction.ToOffset();
         public Vector2Int OutputConveyorPosition => Center + Forward * 2;
+        public IReadOnlyCollection<RawMaterialType> StoredMaterials => stored_material.HasValue
+            ? new[] { stored_material.Value }
+            : Array.Empty<RawMaterialType>();
         public bool CanCraft => SelectedRecipe != null
             && stored_material == SelectedRecipe.InputMaterial;
 
@@ -510,6 +514,7 @@ namespace Maptory.Factory
         public Vector2Int InputConveyorPosition => Center - Forward;
         public Vector2Int OutputConveyorPosition => Center + Forward;
         public bool CanProduce => stored_material.HasValue;
+        public RawMaterialType? StoredMaterial => stored_material;
         public RawMaterialType OutputMaterial => ErdaInjectionRecipes.GetResult(stored_material.Value);
 
         public ErdaInjectorState(Vector2Int center, GridDirection direction)

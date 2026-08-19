@@ -32,6 +32,7 @@ namespace Maptory.Factory
         private FactoryProgression progression;
         private PortalEconomy economy;
         private FactoryStageDefinition current_stage;
+        private FactoryStageStateData current_factory_state;
         private FactoryDebugMapEditor debug_map_editor;
         private FactoryItemTransport item_transport;
         private readonly List<FactoryHeadlessRuntime> background_factories = new();
@@ -275,6 +276,12 @@ namespace Maptory.Factory
                 map_size);
 
             item_transport = new FactoryItemTransport(conveyor_network, extraction_network);
+            if (current_factory_state != null)
+            {
+                FactoryStagePersistence.RestoreItems(
+                    current_factory_state,
+                    item_transport);
+            }
             var item_view = gameObject.AddComponent<FactoryItemTransportView>();
             item_view.Initialize(item_transport, tile_catalog, grid, item_root, map_size);
 
@@ -347,11 +354,11 @@ namespace Maptory.Factory
 
         private void RestoreCurrentFactory()
         {
-            var saved_factory = factory_stages.GetStage(current_stage.Id);
-            if (saved_factory == null) return;
+            current_factory_state = factory_stages.GetStage(current_stage.Id);
+            if (current_factory_state == null) return;
 
             FactoryStagePersistence.Restore(
-                saved_factory,
+                current_factory_state,
                 conveyor_network,
                 extraction_network);
         }
@@ -382,7 +389,8 @@ namespace Maptory.Factory
                 factory_stages.SetStage(FactoryStagePersistence.Capture(
                     current_stage.Id,
                     conveyor_network,
-                    extraction_network));
+                    extraction_network,
+                    item_transport));
             }
 
             foreach (var factory in background_factories)

@@ -19,14 +19,20 @@ namespace Maptory.Factory
         public Vector2Int TargetPosition { get; internal set; }
         public ItemScaleAnimation ScaleAnimation { get; internal set; }
         public IItemConsumer DestinationConsumer { get; internal set; }
+        public GridDirection EntryDirection { get; internal set; }
         public bool IsSpawning => ScaleAnimation == ItemScaleAnimation.Spawning;
 
-        public FactoryItemState(int id, RawMaterialType material, Vector2Int position)
+        public FactoryItemState(
+            int id,
+            RawMaterialType material,
+            Vector2Int position,
+            GridDirection entry_direction)
         {
             Id = id;
             Material = material;
             Position = position;
             TargetPosition = position;
+            EntryDirection = entry_direction;
         }
     }
 
@@ -81,17 +87,50 @@ namespace Maptory.Factory
             items.Clear();
         }
 
-        public FactoryItemState SpawnItem(RawMaterialType material, Vector2Int conveyor_position)
+        public FactoryItemState SpawnItem(
+            RawMaterialType material,
+            Vector2Int conveyor_position,
+            GridDirection? entry_direction = null)
         {
             if (!conveyor_network.Conveyors.ContainsKey(conveyor_position))
             {
                 throw new System.InvalidOperationException("Items can only spawn on conveyors.");
             }
 
-            var item = new FactoryItemState(next_item_id++, material, conveyor_position)
+            var item = new FactoryItemState(
+                next_item_id++,
+                material,
+                conveyor_position,
+                entry_direction ?? conveyor_network.Conveyors[conveyor_position].Direction)
             {
                 ScaleAnimation = ItemScaleAnimation.Spawning
             };
+            items.Add(item);
+            return item;
+        }
+
+        public FactoryItemState RestoreItem(
+            RawMaterialType material,
+            Vector2Int position,
+            Vector2Int target_position,
+            ItemScaleAnimation scale_animation,
+            GridDirection entry_direction)
+        {
+            var item = new FactoryItemState(
+                next_item_id++,
+                material,
+                position,
+                entry_direction)
+            {
+                TargetPosition = target_position,
+                ScaleAnimation = scale_animation
+            };
+            if (scale_animation == ItemScaleAnimation.Despawning)
+            {
+                item.DestinationConsumer = FindRestoredConsumer(
+                    material,
+                    target_position);
+            }
             items.Add(item);
             return item;
         }
@@ -132,6 +171,11 @@ namespace Maptory.Factory
                     continue;
                 }
 
+                if (item.Position != item.TargetPosition)
+                {
+                    item.EntryDirection = GridDirectionExtensions.FromDelta(
+                        item.TargetPosition - item.Position);
+                }
                 item.Position = item.TargetPosition;
                 item.ScaleAnimation = ItemScaleAnimation.None;
             }
@@ -152,7 +196,10 @@ namespace Maptory.Factory
                 if (routed_items.Contains(item)) continue;
 
                 if (conveyor_network.Conveyors.ContainsKey(item.Position)
-                    && conveyor_network.TrySelectNextOutput(item.Position, out var output))
+                    && conveyor_network.TrySelectNextOutput(
+                        item.Position,
+                        item.EntryDirection,
+                        out var output))
                 {
                     proposals.Add(new MoveProposal(item, item.Position + output.ToOffset()));
                 }
@@ -309,7 +356,10 @@ namespace Maptory.Factory
                 if (!conveyor_network.Conveyors.ContainsKey(machine.OutputConveyorPosition)
                     || IsOccupied(machine.OutputConveyorPosition)) continue;
 
-                SpawnItem(machine.Craft(), machine.OutputConveyorPosition);
+                SpawnItem(
+                    machine.Craft(),
+                    machine.OutputConveyorPosition,
+                    GridDirectionExtensions.FromDelta(machine.Forward));
             }
         }
 
@@ -332,7 +382,10 @@ namespace Maptory.Factory
                 if (!conveyor_network.Conveyors.ContainsKey(injector.OutputConveyorPosition)
                     || IsOccupied(injector.OutputConveyorPosition)) continue;
 
-                SpawnItem(injector.Produce(), injector.OutputConveyorPosition);
+                SpawnItem(
+                    injector.Produce(),
+                    injector.OutputConveyorPosition,
+                    GridDirectionExtensions.FromDelta(injector.Forward));
             }
         }
 
@@ -367,7 +420,10 @@ namespace Maptory.Factory
                     continue;
                 }
 
-                SpawnItem(extractor.Material, extractor.OutputPosition);
+                SpawnItem(
+                    extractor.Material,
+                    extractor.OutputPosition,
+                    extractor.Direction);
                 production_elapsed[extractor.Center] = elapsed
                     - EXTRACTOR_PRODUCTION_INTERVAL;
             }
@@ -384,7 +440,11 @@ namespace Maptory.Factory
             var consumer = FindDirectConsumer(material, source_port, destination_port, forward);
             if (consumer == null) return false;
 
-            var item = new FactoryItemState(next_item_id++, material, source_port)
+            var item = new FactoryItemState(
+                next_item_id++,
+                material,
+                source_port,
+                GridDirectionExtensions.FromDelta(forward))
             {
                 TargetPosition = destination_port,
                 ScaleAnimation = ItemScaleAnimation.Despawning,
@@ -430,6 +490,35 @@ namespace Maptory.Factory
             }
 
             return null;
+        }
+
+        private IItemConsumer FindRestoredConsumer(
+            RawMaterialType material,
+            Vector2Int target_position)
+        {
+            foreach (var machine in GetRecipeMachines())
+            {
+                if (!machine.CanAccept(material)) continue;
+                for (var input = 0; input < machine.InputCount; input++)
+                {
+                    if (machine.GetInputPort(input) == target_position) return machine;
+                }
+            }
+
+            foreach (var injector in extraction_network.ErdaInjectors.Values)
+            {
+                if (injector.Center == target_position
+                    && injector.CanAccept(material)) return injector;
+            }
+
+            foreach (var portal in extraction_network.Portals.Values)
+            {
+                if (portal.Contains(target_position)
+                    && portal.CanAccept(material)) return portal;
+            }
+
+            throw new System.InvalidOperationException(
+                "The saved moving item has no destination consumer.");
         }
 
         private IEnumerable<IRecipeMachine> GetRecipeMachines()

@@ -21,6 +21,7 @@ namespace Maptory.Factory.Tests
                 new Vector2Int(15, 15),
                 GridDirection.Right);
             dyeing.SelectRecipe(DyeingRecipe.All[DyeingRecipeId.SnailRed]);
+            dyeing.AddInput(RawMaterialType.Snail);
             var combiner = extraction.PlaceCombiner(
                 new Vector2Int(20, 20),
                 GridDirection.Down);
@@ -29,7 +30,11 @@ namespace Maptory.Factory.Tests
                 new Vector2Int(25, 25),
                 GridDirection.Left);
             processing.SelectRecipe(ProcessingRecipe.All[ProcessingRecipeId.Horn]);
-            extraction.PlaceErdaInjector(new Vector2Int(7, 5), GridDirection.Up);
+            processing.AddInput(RawMaterialType.Snail);
+            var injector = extraction.PlaceErdaInjector(
+                new Vector2Int(7, 5),
+                GridDirection.Up);
+            injector.AddInput(RawMaterialType.Snail);
             var portal = extraction.PlacePortal(new Vector2Int(8, 5));
             portal.SelectMaterial(RawMaterialType.MonsterSnailGreen);
 
@@ -48,13 +53,58 @@ namespace Maptory.Factory.Tests
                 Is.EqualTo(GridDirection.Up));
             Assert.That(restored.DyeingMachines[new Vector2Int(15, 15)].SelectedRecipe,
                 Is.SameAs(DyeingRecipe.All[DyeingRecipeId.SnailRed]));
+            Assert.That(restored.DyeingMachines[new Vector2Int(15, 15)].StoredMaterials,
+                Contains.Item(RawMaterialType.Snail));
             Assert.That(restored.Combiners[new Vector2Int(20, 20)].SelectedRecipe,
                 Is.SameAs(CombiningRecipe.All[CombiningRecipeId.DyePurple]));
             Assert.That(restored.ProcessingMachines[new Vector2Int(25, 25)].SelectedRecipe,
                 Is.SameAs(ProcessingRecipe.All[ProcessingRecipeId.Horn]));
+            Assert.That(restored.ProcessingMachines[new Vector2Int(25, 25)].StoredMaterials,
+                Contains.Item(RawMaterialType.Snail));
             Assert.That(restored.ErdaInjectors.ContainsKey(new Vector2Int(7, 5)), Is.True);
+            Assert.That(restored.ErdaInjectors[new Vector2Int(7, 5)].StoredMaterial,
+                Is.EqualTo(RawMaterialType.Snail));
             Assert.That(restored.Portals[new Vector2Int(8, 5)].SelectedMaterial,
                 Is.EqualTo(RawMaterialType.MonsterSnailGreen));
+        }
+
+        [Test]
+        public void MovingItemsRoundTripWithoutResettingTheirRoute()
+        {
+            var conveyors = new ConveyorNetwork();
+            conveyors.PlaceLine(Vector2Int.zero, Vector2Int.right * 2);
+            var extraction = new ExtractionNetwork(
+                new RawMaterialDeposit[0],
+                conveyors);
+            var transport = new FactoryItemTransport(conveyors, extraction);
+            transport.SpawnItem(RawMaterialType.DyeRed, Vector2Int.zero);
+            transport.Step();
+            var captured = FactoryStagePersistence.Capture(
+                "stage_1",
+                conveyors,
+                extraction,
+                transport);
+            var restored_conveyors = new ConveyorNetwork();
+            var restored_extraction = new ExtractionNetwork(
+                new RawMaterialDeposit[0],
+                restored_conveyors);
+            FactoryStagePersistence.Restore(
+                captured,
+                restored_conveyors,
+                restored_extraction);
+            var restored_transport = new FactoryItemTransport(
+                restored_conveyors,
+                restored_extraction);
+            FactoryStagePersistence.RestoreItems(captured, restored_transport);
+
+            Assert.That(restored_transport.Items.Count, Is.EqualTo(1));
+            Assert.That(restored_transport.Items[0].Material,
+                Is.EqualTo(RawMaterialType.DyeRed));
+            Assert.That(restored_transport.Items[0].Position, Is.EqualTo(Vector2Int.zero));
+            Assert.That(restored_transport.Items[0].TargetPosition,
+                Is.EqualTo(Vector2Int.right));
+            Assert.That(restored_transport.Items[0].EntryDirection,
+                Is.EqualTo(GridDirection.Up));
         }
 
         [Test]

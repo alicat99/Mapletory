@@ -163,11 +163,28 @@ namespace Maptory.Factory
 
         public bool TrySelectNextOutput(Vector2Int position, out GridDirection output)
         {
+            return TrySelectNextOutput(position, conveyors[position].Direction, out output);
+        }
+
+        public bool TrySelectNextOutput(
+            Vector2Int position,
+            GridDirection entry_direction,
+            out GridDirection output)
+        {
             var outputs = GetConveyorOutputDirections(position);
             if (outputs.Count == 0)
             {
                 output = default;
                 return false;
+            }
+
+            var inputs = GetInputDirections(position);
+            if (inputs.Count == 2
+                && outputs.Count == 2
+                && outputs.Contains(entry_direction))
+            {
+                output = entry_direction;
+                return true;
             }
 
             output = conveyors[position].SelectNextOutput(outputs);
@@ -176,15 +193,19 @@ namespace Maptory.Factory
 
         private GridDirection GetInputDirection(Vector2Int position, ConveyorTile conveyor)
         {
-            var input_direction = conveyor.Direction;
-            var input_count = 0;
+            var inputs = GetInputDirections(position);
+            return inputs.Count == 1 ? inputs[0] : conveyor.Direction;
+        }
 
-            if (external_inputs.TryGetValue(position, out var inputs))
+        private List<GridDirection> GetInputDirections(Vector2Int position)
+        {
+            var inputs = new List<GridDirection>(3);
+
+            if (external_inputs.TryGetValue(position, out var registered_inputs))
             {
-                foreach (var direction in inputs)
+                foreach (var direction in registered_inputs)
                 {
-                    input_direction = direction;
-                    input_count++;
+                    if (!inputs.Contains(direction)) inputs.Add(direction);
                 }
             }
 
@@ -197,11 +218,10 @@ namespace Maptory.Factory
                     continue;
                 }
 
-                input_direction = direction;
-                input_count++;
+                if (!inputs.Contains(direction)) inputs.Add(direction);
             }
 
-            return input_count == 1 ? input_direction : conveyor.Direction;
+            return inputs;
         }
 
         private static void RemoveExternalConnection(

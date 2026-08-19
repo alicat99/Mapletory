@@ -50,4 +50,4 @@ if (progression.CanUnlockHuntingGround("lith_harbor_outskirts"))
 | `StageSelectionPanel.cs` | 스테이지 목록·잠금·구매 팝업, 입장과 우측 상단 돌아가기 UI |
 | `Resources/Factory/Progression/FactoryContentConfig.asset` | 빌드에서 사용하는 2개 스테이지와 순서화된 사냥터·비용 원본 |
 
-`FactoryGame`은 저장 설정을 적용한 `PortalEconomy`와 `FactoryProgression`을 먼저 만든 뒤, 스테이지 선택 화면 또는 해당 스테이지의 공장 런타임을 조립한다. 컨베이어, 건물 방향, 레시피와 포탈 선택은 스테이지별 플레이 진행으로 저장한다. 현재 보이지 않는 저장 공장은 `FactoryHeadlessRuntime`이 같은 운송 규칙으로 계속 갱신하므로 스테이지 선택 화면과 다른 스테이지에서도 메소 생산이 유지된다. 이동 중인 개별 아이템과 기계 내부 대기 재료는 저장하지 않고 재입장 시 빈 상태에서 다시 흐르기 시작한다.
+`FactoryGame`은 저장 설정을 적용한 `PortalEconomy`와 `FactoryProgression`을 먼저 만든 뒤, 스테이지 선택 화면 또는 해당 스테이지의 공장 런타임을 조립한다. 컨베이어, 건물 방향, 레시피, 포탈 선택, 이동 중 아이템과 기계 내부 대기 재료는 스테이지별 플레이 진행으로 저장한다. 현재 보이지 않는 저장 공장은 `FactoryHeadlessRuntime`이 같은 운송 규칙으로 계속 갱신하므로 스테이지 선택 화면과 다른 스테이지에서도 메소 생산이 유지된다.

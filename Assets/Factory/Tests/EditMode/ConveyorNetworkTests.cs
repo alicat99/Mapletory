@@ -123,6 +123,28 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
+        public void TwoInputTwoOutputCrossingKeepsEachEntryDirectionStraight()
+        {
+            var network = new ConveyorNetwork();
+            network.SetConveyor(Vector2Int.zero, GridDirection.Up);
+            network.SetConveyor(Vector2Int.left, GridDirection.Up);
+            network.SetConveyor(Vector2Int.down, GridDirection.Left);
+            network.SetConveyor(Vector2Int.right, GridDirection.Up);
+            network.SetConveyor(Vector2Int.up, GridDirection.Left);
+
+            Assert.That(network.TrySelectNextOutput(
+                Vector2Int.zero,
+                GridDirection.Up,
+                out var horizontal), Is.True);
+            Assert.That(network.TrySelectNextOutput(
+                Vector2Int.zero,
+                GridDirection.Left,
+                out var vertical), Is.True);
+            Assert.That(horizontal, Is.EqualTo(GridDirection.Up));
+            Assert.That(vertical, Is.EqualTo(GridDirection.Left));
+        }
+
+        [Test]
         public void ConveyorDoesNotOutputBackTowardItsInput()
         {
             var network = new ConveyorNetwork();

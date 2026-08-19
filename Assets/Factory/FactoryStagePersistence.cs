@@ -38,6 +38,7 @@ namespace Maptory.Factory
         public string stage_id;
         public List<ConveyorStateData> conveyors = new();
         public List<FactoryBuildingStateData> buildings = new();
+        public List<FactoryItemStateData> items = new();
     }
 
     [Serializable]
@@ -59,6 +60,19 @@ namespace Maptory.Factory
         public RawMaterialType recipe_result;
         public bool has_portal_material;
         public RawMaterialType portal_material;
+        public List<RawMaterialType> stored_materials = new();
+    }
+
+    [Serializable]
+    public sealed class FactoryItemStateData
+    {
+        public RawMaterialType material;
+        public int position_x;
+        public int position_y;
+        public int target_x;
+        public int target_y;
+        public ItemScaleAnimation scale_animation;
+        public GridDirection entry_direction;
     }
 
     public static class FactoryStagePersistence
@@ -66,7 +80,8 @@ namespace Maptory.Factory
         public static FactoryStageStateData Capture(
             string stage_id,
             ConveyorNetwork conveyors,
-            ExtractionNetwork extraction)
+            ExtractionNetwork extraction,
+            FactoryItemTransport transport = null)
         {
             var data = new FactoryStageStateData { stage_id = stage_id };
             foreach (var pair in conveyors.Conveyors)
@@ -96,10 +111,15 @@ namespace Maptory.Factory
 
             foreach (var injector in extraction.ErdaInjectors.Values)
             {
-                data.buildings.Add(CreateBuilding(
+                var building = CreateBuilding(
                     FactoryBuildingKind.ErdaInjector,
                     injector.Center,
-                    injector.Direction));
+                    injector.Direction);
+                if (injector.StoredMaterial.HasValue)
+                {
+                    building.stored_materials.Add(injector.StoredMaterial.Value);
+                }
+                data.buildings.Add(building);
             }
 
             foreach (var portal in extraction.Portals.Values)
@@ -116,7 +136,39 @@ namespace Maptory.Factory
                 data.buildings.Add(building);
             }
 
+            if (transport != null)
+            {
+                foreach (var item in transport.Items)
+                {
+                    data.items.Add(new FactoryItemStateData
+                    {
+                        material = item.Material,
+                        position_x = item.Position.x,
+                        position_y = item.Position.y,
+                        target_x = item.TargetPosition.x,
+                        target_y = item.TargetPosition.y,
+                        scale_animation = item.ScaleAnimation,
+                        entry_direction = item.EntryDirection
+                    });
+                }
+            }
+
             return data;
+        }
+
+        public static void RestoreItems(
+            FactoryStageStateData data,
+            FactoryItemTransport transport)
+        {
+            foreach (var item in data.items)
+            {
+                transport.RestoreItem(
+                    item.material,
+                    new Vector2Int(item.position_x, item.position_y),
+                    new Vector2Int(item.target_x, item.target_y),
+                    item.scale_animation,
+                    item.entry_direction);
+            }
         }
 
         public static void Restore(
@@ -196,6 +248,10 @@ namespace Maptory.Factory
                 {
                     building.recipe_result = machine.SelectedRecipe.Result;
                 }
+                foreach (var material in machine.StoredMaterials)
+                {
+                    building.stored_materials.Add(material);
+                }
                 data.buildings.Add(building);
             }
         }
@@ -217,6 +273,7 @@ namespace Maptory.Factory
                         dyeing_machine.SelectRecipe(DyeingRecipe.All.Values.First(
                             recipe => recipe.Result == data.recipe_result));
                     }
+                    RestoreStoredMaterials(data, dyeing_machine);
                     break;
                 case FactoryBuildingKind.Combiner:
                     var combiner = extraction.PlaceCombiner(position, data.direction);
@@ -225,6 +282,7 @@ namespace Maptory.Factory
                         combiner.SelectRecipe(CombiningRecipe.All.Values.First(
                             recipe => recipe.Result == data.recipe_result));
                     }
+                    RestoreStoredMaterials(data, combiner);
                     break;
                 case FactoryBuildingKind.ProcessingMachine:
                     var processing_machine = extraction.PlaceProcessingMachine(
@@ -235,9 +293,14 @@ namespace Maptory.Factory
                         processing_machine.SelectRecipe(ProcessingRecipe.All.Values.First(
                             recipe => recipe.Result == data.recipe_result));
                     }
+                    RestoreStoredMaterials(data, processing_machine);
                     break;
                 case FactoryBuildingKind.ErdaInjector:
-                    extraction.PlaceErdaInjector(position, data.direction);
+                    var injector = extraction.PlaceErdaInjector(position, data.direction);
+                    foreach (var material in data.stored_materials)
+                    {
+                        injector.AddInput(material);
+                    }
                     break;
                 case FactoryBuildingKind.Portal:
                     var portal = extraction.PlacePortal(position);
@@ -248,6 +311,16 @@ namespace Maptory.Factory
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static void RestoreStoredMaterials(
+            FactoryBuildingStateData data,
+            IRecipeMachine machine)
+        {
+            foreach (var material in data.stored_materials)
+            {
+                machine.AddInput(material);
             }
         }
 
@@ -300,7 +373,9 @@ namespace Maptory.Factory
                 economy,
                 is_portal_material_allowed);
             FactoryStagePersistence.Restore(state, conveyors, extraction);
-            return new FactoryHeadlessRuntime(state.stage_id, conveyors, extraction);
+            var runtime = new FactoryHeadlessRuntime(state.stage_id, conveyors, extraction);
+            FactoryStagePersistence.RestoreItems(state, runtime.transport);
+            return runtime;
         }
 
         public void Update(float delta_time)
@@ -310,7 +385,11 @@ namespace Maptory.Factory
 
         public FactoryStageStateData Capture()
         {
-            return FactoryStagePersistence.Capture(stage_id, conveyors, extraction);
+            return FactoryStagePersistence.Capture(
+                stage_id,
+                conveyors,
+                extraction,
+                transport);
         }
     }
 }
