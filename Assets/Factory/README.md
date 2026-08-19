@@ -22,7 +22,7 @@ Play Mode가 시작되면 스테이지 선택 화면에 2개 스테이지가 표
 14. 채굴기 중심에서 출력 방향으로 두 칸 떨어진 셀에 컨베이어를 설치한다. 채굴기는 원재료에 대응하는 아이템을 정확히 1초마다 1개씩 첫 컨베이어 위에 0→1 스케일 애니메이션으로 생성한다. 생성이 끝나면 `(0.5, 0.25)` 피벗을 기준으로 컨베이어 상판에 맞춘 경로를 따라 0.45초마다 다음 컨베이어로 등속 이동한다. 아이템은 컨베이어보다 로컬 Z가 `0.3` 높다.
 15. 두 컨베이어를 하나로 합쳐 아이템을 연속 공급하면 합류 승인이 입력별로 번갈아 적용된다. `Conveyor?A` 분배기에서는 `TrySelectNextOutput`의 라운드로빈 순서에 따라 출력들이 균등하게 선택된다.
 16. 채굴기 출구가 향하는 첫 컨베이어는 출구 방향을 외부 입력으로 판정한다. 따라서 U 방향 채굴기에서 나온 첫 컨베이어가 R 방향으로 꺾이면 `ConveyorUR`이 표시된다. 실제 컨베이어 입력까지 여러 개가 합류하면 기존 규칙대로 별도 합류 이미지를 사용하지 않는다.
-17. 컨베이어와 건물의 마스크 하단은 `ConveyorLevel`, 아이템과 건물 상단은 `ItemLevel` Sorting Layer를 사용한다. `ItemLevel`은 항상 `ConveyorLevel` 위에 그려진다. 채굴기는 `BuildingLowerMask.png`의 알파와 겹치는 부분만 Lower SpriteRenderer로, 나머지를 Upper SpriteRenderer로 표시하며 두 조각의 합은 원본과 같다.
+17. 컨베이어와 건물·원재료의 마스크 하단은 `ConveyorLevel`, 아이템과 건물·원재료 상단은 `ItemLevel` Sorting Layer를 사용한다. `ItemLevel`은 항상 `ConveyorLevel` 위에 그려진다. 채굴기와 5종 64×64 원재료는 `BuildingLowerMask.png`의 알파와 겹치는 부분만 Lower SpriteRenderer로, 나머지를 Upper SpriteRenderer로 표시하며 두 조각의 합은 원본과 같다.
 18. 같은 Sorting Layer 안에서는 원재료, 채굴기 조각, 컨베이어와 이동 아이템이 Y 기반 정렬 규칙을 사용한다. 아이템은 매 프레임 보간된 격자 좌표와 `(0.5, 0.25)` Sprite 피벗을 정렬 기준으로 사용한다.
 19. 세 번째 슬롯을 선택하면 3×3 염색기 고스트가 표시된다. `R`은 채굴기와 동일하게 출력 방향을 반시계 회전하며, 원재료·건물·컨베이어와 3×3 점유 영역이 겹치면 설치할 수 없다.
 20. 사용자 좌표축은 `x+ = 화면 우하단`, `y+ = 화면 우상단`이다. 이 좌표계에서 U 방향 염색기의 중심이 `(0, 0)`일 때 내부 입력 포트는 `(-1, -1)`, `(1, -1)`, 내부 출력 포트는 `(0, 1)`이다. Unity 내부 격자로 변환한 포트는 각각 `(-1, 1)`, `(-1, -1)`, `(1, 0)`이며, 연결 컨베이어는 `(-2, 1)`, `(-2, -1)`, `(2, 0)`에 둔다. R/D/L은 이 배치를 화면 방향에 맞게 회전한다.
@@ -40,7 +40,7 @@ Play Mode가 시작되면 스테이지 선택 화면에 2개 스테이지가 표
 32. 초록 달팽이 껍질 한 개를 입력하면 빠른 스케일 아웃 뒤 `Horn.png` 뿔 아이템이 출력 컨베이어에 스케일 인으로 생성된다. 조합기의 `뿔버섯` 대분류에서 뿔 한 개와 기본 버섯 갓 한 개를 조합하면 염색 전 뿔버섯 갓이 생산된다.
 33. 일곱 번째 슬롯은 2×2 포탈 건설 모드다. 포인터 셀을 발자국의 좌하단 앵커로 사용하고 네 칸의 중심에 고스트와 건물을 표시한다. 네 변에 붙는 컨베이어 두 칸씩, 총 8개 위치에서 포탈 방향으로 들어오는 아이템을 받을 수 있다. 발자국은 원재료·건물·컨베이어와 겹칠 수 없고 입력 위치까지 맵 안에 있을 때만 설치할 수 있다.
 34. 새 포탈에는 `(아이템 선택)` 툴팁이 표시된다. 건설 도구를 해제하고 포탈을 클릭하면 현재 스테이지에 속한 사냥터만 남색 선택창에 표시된다. 초기 사냥터는 즉시 선택할 수 있고 나머지는 `[잠금]` 행과 `해금` 버튼으로 구분된다. 해금 팝업은 필요 메소, 사용 가능 몬스터, 필요 몬스터 생산 재화와 현재 수량을 표시하며 부족 조건은 붉게 표시한다. 조건을 모두 만족해야 두 재화를 함께 차감하고 영구 해금한다. 팝업이 열린 동안 카메라 이동·우클릭 패닝·휠 줌은 비활성화된다.
-35. 선택된 포탈은 선택한 버섯·달팽이·뿔버섯 몬스터와 일치하고 포탈을 향하는 컨베이어 아이템만 빠른 스케일 아웃으로 소비한다. 가공 전 버섯 갓·달팽이 껍질·뿔버섯 갓은 받지 않는다. 기본 개체 가치는 1.5메소이며 총 메소는 화면 좌측 상단 `<누적량> 메소` HUD에서 실시간으로 확인한다.
+35. 선택된 포탈은 선택한 버섯·달팽이·뿔버섯 몬스터와 일치하고 포탈을 향하는 컨베이어 아이템만 빠른 스케일 아웃으로 소비한다. 가공 전 버섯 갓·달팽이 껍질·뿔버섯 갓은 받지 않는다. 기본 개체 가치는 몬스터별 `1 / 2 / 3 / 5 / 7 / 10 / 20 / 30`메소이며 총 메소는 화면 좌측 상단 `<누적량> 메소` HUD에서 실시간으로 확인한다.
 36. 선택 후 월드 툴팁은 `<아이템> | x메소/개`로 바뀐다. 포탈에 공급한 수량은 몬스터 종류별 누적 생산량과 업그레이드에 쓸 수 있는 생산량에 함께 더해지며, 같은 몬스터를 선택한 모든 포탈이 하나의 진행도를 공유한다.
 37. 포탈은 `BuildingLowerMaskPortal.png` 전용 마스크로 Lower/Upper Sprite를 만들며 기존 건물과 같은 `ConveyorLevel`/`ItemLevel`, `(0.5, 0.25)` 피벗 및 Y 기반 정렬 규칙을 사용한다.
 38. 추출기·염색기·조합기·가공기계·에르다 주입기의 출력 방향에 다음 공장이나 포탈의 입력 포트가 바로 닿아 있으면 중간 컨베이어 없이 생산물이 빠른 이동·스케일 아웃으로 전달된다. 공장끼리는 진행 방향이 같아야 하며, 포탈은 맞닿은 면의 모든 방향 입력을 사용한다. 다음 목적지가 해당 아이템을 받을 수 없으면 생산물은 이전 공장에 대기한다.
@@ -51,7 +51,7 @@ Play Mode가 시작되면 스테이지 선택 화면에 2개 스테이지가 표
 43. `F2`를 누르면 화면 왼쪽에 전체 화면 음영 없는 런타임 디버그 패널이 열린다. `맵` 탭은 잔디 두 종류 페인트, 5종 원재료 배치, 셀 제거, 셀/전체 이동 아이템 제거를 제공하며 월드에서 좌클릭 드래그로 적용한다. 건물과 컨베이어는 기존 핫바 또는 숫자키로 배치한다.
 44. 디버그 `몬스터` 탭은 몬스터를 순환 선택해 기본 가치, 레벨당 합연산 값, 레벨당 곱연산 계수, 두 현재 레벨과 사용 가능 생산량을 즉시 수정한다. `업그레이드` 탭은 몬스터별 두 기본 비용과 전역 메소·생산량 비용 계수를 조정한다. 변경된 최종 가치와 비용은 포탈·업그레이드 UI에 즉시 반영된다.
 45. 공장 화면 우측 상단의 `돌아가기`를 누르면 진행을 저장하고 스테이지 선택 화면으로 복귀한다. 1스테이지 외 스테이지의 잠금과 구매 비용을 확인할 수 있으며 해금된 스테이지는 재입장 시 비용을 다시 요구하지 않는다.
-46. 디버그 `해금` 탭은 스테이지·사냥터별 메소 비용을 수정한다. `변경사항 저장 후 처음부터 실행`은 이 설정과 몬스터·업그레이드 밸런스, 현재 스테이지의 잔디·원재료 맵 편집을 별도 설정 세이브에 유지하고 메소·생산량·업그레이드·스테이지·사냥터 진행을 초기화해 새 게임 상태로 재시작한다.
+46. 디버그 `해금` 탭은 스테이지·사냥터별 메소 비용을 수정한다. `변경사항 저장 후 처음부터 실행`은 이 설정과 몬스터·업그레이드 밸런스, 현재 스테이지의 잔디·원재료 맵 편집을 별도 설정 세이브에 유지하고 메소·생산량·업그레이드·스테이지·사냥터 진행을 초기화해 새 게임 상태로 재시작한다. 우측 상단 `돌아가기`로 스테이지를 나갈 때도 디버그 설정과 현재 맵을 자동 저장하되 진행도는 유지한다.
 
 Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 맵 크기와 무관한 격자 메시, 염색기와 조합기의 포트·점유·레시피·생산, 가공기계와 에르다 주입기, 포탈 경제와 두 업그레이드, 스테이지·사냥터 기본 잠금과 영구 해금 구매, 두 재화의 원자적 차감·중복 구매 방지·직접 진입 차단, 설정 직렬화와 잠금 UI, 우측 업그레이드 창·숫자키 핫바, 원재료 런타임 편집, 철거 드래그, Lower/Upper Sprite를 검증한다.
 
@@ -59,7 +59,7 @@ Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈�
 
 `FactoryGame`은 맵 표현과 입력/UI 조립을 담당하는 Scene 진입점이다. Main Camera가 `MainCamera` 태그를 가지고 있어야 한다. 모든 런타임 Sprite는 `Art/Resources/Factory` 아래에서 이름으로 로드된다. `FactorySpriteImporter`는 Point 필터와 16 PPU를 적용하고, 컨베이어·건물·아이템에는 `(0.5, 0.25)`, 원재료에는 중앙 피벗을 사용한다. 월드 객체는 `FactorySorting`의 명시적 Y 깊이 순서를 공유한다.
 
-건물 원본이나 `Art/BuildingProcessing`의 마스크가 변경되면 `BuildingSpriteLayerGenerator`가 각 원본의 `Lower`와 `Upper` PNG를 `Art/Resources/Factory/Buildings/Generated`에 다시 만든다. 64×64 건물은 `BuildingLowerMask.png`, 32×64 1×1 건물은 `BuildingLowerMask1x1.png`, 32×32 포탈은 `BuildingLowerMaskPortal.png`를 사용한다. 수동 갱신은 Unity 메뉴 `Tools > Maptory > Regenerate Building Layers`를 사용한다.
+건물·원재료 원본이나 `Art/BuildingProcessing`의 마스크가 변경되면 `BuildingSpriteLayerGenerator`가 각 원본의 `Lower`와 `Upper` PNG를 해당 `Generated` 폴더에 다시 만든다. 64×64 건물과 원재료는 `BuildingLowerMask.png`, 32×64 1×1 건물은 `BuildingLowerMask1x1.png`, 32×32 포탈은 `BuildingLowerMaskPortal.png`를 사용한다. 수동 갱신은 Unity 메뉴 `Tools > Maptory > Regenerate Building Layers`를 사용한다.
 
 검증 Scene의 Global Light 2D는 `Default`, `ConveyorLevel`, `ItemLevel`을 모두 대상으로 한다. 새 레이어를 추가할 때 Lit Sprite가 검게 표시되지 않도록 조명 대상에도 함께 등록해야 한다.
 
@@ -181,7 +181,7 @@ if (economy.CanPurchaseProductionUpgrade(RawMaterialType.MonsterSnailRed))
 | `Art/Resources/Factory/Construction/ConstructionGridOverlay.shader` | 단일 메시의 보간된 격자 좌표로 셀 경계와 화면상 일정한 선 굵기를 계산 |
 | `FactoryTileCatalog.cs` | 잔디, 컨베이어, 원재료, 건물 원본·Lower·Upper, 일반·몬스터 아이템·UI Sprite와 런타임 TMP 폰트 조회 제공 |
 | `ConveyorBuilder.cs` | 핫바가 켠 건설 모드에서 포인터를 격자에 투영하고 건물 점유를 검증한 직선 미리보기·배치를 수행하며 셀별 컨베이어 SpriteRenderer를 갱신 |
-| `ExtractorBuilder.cs` | 원재료 표현, 방향 고스트, 중심 일치 검증과 채굴기 Lower/Upper SpriteRenderer 생성 |
+| `ExtractorBuilder.cs` | 원재료·채굴기 Lower/Upper 표현, 방향 고스트와 중심 일치 검증 |
 | `DyeingMachineBuilder.cs` | 염색기 방향 고스트·설치·클릭, Lower/Upper 렌더러와 미선택 툴팁 생성 |
 | `CombinerBuilder.cs` | 3×3 조합기 방향 고스트·설치·클릭, Lower/Upper 렌더러와 미선택 툴팁 생성 |
 | `ErdaInjectorBuilder.cs` | 1×1 에르다 주입기 방향 고스트·설치 및 전용 마스크 Lower/Upper 렌더러 생성 |
@@ -207,7 +207,7 @@ if (economy.CanPurchaseProductionUpgrade(RawMaterialType.MonsterSnailRed))
 | `Progression/StageSelectionPanel.cs` | 스테이지 목록·구매·입장과 공장 우측 상단 돌아가기 UI |
 | `DebugTools/FactoryDebugMapEditor.cs` | 잔디·원재료·제거·아이템 브러시와 스테이지별 맵 설정 캡처를 기존 상태에 연결 |
 | `Editor/FactorySpriteImporter.cs` | 기능 전용 픽셀 아트의 Sprite import 설정 고정 |
-| `Editor/BuildingSpriteLayerGenerator.cs` | 3×3/1×1/포탈 전용 하단 마스크를 선택해 Lower/Upper PNG로 전처리하고 변경 시 재생성 |
+| `Editor/BuildingSpriteLayerGenerator.cs` | 3×3/1×1/포탈 건물과 64×64 원재료에 맞는 하단 마스크를 선택해 Lower/Upper PNG로 전처리하고 변경 시 재생성 |
 | `Tests/EditMode/ConveyorNetworkTests.cs` | 컨베이어 연결 및 분배 규칙의 Edit Mode 회귀 테스트 |
 | `Tests/EditMode/ExtractionAndTransportTests.cs` | 채굴기 배치·회전·생산, 운송·합류 및 정렬 규칙 회귀 테스트 |
 | `Tests/EditMode/ConstructionGridOverlayTests.cs` | 초대형 맵에서도 메시 크기가 일정하고 건설 모드에만 표시되는지 검증 |
