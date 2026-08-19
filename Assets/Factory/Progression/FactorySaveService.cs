@@ -13,6 +13,7 @@ namespace Maptory.Factory
     {
         private const string PROGRESS_KEY = "Maptory.Factory.Progress.v1";
         private const string SETTINGS_KEY = "Maptory.Factory.Settings.v1";
+        private const string FACTORIES_KEY = "Maptory.Factory.Stages.v1";
 
         public FactoryProgressData LoadProgress()
         {
@@ -40,9 +41,24 @@ namespace Maptory.Factory
             PlayerPrefs.Save();
         }
 
+        public FactoryStageCollectionData LoadFactories()
+        {
+            return PlayerPrefs.HasKey(FACTORIES_KEY)
+                ? JsonUtility.FromJson<FactoryStageCollectionData>(
+                    PlayerPrefs.GetString(FACTORIES_KEY))
+                : new FactoryStageCollectionData();
+        }
+
+        public void SaveFactories(FactoryStageCollectionData factories)
+        {
+            PlayerPrefs.SetString(FACTORIES_KEY, JsonUtility.ToJson(factories));
+            PlayerPrefs.Save();
+        }
+
         public void ResetProgress()
         {
             PlayerPrefs.DeleteKey(PROGRESS_KEY);
+            PlayerPrefs.DeleteKey(FACTORIES_KEY);
             PlayerPrefs.Save();
         }
     }

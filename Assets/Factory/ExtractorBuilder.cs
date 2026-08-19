@@ -40,6 +40,7 @@ namespace Maptory.Factory
             map_size = size;
 
             DrawDeposits();
+            DrawExtractors();
             CreateGhost();
             build_mode.Changed += OnBuildToolChanged;
             extraction_network.DepositPlaced += DrawDeposit;
@@ -96,6 +97,14 @@ namespace Maptory.Factory
                 FactorySorting.ITEM_SORTING_LAYER,
                 deposit.Center);
             deposit_views.Add(deposit, deposit_object);
+        }
+
+        private void DrawExtractors()
+        {
+            foreach (var extractor in extraction_network.Extractors.Values)
+            {
+                DrawExtractor(extractor);
+            }
         }
 
         private void CreateDepositPart(
@@ -156,6 +165,13 @@ namespace Maptory.Factory
         private void PlaceExtractor(Vector2Int center)
         {
             var extractor = extraction_network.PlaceExtractor(center, direction);
+            DrawExtractor(extractor);
+            ghost_renderer.enabled = false;
+        }
+
+        private void DrawExtractor(ExtractorState extractor)
+        {
+            var center = extractor.Center;
             var extractor_object = new GameObject($"Extractor ({center.x}, {center.y})");
             extractor_object.transform.SetParent(world_root, false);
             extractor_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
@@ -163,16 +179,15 @@ namespace Maptory.Factory
             CreateExtractorPart(
                 extractor_object.transform,
                 "Lower",
-                tile_catalog.GetExtractorLowerSprite(direction),
+                tile_catalog.GetExtractorLowerSprite(extractor.Direction),
                 FactorySorting.CONVEYOR_SORTING_LAYER,
                 center);
             CreateExtractorPart(
                 extractor_object.transform,
                 "Upper",
-                tile_catalog.GetExtractorUpperSprite(direction),
+                tile_catalog.GetExtractorUpperSprite(extractor.Direction),
                 FactorySorting.ITEM_SORTING_LAYER,
                 center);
-            ghost_renderer.enabled = false;
         }
 
         private void CreateExtractorPart(

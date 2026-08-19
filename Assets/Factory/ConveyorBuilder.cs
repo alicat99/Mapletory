@@ -43,6 +43,7 @@ namespace Maptory.Factory
             tile_catalog = catalog;
             map_size = size;
             build_mode.Changed += OnBuildToolChanged;
+            DrawConveyors();
         }
 
         public void RefreshConveyors()

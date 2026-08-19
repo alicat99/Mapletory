@@ -41,6 +41,7 @@ namespace Maptory.Factory
             tile_catalog = catalog;
             recipe_panel = panel;
             map_size = size;
+            DrawExistingMachines();
             CreateGhost();
             build_mode.Changed += OnBuildToolChanged;
             recipe_panel.RecipeSelected += OnRecipeSelected;
@@ -103,20 +104,38 @@ namespace Maptory.Factory
         private void Place(Vector2Int center)
         {
             var machine = extraction_network.PlaceCombiner(center, direction);
+            DrawMachine(machine);
+            ghost_renderer.enabled = false;
+        }
+
+        private void DrawExistingMachines()
+        {
+            foreach (var machine in extraction_network.Combiners.Values)
+            {
+                DrawMachine(machine);
+            }
+        }
+
+        private void DrawMachine(CombinerState machine)
+        {
+            var center = machine.Center;
             var machine_object = new GameObject($"Combiner ({center.x}, {center.y})");
             machine_object.transform.SetParent(world_root, false);
             machine_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
             FactoryBuildingView.Attach(machine_object, machine);
             CreatePart(machine_object.transform, "Lower",
-                tile_catalog.GetCombinerLowerSprite(direction),
+                tile_catalog.GetCombinerLowerSprite(machine.Direction),
                 FactorySorting.CONVEYOR_SORTING_LAYER, center);
             CreatePart(machine_object.transform, "Upper",
-                tile_catalog.GetCombinerUpperSprite(direction),
+                tile_catalog.GetCombinerUpperSprite(machine.Direction),
                 FactorySorting.ITEM_SORTING_LAYER, center);
-            tooltips.Add(
-                machine,
-                RecipeTooltip.Create(machine_object.transform, tile_catalog, center, map_size));
-            ghost_renderer.enabled = false;
+            var tooltip = RecipeTooltip.Create(
+                machine_object.transform,
+                tile_catalog,
+                center,
+                map_size);
+            tooltip.SetActive(machine.SelectedRecipe == null);
+            tooltips.Add(machine, tooltip);
         }
 
         private void CreateGhost()

@@ -52,6 +52,7 @@ Play Mode가 시작되면 스테이지 선택 화면에 2개 스테이지가 표
 44. 디버그 `몬스터` 탭은 몬스터를 순환 선택해 기본 가치, 레벨당 합연산 값, 레벨당 곱연산 계수, 두 현재 레벨과 사용 가능 생산량을 즉시 수정한다. `업그레이드` 탭은 몬스터별 두 기본 비용과 전역 메소·생산량 비용 계수를 조정한다. 변경된 최종 가치와 비용은 포탈·업그레이드 UI에 즉시 반영된다.
 45. 공장 화면 우측 상단의 `돌아가기`를 누르면 진행을 저장하고 스테이지 선택 화면으로 복귀한다. 1스테이지 외 스테이지의 잠금과 구매 비용을 확인할 수 있으며 해금된 스테이지는 재입장 시 비용을 다시 요구하지 않는다.
 46. 디버그 `해금` 탭은 스테이지·사냥터별 메소 비용을 수정한다. `변경사항 저장 후 처음부터 실행`은 이 설정과 몬스터·업그레이드 밸런스, 현재 스테이지의 잔디·원재료 맵 편집을 별도 설정 세이브에 유지하고 메소·생산량·업그레이드·스테이지·사냥터 진행을 초기화해 새 게임 상태로 재시작한다. 우측 상단 `돌아가기`로 스테이지를 나갈 때도 디버그 설정과 현재 맵을 자동 저장하되 진행도는 유지한다.
+47. 스테이지를 나가면 컨베이어, 설치 건물의 위치·방향, 선택한 레시피와 포탈 아이템이 스테이지별로 저장되고 재입장 시 복원된다. 스테이지 선택 화면이나 다른 스테이지에 있는 동안에도 저장된 공장은 화면 없이 같은 운송 규칙으로 계속 작동하며 포탈 공급과 메소 획득이 공용 진행도에 반영된다.
 
 Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈블리를 실행한다. 테스트는 기존 컨베이어·채굴·정렬 규칙과 함께 맵 크기와 무관한 격자 메시, 염색기와 조합기의 포트·점유·레시피·생산, 가공기계와 에르다 주입기, 포탈 경제와 두 업그레이드, 스테이지·사냥터 기본 잠금과 영구 해금 구매, 두 재화의 원자적 차감·중복 구매 방지·직접 진입 차단, 설정 직렬화와 잠금 UI, 우측 업그레이드 창·숫자키 핫바, 원재료 런타임 편집, 철거 드래그, Lower/Upper Sprite를 검증한다.
 
@@ -202,7 +203,8 @@ if (economy.CanPurchaseProductionUpgrade(RawMaterialType.MonsterSnailRed))
 | `Progression/FactoryContentConfig.cs` | ScriptableObject 기반 2개 스테이지·순서화된 사냥터와 메소 비용 정의 |
 | `Progression/FactoryProgressAutosave.cs` | 빈번한 생산 이벤트를 모아 주기적으로 진행 데이터를 저장 |
 | `FactoryUiEventSystem.cs` | 스테이지 선택과 공장 UI가 공유하는 Input System UI 입력 초기화 |
-| `Progression/FactorySaveService.cs` | 플레이 진행과 밸런스·해금·스테이지별 맵 디버그 설정을 분리한 PlayerPrefs JSON 저장 |
+| `Progression/FactorySaveService.cs` | 플레이 진행, 스테이지별 공장 배치와 밸런스·해금·맵 디버그 설정을 분리한 PlayerPrefs JSON 저장 |
+| `FactoryStagePersistence.cs` | 컨베이어·건물·레시피·포탈 선택 캡처/복원과 비활성 스테이지의 화면 없는 운송 시뮬레이션 |
 | `Progression/FactoryProgression.cs` | 해금 상태·구매 검증·원자적 재화 소비와 스테이지 세션 소유 |
 | `Progression/StageSelectionPanel.cs` | 스테이지 목록·구매·입장과 공장 우측 상단 돌아가기 UI |
 | `DebugTools/FactoryDebugMapEditor.cs` | 잔디·원재료·제거·아이템 브러시와 스테이지별 맵 설정 캡처를 기존 상태에 연결 |
@@ -220,4 +222,4 @@ if (economy.CanPurchaseProductionUpgrade(RawMaterialType.MonsterSnailRed))
 
 `ConveyorNetwork`와 `ExtractionNetwork`가 영속 가능한 게임 상태를 소유한다. `FactoryItemTransport`는 두 네트워크만 참조하고 Unity UI나 Renderer에 의존하지 않는다. 건설 Builder와 `FactoryItemTransportView`가 입력과 표현을 담당하며 레시피 UI는 선택 결과만 `DyeingMachineState`에 전달한다.
 
-메소, 몬스터별 누적·사용 가능 생산량, 두 업그레이드 레벨과 스테이지·사냥터 해금은 진행 세이브에 저장된다. 디버그에서 명시적으로 저장한 몬스터 밸런스·몬스터별 업그레이드 기본 비용·비용 계수·스테이지와 사냥터 비용·스테이지별 잔디와 원재료 맵은 진행과 분리된 설정 세이브에 저장된다. 컨베이어와 건물 배치는 아직 저장하지 않는다.
+메소, 몬스터별 누적·사용 가능 생산량, 두 업그레이드 레벨, 스테이지·사냥터 해금과 스테이지별 공장 배치는 진행 세이브에 저장된다. 디버그에서 명시적으로 저장한 몬스터 밸런스·몬스터별 업그레이드 기본 비용·비용 계수·스테이지와 사냥터 비용·스테이지별 잔디와 원재료 맵은 진행과 분리된 설정 세이브에 저장된다. 이동 중 아이템과 기계 내부 대기 재료는 저장하지 않는다.

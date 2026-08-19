@@ -35,6 +35,7 @@ namespace Maptory.Factory
             extraction_network = network;
             tile_catalog = catalog;
             map_size = size;
+            DrawExistingInjectors();
             CreateGhost();
             build_mode.Changed += OnBuildToolChanged;
         }
@@ -77,17 +78,31 @@ namespace Maptory.Factory
         private void Place(Vector2Int center)
         {
             var injector = extraction_network.PlaceErdaInjector(center, direction);
+            DrawInjector(injector);
+            ghost_renderer.enabled = false;
+        }
+
+        private void DrawExistingInjectors()
+        {
+            foreach (var injector in extraction_network.ErdaInjectors.Values)
+            {
+                DrawInjector(injector);
+            }
+        }
+
+        private void DrawInjector(ErdaInjectorState injector)
+        {
+            var center = injector.Center;
             var injector_object = new GameObject($"Erda Injector ({center.x}, {center.y})");
             injector_object.transform.SetParent(world_root, false);
             injector_object.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
             FactoryBuildingView.Attach(injector_object, injector);
             CreatePart(injector_object.transform, "Lower",
-                tile_catalog.GetErdaInjectorLowerSprite(direction),
+                tile_catalog.GetErdaInjectorLowerSprite(injector.Direction),
                 FactorySorting.CONVEYOR_SORTING_LAYER, center);
             CreatePart(injector_object.transform, "Upper",
-                tile_catalog.GetErdaInjectorUpperSprite(direction),
+                tile_catalog.GetErdaInjectorUpperSprite(injector.Direction),
                 FactorySorting.ITEM_SORTING_LAYER, center);
-            ghost_renderer.enabled = false;
         }
 
         private void CreateGhost()

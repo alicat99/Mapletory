@@ -37,6 +37,7 @@ namespace Maptory.Factory
             tile_catalog = catalog;
             selection_panel = panel;
             map_size = size;
+            DrawExistingPortals();
             CreateGhost();
             build_mode.Changed += OnBuildToolChanged;
         }
@@ -91,6 +92,21 @@ namespace Maptory.Factory
         private void Place(Vector2Int anchor)
         {
             var portal = extraction_network.PlacePortal(anchor);
+            DrawPortal(portal);
+            ghost_renderer.enabled = false;
+        }
+
+        private void DrawExistingPortals()
+        {
+            foreach (var portal in extraction_network.Portals.Values)
+            {
+                DrawPortal(portal);
+            }
+        }
+
+        private void DrawPortal(PortalState portal)
+        {
+            var anchor = portal.Anchor;
             var portal_object = new GameObject($"Portal ({anchor.x}, {anchor.y})");
             portal_object.transform.SetParent(world_root, false);
             portal_object.transform.localPosition = GetVisualCenter(anchor);
@@ -113,7 +129,6 @@ namespace Maptory.Factory
                 portal,
                 extraction_network.PortalEconomy,
                 map_size);
-            ghost_renderer.enabled = false;
         }
 
         private void CreateGhost()

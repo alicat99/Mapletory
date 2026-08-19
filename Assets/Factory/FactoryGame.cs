@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -27,10 +28,14 @@ namespace Maptory.Factory
         private FactoryContentConfig content_config;
         private FactorySaveService save_service;
         private FactorySettingsData factory_settings;
+        private FactoryStageCollectionData factory_stages;
         private FactoryProgression progression;
         private PortalEconomy economy;
         private FactoryStageDefinition current_stage;
         private FactoryDebugMapEditor debug_map_editor;
+        private FactoryItemTransport item_transport;
+        private readonly List<FactoryHeadlessRuntime> background_factories = new();
+        private float next_factory_save_time;
 
         private void Awake()
         {
@@ -41,6 +46,7 @@ namespace Maptory.Factory
                 || !progression.IsStageUnlocked(FactoryStageSession.SelectedStageId))
             {
                 FactoryStageSession.Clear();
+                InitializeBackgroundFactories(null);
                 Camera.main.backgroundColor = new Color(0.035f, 0.055f, 0.04f);
                 StageSelectionPanel.Create(transform, tile_catalog, progression, EnterStage);
                 return;
@@ -50,12 +56,27 @@ namespace Maptory.Factory
             grass_seed = current_stage.GrassSeed;
             conveyor_network = new ConveyorNetwork();
             extraction_network = CreateExtractionNetwork();
+            RestoreCurrentFactory();
 
             CreateMap();
             FillGround();
             CreateConstructionControls();
+            InitializeBackgroundFactories(current_stage.Id);
             ConfigureCamera();
             StageReturnButton.Create(transform, tile_catalog, current_stage.DisplayName, ReturnToStages);
+        }
+
+        private void Update()
+        {
+            foreach (var factory in background_factories)
+            {
+                factory.Update(Time.deltaTime);
+            }
+
+            if (Time.unscaledTime < next_factory_save_time) return;
+
+            next_factory_save_time = Time.unscaledTime + 2f;
+            SaveFactoryStates();
         }
 
         private void InitializeProgression()
@@ -66,6 +87,7 @@ namespace Maptory.Factory
             save_service = new FactorySaveService();
             economy = new PortalEconomy();
             factory_settings = save_service.LoadSettings();
+            factory_stages = save_service.LoadFactories();
             factory_settings.Apply(content_config, economy);
             progression = new FactoryProgression(
                 content_config,
@@ -79,6 +101,7 @@ namespace Maptory.Factory
         {
             if (!progression.IsStageUnlocked(stage_id)) return;
 
+            SaveFactoryStates();
             progression.Save();
             FactoryStageSession.Select(stage_id);
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -87,6 +110,7 @@ namespace Maptory.Factory
         private void ReturnToStages()
         {
             SaveRuntimeSettings();
+            SaveFactoryStates();
             progression.Save();
             FactoryStageSession.Clear();
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -250,7 +274,7 @@ namespace Maptory.Factory
                 portal_panel,
                 map_size);
 
-            var item_transport = new FactoryItemTransport(conveyor_network, extraction_network);
+            item_transport = new FactoryItemTransport(conveyor_network, extraction_network);
             var item_view = gameObject.AddComponent<FactoryItemTransportView>();
             item_view.Initialize(item_transport, tile_catalog, grid, item_root, map_size);
 
@@ -319,6 +343,69 @@ namespace Maptory.Factory
             factory_settings.Capture(content_config, economy);
             factory_settings.SetMap(debug_map_editor.CaptureSettings());
             save_service.SaveSettings(factory_settings);
+        }
+
+        private void RestoreCurrentFactory()
+        {
+            var saved_factory = factory_stages.GetStage(current_stage.Id);
+            if (saved_factory == null) return;
+
+            FactoryStagePersistence.Restore(
+                saved_factory,
+                conveyor_network,
+                extraction_network);
+        }
+
+        private void InitializeBackgroundFactories(string excluded_stage_id)
+        {
+            background_factories.Clear();
+            foreach (var saved_factory in factory_stages.stages)
+            {
+                if (saved_factory.stage_id == excluded_stage_id) continue;
+
+                var stage_id = saved_factory.stage_id;
+                var runtime = FactoryHeadlessRuntime.Create(
+                    saved_factory,
+                    CreateDeposits(stage_id),
+                    economy,
+                    material => progression.IsMonsterUnlocked(stage_id, material));
+                background_factories.Add(runtime);
+            }
+
+            next_factory_save_time = Time.unscaledTime + 2f;
+        }
+
+        private void SaveFactoryStates()
+        {
+            if (current_stage != null && conveyor_network != null && extraction_network != null)
+            {
+                factory_stages.SetStage(FactoryStagePersistence.Capture(
+                    current_stage.Id,
+                    conveyor_network,
+                    extraction_network));
+            }
+
+            foreach (var factory in background_factories)
+            {
+                factory_stages.SetStage(factory.Capture());
+            }
+
+            save_service.SaveFactories(factory_stages);
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused) SaveFactoryStates();
+        }
+
+        private void OnApplicationFocus(bool focused)
+        {
+            if (!focused) SaveFactoryStates();
+        }
+
+        private void OnApplicationQuit()
+        {
+            SaveFactoryStates();
         }
 
         private void OnExtractorPlaced(ExtractorState extractor)
@@ -412,7 +499,16 @@ namespace Maptory.Factory
 
         private ExtractionNetwork CreateExtractionNetwork()
         {
-            var saved_map = factory_settings.GetMap(current_stage.Id);
+            return new ExtractionNetwork(
+                CreateDeposits(current_stage.Id),
+                conveyor_network,
+                economy,
+                material => progression.IsMonsterUnlocked(current_stage.Id, material));
+        }
+
+        private RawMaterialDeposit[] CreateDeposits(string stage_id)
+        {
+            var saved_map = factory_settings.GetMap(stage_id);
             var deposits = saved_map == null
                 ? new[]
             {
@@ -425,11 +521,7 @@ namespace Maptory.Factory
                 : saved_map.deposits.ConvertAll(deposit => new RawMaterialDeposit(
                     deposit.material,
                     new Vector2Int(deposit.x, deposit.y))).ToArray();
-            return new ExtractionNetwork(
-                deposits,
-                conveyor_network,
-                economy,
-                material => progression.IsMonsterUnlocked(current_stage.Id, material));
+            return deposits;
         }
 
         private void ConfigureCamera()
