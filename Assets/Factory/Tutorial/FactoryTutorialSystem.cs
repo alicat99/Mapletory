@@ -291,9 +291,9 @@ namespace Maptory.Factory
         {
             replay_button = CreateButton(catalog, transform, "튜토리얼 다시보기", 16f);
             var rect = replay_button.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(24f, -154f);
+            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(1f, 0f);
+            rect.anchoredPosition = new Vector2(-24f, 24f);
             rect.sizeDelta = new Vector2(190f, 44f);
             replay_button.onClick.AddListener(ReplayTutorial);
         }
