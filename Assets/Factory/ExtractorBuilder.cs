@@ -9,6 +9,7 @@ namespace Maptory.Factory
     {
         private static readonly Color VALID_GHOST_COLOR = new(1f, 1f, 1f, 0.6f);
         private static readonly Color INVALID_GHOST_COLOR = new(1f, 0.35f, 0.35f, 0.45f);
+        private const int DEPOSIT_VISUAL_SPACING = 3;
 
         private readonly Dictionary<RawMaterialDeposit, GameObject> deposit_views = new();
 
@@ -82,7 +83,9 @@ namespace Maptory.Factory
             {
                 for (var x = -1; x <= 1; x++)
                 {
-                    var cell = deposit.Center + new Vector2Int(x, y);
+                    var cell = deposit.Center + new Vector2Int(
+                        x * DEPOSIT_VISUAL_SPACING,
+                        y * DEPOSIT_VISUAL_SPACING);
                     CreateDepositPart(
                         deposit_object.transform,
                         $"Lower ({x}, {y})",

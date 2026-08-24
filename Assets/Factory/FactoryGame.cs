@@ -284,7 +284,6 @@ namespace Maptory.Factory
                 grid,
                 world_root,
                 build_mode,
-                conveyor_network,
                 extraction_network);
 
             item_transport = new FactoryItemTransport(conveyor_network, extraction_network);

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Maptory.Factory
@@ -12,7 +11,6 @@ namespace Maptory.Factory
         private Grid grid;
         private Transform marker_root;
         private FactoryBuildMode build_mode;
-        private ConveyorNetwork conveyor_network;
         private ExtractionNetwork extraction_network;
         private Sprite input_icon;
         private Sprite output_icon;
@@ -25,13 +23,11 @@ namespace Maptory.Factory
             Grid map_grid,
             Transform world_root,
             FactoryBuildMode mode,
-            ConveyorNetwork conveyors,
             ExtractionNetwork extraction)
         {
             main_camera = camera;
             grid = map_grid;
             build_mode = mode;
-            conveyor_network = conveyors;
             extraction_network = extraction;
             marker_root = new GameObject("Building Port Markers").transform;
             marker_root.SetParent(world_root, false);
@@ -45,25 +41,13 @@ namespace Maptory.Factory
         {
             if (Mouse.current == null) return;
 
-            if (build_mode.ActiveTool != FactoryBuildTool.None)
-            {
-                RefreshPreview(false);
-                return;
-            }
-
-            if (build_mode.IsDemolitionMode)
+            if (build_mode.ActiveTool == FactoryBuildTool.None)
             {
                 Clear();
                 return;
             }
 
-            if (!Mouse.current.leftButton.wasPressedThisFrame
-                || EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-            {
-                return;
-            }
-
-            ShowSelection(GetPointerCell());
+            RefreshPreview(false);
         }
 
         private void RefreshPreview(bool force)
@@ -110,31 +94,6 @@ namespace Maptory.Factory
                     ShowPortal(new PortalState(cell, extraction_network.PortalEconomy));
                     break;
             }
-        }
-
-        private void ShowSelection(Vector2Int cell)
-        {
-            Clear();
-            var building = extraction_network.FindBuilding(cell);
-            switch (building)
-            {
-                case ExtractorState extractor:
-                    ShowOutput(extractor.OutputPosition, extractor.Direction);
-                    return;
-                case IRecipeMachine recipe_machine:
-                    ShowRecipeMachine(recipe_machine);
-                    return;
-                case ErdaInjectorState injector:
-                    ShowInjector(injector);
-                    return;
-                case PortalState portal:
-                    ShowPortal(portal);
-                    return;
-            }
-
-            if (!conveyor_network.Conveyors.TryGetValue(cell, out var conveyor)) return;
-            ShowMarker(cell, input_icon, conveyor.Direction, -0.22f);
-            ShowMarker(cell, output_icon, conveyor.Direction, 0.22f);
         }
 
         private void ShowRecipeMachine(IRecipeMachine machine)

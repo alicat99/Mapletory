@@ -2,21 +2,21 @@
 
 ## 1. 기능 검증 방법
 
-2~7번 건설 도구를 선택하고 마우스를 이동한다. 고스트 주변 실제 컨베이어 연결 셀에 입력/출력 아이콘이 나타나야 한다. R로 회전하면 건물 스프라이트와 포트가 함께 회전해야 한다. 건설 모드를 끄고 기존 건물을 클릭해도 같은 포트가 표시되어야 한다. UI 위 클릭은 월드 선택으로 전달되지 않아야 한다.
+2~7번 건설 도구를 선택하고 마우스를 이동한다. 고스트 주변 실제 컨베이어 연결 셀에 입력/출력 아이콘이 나타나야 한다. R로 회전하면 건물 스프라이트와 포트가 함께 회전해야 한다. 건설 모드를 끝내는 즉시 아이콘이 사라지고 기존 건물이나 컨베이어를 클릭해도 다시 나타나지 않아야 한다.
 
 ## 2. 기능 사용법
 
 `FactoryGame`이 오버레이를 자동 생성한다. 아이콘은 `Resources/Factory/BuildingPorts/InputIcon.png`와 `OutputIcon.png`를 사용하므로 Inspector 연결이 없다.
 
 ```csharp
-port_overlay.Initialize(camera, grid, world_root, build_mode, conveyors, extraction);
+port_overlay.Initialize(camera, grid, world_root, build_mode, extraction);
 ```
 
 ## 3. 코드 구조와 책임
 
 | 파일 | 책임 |
 |---|---|
-| `FactoryBuildingPortOverlay.cs` | 기존 건물 상태의 포트 좌표를 아이콘으로 표시 |
+| `FactoryBuildingPortOverlay.cs` | 건설 미리보기 상태의 포트 좌표를 아이콘으로 표시 |
 | `Resources/Factory/BuildingPorts/InputIcon.png` | 입력 표시 스프라이트 |
 | `Resources/Factory/BuildingPorts/OutputIcon.png` | 출력 표시 스프라이트 |
 
