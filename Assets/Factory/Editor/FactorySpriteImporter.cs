@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Maptory.Factory.Editor
 {
+#pragma warning disable CS0618
     public sealed class FactorySpriteImporter : AssetPostprocessor
     {
         private void OnPreprocessTexture()
@@ -24,7 +25,10 @@ namespace Maptory.Factory.Editor
 
             if (assetPath.StartsWith("Assets/Factory/BuildingPorts/"))
             {
-                importer.spritePixelsPerUnit = 32f;
+                importer.spriteImportMode = SpriteImportMode.Multiple;
+                importer.spritePixelsPerUnit = 16f;
+                importer.spritesheet = CreatePortSprites(
+                    assetPath.EndsWith("/InputIcon.png") ? "InputIcon" : "OutputIcon");
                 return;
             }
 
@@ -48,5 +52,41 @@ namespace Maptory.Factory.Editor
                 importer.SetTextureSettings(settings);
             }
         }
+
+        private static SpriteMetaData[] CreatePortSprites(string prefix)
+        {
+            return new[]
+            {
+                new SpriteMetaData
+                {
+                    name = prefix + "U",
+                    rect = new Rect(16f, 0f, 16f, 16f),
+                    alignment = (int)SpriteAlignment.Center,
+                    pivot = new Vector2(0.5f, 0.5f)
+                },
+                new SpriteMetaData
+                {
+                    name = prefix + "R",
+                    rect = new Rect(16f, 16f, 16f, 16f),
+                    alignment = (int)SpriteAlignment.Center,
+                    pivot = new Vector2(0.5f, 0.5f)
+                },
+                new SpriteMetaData
+                {
+                    name = prefix + "D",
+                    rect = new Rect(0f, 16f, 16f, 16f),
+                    alignment = (int)SpriteAlignment.Center,
+                    pivot = new Vector2(0.5f, 0.5f)
+                },
+                new SpriteMetaData
+                {
+                    name = prefix + "L",
+                    rect = new Rect(0f, 0f, 16f, 16f),
+                    alignment = (int)SpriteAlignment.Center,
+                    pivot = new Vector2(0.5f, 0.5f)
+                }
+            };
+        }
     }
+#pragma warning restore CS0618
 }

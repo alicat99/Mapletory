@@ -6,7 +6,7 @@
 
 ## 2. 기능 사용법
 
-`FactoryGame`이 오버레이를 자동 생성한다. 아이콘은 `Resources/Factory/BuildingPorts/InputIcon.png`와 `OutputIcon.png`를 사용하므로 Inspector 연결이 없다.
+`FactoryGame`이 오버레이를 자동 생성한다. 아이콘은 `Resources/Factory/BuildingPorts/InputIcon.png`와 `OutputIcon.png`의 2×2 방향 시트를 16×16로 슬라이스해 사용하므로 Inspector 연결이 없다. 방향별 조각은 `U=우상`, `R=우하`, `D=좌하`, `L=좌상`으로 직접 매핑하며 Output 조각의 뾰족한 끝이 항상 건물 바깥을 향한다.
 
 ```csharp
 port_overlay.Initialize(camera, grid, world_root, build_mode, conveyor_builder, extraction);
@@ -17,7 +17,8 @@ port_overlay.Initialize(camera, grid, world_root, build_mode, conveyor_builder, 
 | 파일 | 책임 |
 |---|---|
 | `FactoryBuildingPortOverlay.cs` | 건설 미리보기 상태의 포트 좌표를 아이콘으로 표시 |
-| `Resources/Factory/BuildingPorts/InputIcon.png` | 입력 표시 스프라이트 |
-| `Resources/Factory/BuildingPorts/OutputIcon.png` | 출력 표시 스프라이트 |
+| `Resources/Factory/BuildingPorts/InputIcon.png` | 4방향 입력 표시 스프라이트 시트 |
+| `Resources/Factory/BuildingPorts/OutputIcon.png` | 4방향 출력 표시 스프라이트 시트 |
+| `../Tests/EditMode/BuildingPortOverlayTests.cs` | 방향별 시트 슬라이스 좌표 검증 |
 
 방향과 포트 위치는 `ConveyorBuilder`의 프리뷰 구간과 `ExtractorState`, `IRecipeMachine`, `ErdaInjectorState`, `PortalState`에서 읽는다. UI에는 건물별 방향 좌표를 별도 하드코딩하지 않는다.

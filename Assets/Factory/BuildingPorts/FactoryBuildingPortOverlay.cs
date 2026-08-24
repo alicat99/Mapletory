@@ -13,8 +13,8 @@ namespace Maptory.Factory
         private Transform marker_root;
         private FactoryBuildMode build_mode;
         private ExtractionNetwork extraction_network;
-        private Sprite input_icon;
-        private Sprite output_icon;
+        private Sprite[] input_icons;
+        private Sprite[] output_icons;
         private Vector2Int last_preview_cell = new(int.MinValue, int.MinValue);
         private FactoryBuildTool last_preview_tool;
         private GridDirection last_preview_direction;
@@ -33,8 +33,8 @@ namespace Maptory.Factory
             extraction_network = extraction;
             marker_root = new GameObject("Building Port Markers").transform;
             marker_root.SetParent(world_root, false);
-            input_icon = Resources.Load<Sprite>("Factory/BuildingPorts/InputIcon");
-            output_icon = Resources.Load<Sprite>("Factory/BuildingPorts/OutputIcon");
+            input_icons = LoadDirectionalSprites("Factory/BuildingPorts/InputIcon");
+            output_icons = LoadDirectionalSprites("Factory/BuildingPorts/OutputIcon");
             build_mode.Changed += _ => RefreshPreview(true);
             build_mode.Rotated += (_, _) => RefreshPreview(true);
             conveyors.PreviewChanged += ShowConveyorPreview;
@@ -108,8 +108,8 @@ namespace Maptory.Factory
             if (!visible || build_mode.ActiveTool != FactoryBuildTool.Conveyor) return;
 
             var direction = GridDirectionExtensions.FromDelta(end - start);
-            ShowMarker(start, input_icon, direction, -0.22f);
-            ShowMarker(end, output_icon, direction, 0.22f);
+            ShowMarker(start, input_icons[(int)direction], direction, -0.22f);
+            ShowMarker(end, output_icons[(int)direction], direction, 0.22f);
         }
 
         private void ShowRecipeMachine(IRecipeMachine machine)
@@ -138,12 +138,12 @@ namespace Maptory.Factory
 
         private void ShowInput(Vector2Int position, GridDirection direction)
         {
-            ShowMarker(position, input_icon, direction, 0f);
+            ShowMarker(position, input_icons[(int)direction], direction, 0f);
         }
 
         private void ShowOutput(Vector2Int position, GridDirection direction)
         {
-            ShowMarker(position, output_icon, direction, 0f);
+            ShowMarker(position, output_icons[(int)direction], direction, 0f);
         }
 
         private void ShowMarker(
@@ -157,11 +157,7 @@ namespace Maptory.Factory
             var flow = GetWorldDirection(direction);
             marker.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)position)
                 + flow * flow_offset;
-            marker.transform.localRotation = Quaternion.Euler(
-                0f,
-                0f,
-                Mathf.Atan2(flow.y, flow.x) * Mathf.Rad2Deg - 26.565f);
-            marker.transform.localScale = Vector3.one * 2.2f;
+            marker.transform.localScale = Vector3.one * 1.6f;
             marker.sprite = sprite;
             marker.sortingLayerName = FactorySorting.ITEM_SORTING_LAYER;
             marker.sortingOrder = 31000;
@@ -173,6 +169,26 @@ namespace Maptory.Factory
             var origin = grid.GetCellCenterLocal(Vector3Int.zero);
             var target = grid.GetCellCenterLocal((Vector3Int)direction.ToOffset());
             return (target - origin).normalized;
+        }
+
+        private static Sprite[] LoadDirectionalSprites(string path)
+        {
+            var directional_sprites = new Sprite[4];
+            foreach (var sprite in Resources.LoadAll<Sprite>(path))
+            {
+                var direction = sprite.name[^1] switch
+                {
+                    'U' => GridDirection.Up,
+                    'R' => GridDirection.Right,
+                    'D' => GridDirection.Down,
+                    'L' => GridDirection.Left,
+                    _ => throw new System.InvalidOperationException(
+                        $"Unknown building port sprite direction: {sprite.name}")
+                };
+                directional_sprites[(int)direction] = sprite;
+            }
+
+            return directional_sprites;
         }
 
         private Vector2Int GetPointerCell()
