@@ -723,6 +723,23 @@ namespace Maptory.Factory
             return null;
         }
 
+        public object FindBuilding(Vector2Int position)
+        {
+            foreach (var extractor in extractors.Values)
+            {
+                if (IsInsideFootprint(position, extractor.Center)) return extractor;
+            }
+
+            var dyeing_machine = FindDyeingMachine(position);
+            if (dyeing_machine != null) return dyeing_machine;
+            var combiner = FindCombiner(position);
+            if (combiner != null) return combiner;
+            var processing_machine = FindProcessingMachine(position);
+            if (processing_machine != null) return processing_machine;
+            if (erda_injectors.TryGetValue(position, out var injector)) return injector;
+            return FindPortal(position);
+        }
+
         public DyeingMachineState FindDyeingMachine(Vector2Int position)
         {
             foreach (var machine in dyeing_machines.Values)

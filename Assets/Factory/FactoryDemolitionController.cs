@@ -18,6 +18,7 @@ namespace Maptory.Factory
 
     public sealed class FactoryDemolitionController : MonoBehaviour
     {
+        public event Action<object> Demolished;
         private Camera main_camera;
         private Grid grid;
         private Transform world_root;
@@ -123,11 +124,14 @@ namespace Maptory.Factory
             {
                 item_transport.RemoveItemsAt(position);
                 conveyor_builder.RefreshConveyors();
+                Demolished?.Invoke(position);
                 return;
             }
 
             var building = extraction_network.RemoveBuilding(position);
             if (building == null) return;
+
+            Demolished?.Invoke(building);
 
             foreach (var view in world_root.GetComponentsInChildren<FactoryBuildingView>(true))
             {

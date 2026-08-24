@@ -29,6 +29,7 @@ namespace Maptory.Factory
         private TMP_Text title;
 
         public event Action<IRecipeMachine> RecipeSelected;
+        public event Action<string> Opened;
         public bool IsOpen => blocker != null && blocker.activeSelf;
 
         public static RecipeSelectionPanel Create(Transform parent, FactoryTileCatalog catalog)
@@ -66,6 +67,7 @@ namespace Maptory.Factory
             PopulateRecipeList(categories);
             blocker.SetActive(true);
             RefreshSelection();
+            Opened?.Invoke(panel_title);
         }
 
         private void Build()

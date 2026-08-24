@@ -25,6 +25,9 @@ namespace Maptory.Factory
         private RecipeSelectionPanel recipe_panel;
         private PortalSelectionPanel portal_panel;
         private ItemUpgradePanel item_upgrade_panel;
+        private FactoryCodexPanel codex_panel;
+        private FactoryTutorialSystem tutorial_system;
+        private FactoryCameraController camera_controller;
         private FactoryContentConfig content_config;
         private FactorySaveService save_service;
         private FactorySettingsData factory_settings;
@@ -61,9 +64,9 @@ namespace Maptory.Factory
 
             CreateMap();
             FillGround();
+            ConfigureCamera();
             CreateConstructionControls();
             InitializeBackgroundFactories(current_stage.Id);
-            ConfigureCamera();
             StageReturnButton.Create(transform, tile_catalog, current_stage.DisplayName, ReturnToStages);
         }
 
@@ -275,6 +278,15 @@ namespace Maptory.Factory
                 portal_panel,
                 map_size);
 
+            var port_overlay = gameObject.AddComponent<FactoryBuildingPortOverlay>();
+            port_overlay.Initialize(
+                Camera.main,
+                grid,
+                world_root,
+                build_mode,
+                conveyor_network,
+                extraction_network);
+
             item_transport = new FactoryItemTransport(conveyor_network, extraction_network);
             if (current_factory_state != null)
             {
@@ -300,9 +312,9 @@ namespace Maptory.Factory
                 transform,
                 tile_catalog.ConveyorIcon,
                 tile_catalog.ExtractorIcon,
+                tile_catalog.ErdaInjectorIcon,
                 tile_catalog.DyeingMachineIcon,
                 tile_catalog.CombinerIcon,
-                tile_catalog.ErdaInjectorIcon,
                 tile_catalog.ProcessingMachineIcon,
                 tile_catalog.PortalIcon);
             hotbar.ToolClicked += build_mode.Toggle;
@@ -315,12 +327,39 @@ namespace Maptory.Factory
                 extraction_network.PortalEconomy);
             item_upgrade_panel.SetOtherModalCheck(
                 () => (recipe_panel != null && recipe_panel.IsOpen)
-                    || (portal_panel != null && portal_panel.IsOpen));
+                    || (portal_panel != null && portal_panel.IsOpen)
+                    || (codex_panel != null && codex_panel.IsOpen)
+                    || (tutorial_system != null && tutorial_system.IsModalOpen));
             ItemUpgradeShortcut.Create(
                 transform,
                 tile_catalog,
                 extraction_network.PortalEconomy,
                 item_upgrade_panel);
+
+            codex_panel = FactoryCodexPanel.Create(transform, tile_catalog, progression);
+            codex_panel.SetOtherModalCheck(
+                () => (recipe_panel != null && recipe_panel.IsOpen)
+                    || (portal_panel != null && portal_panel.IsOpen)
+                    || (item_upgrade_panel != null && item_upgrade_panel.IsOpen)
+                    || (tutorial_system != null && tutorial_system.IsModalOpen));
+            FactoryObjectiveSystem.Create(
+                transform,
+                tile_catalog,
+                progression,
+                item_transport,
+                codex_panel);
+            tutorial_system = FactoryTutorialSystem.Create(
+                transform,
+                tile_catalog,
+                progression,
+                camera_controller,
+                build_mode,
+                conveyor_builder,
+                demolition,
+                recipe_panel,
+                portal_panel,
+                item_upgrade_panel,
+                codex_panel);
 
             debug_map_editor = gameObject.AddComponent<FactoryDebugMapEditor>();
             debug_map_editor.Initialize(
@@ -546,11 +585,13 @@ namespace Maptory.Factory
             main_camera.transform.position = new Vector3(center.x, center.y, -10f);
             main_camera.orthographicSize = 7.5f;
 
-            var controller = main_camera.gameObject.AddComponent<FactoryCameraController>();
-            controller.Initialize(
+            camera_controller = main_camera.gameObject.AddComponent<FactoryCameraController>();
+            camera_controller.Initialize(
                 ground_tilemap.GetComponent<Renderer>(),
                 () => (recipe_panel != null && recipe_panel.IsOpen)
-                    || (portal_panel != null && portal_panel.IsOpen));
+                    || (portal_panel != null && portal_panel.IsOpen)
+                    || (codex_panel != null && codex_panel.IsOpen)
+                    || (tutorial_system != null && tutorial_system.IsModalOpen));
         }
 
         private Tilemap CreateTilemap(string object_name, int sorting_order, TilemapRenderer.Mode mode)

@@ -69,6 +69,8 @@ namespace Maptory.Factory
         public List<string> unlocked_stages = new();
         public List<string> unlocked_hunting_grounds = new();
         public PortalEconomyProgressData economy = new();
+        public FactoryTutorialProgressData tutorial = new();
+        public FactoryObjectiveProgressData objectives = new();
     }
 
     [Serializable]

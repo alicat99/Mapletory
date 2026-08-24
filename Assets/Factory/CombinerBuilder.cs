@@ -20,7 +20,6 @@ namespace Maptory.Factory
         private FactoryTileCatalog tile_catalog;
         private RecipeSelectionPanel recipe_panel;
         private Vector2Int map_size;
-        private GridDirection direction = GridDirection.Up;
         private SpriteRenderer ghost_renderer;
 
         public void Initialize(
@@ -74,17 +73,13 @@ namespace Maptory.Factory
 
         private void UpdateConstruction()
         {
-            if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
-            {
-                direction = direction.RotateCounterClockwise();
-            }
-
             var center = GetPointerCell();
             ghost_renderer.enabled = ContainsFootprint(center);
             if (!ghost_renderer.enabled) return;
 
             ghost_renderer.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
-            ghost_renderer.sprite = tile_catalog.GetCombinerSprite(direction);
+            ghost_renderer.sprite = tile_catalog.GetCombinerSprite(
+                build_mode.GetDirection(FactoryBuildTool.Combiner));
             ghost_renderer.color = extraction_network.CanPlaceCombiner(center)
                 ? VALID_GHOST_COLOR
                 : INVALID_GHOST_COLOR;
@@ -103,7 +98,9 @@ namespace Maptory.Factory
 
         private void Place(Vector2Int center)
         {
-            var machine = extraction_network.PlaceCombiner(center, direction);
+            var machine = extraction_network.PlaceCombiner(
+                center,
+                build_mode.GetDirection(FactoryBuildTool.Combiner));
             DrawMachine(machine);
             ghost_renderer.enabled = false;
         }

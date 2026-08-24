@@ -65,6 +65,8 @@ namespace Maptory.Factory
         public float ProductionUpgradeCostCoefficient { get; private set; } =
             DEFAULT_PRODUCTION_COST_COEFFICIENT;
         public event Action Changed;
+        public event Action<RawMaterialType> Supplied;
+        public event Action<RawMaterialType, ItemUpgradeCategory> UpgradePurchased;
 
         public void RecordSupply(RawMaterialType material)
         {
@@ -73,6 +75,7 @@ namespace Maptory.Factory
             monster.AvailableProduction++;
             meso_units += GetUnitValueUnits(monster, GetBalance(material));
             Changed?.Invoke();
+            Supplied?.Invoke(material);
         }
 
         public long GetTotalItems(RawMaterialType material)
@@ -261,6 +264,7 @@ namespace Maptory.Factory
             meso_units -= GetMesoUpgradeCost(material) * MESO_SCALE;
             monster.MesoUpgradeLevel++;
             Changed?.Invoke();
+            UpgradePurchased?.Invoke(material, ItemUpgradeCategory.Meso);
             return true;
         }
 
@@ -272,6 +276,7 @@ namespace Maptory.Factory
             monster.AvailableProduction -= GetProductionUpgradeCost(material);
             monster.ProductionUpgradeLevel++;
             Changed?.Invoke();
+            UpgradePurchased?.Invoke(material, ItemUpgradeCategory.Production);
             return true;
         }
 

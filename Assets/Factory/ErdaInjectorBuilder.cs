@@ -16,7 +16,6 @@ namespace Maptory.Factory
         private ExtractionNetwork extraction_network;
         private FactoryTileCatalog tile_catalog;
         private Vector2Int map_size;
-        private GridDirection direction = GridDirection.Up;
         private SpriteRenderer ghost_renderer;
 
         public void Initialize(
@@ -48,17 +47,13 @@ namespace Maptory.Factory
                 return;
             }
 
-            if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
-            {
-                direction = direction.RotateCounterClockwise();
-            }
-
             var center = GetPointerCell();
             ghost_renderer.enabled = ContainsPorts(center);
             if (!ghost_renderer.enabled) return;
 
             ghost_renderer.transform.localPosition = grid.GetCellCenterLocal((Vector3Int)center);
-            ghost_renderer.sprite = tile_catalog.GetErdaInjectorSprite(direction);
+            ghost_renderer.sprite = tile_catalog.GetErdaInjectorSprite(
+                build_mode.GetDirection(FactoryBuildTool.ErdaInjector));
             ghost_renderer.color = extraction_network.CanPlaceErdaInjector(center)
                 ? VALID_GHOST_COLOR
                 : INVALID_GHOST_COLOR;
@@ -77,7 +72,9 @@ namespace Maptory.Factory
 
         private void Place(Vector2Int center)
         {
-            var injector = extraction_network.PlaceErdaInjector(center, direction);
+            var injector = extraction_network.PlaceErdaInjector(
+                center,
+                build_mode.GetDirection(FactoryBuildTool.ErdaInjector));
             DrawInjector(injector);
             ghost_renderer.enabled = false;
         }
@@ -143,7 +140,7 @@ namespace Maptory.Factory
 
         private bool ContainsPorts(Vector2Int center)
         {
-            var forward = direction.ToOffset();
+            var forward = build_mode.GetDirection(FactoryBuildTool.ErdaInjector).ToOffset();
             return IsInsideMap(center - forward) && IsInsideMap(center + forward);
         }
 

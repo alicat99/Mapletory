@@ -28,6 +28,7 @@ namespace Maptory.Factory
         public bool IsOpen => blocker != null && blocker.activeSelf;
         public int RowCount => rows.Count;
         public ItemUpgradeCategory SelectedCategory { get; private set; }
+        public event Action Opened;
 
         public static ItemUpgradePanel Create(
             Transform parent,
@@ -69,6 +70,7 @@ namespace Maptory.Factory
 
             blocker.SetActive(true);
             Refresh();
+            Opened?.Invoke();
         }
 
         public void Close()

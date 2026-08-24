@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -24,9 +25,9 @@ namespace Maptory.Factory
             Transform parent,
             Sprite conveyor_icon,
             Sprite extractor_icon,
+            Sprite erda_injector_icon,
             Sprite dyeing_machine_icon,
             Sprite combiner_icon,
-            Sprite erda_injector_icon,
             Sprite processing_machine_icon,
             Sprite portal_icon)
         {
@@ -54,9 +55,9 @@ namespace Maptory.Factory
             hotbar.Build(
                 conveyor_icon,
                 extractor_icon,
+                erda_injector_icon,
                 dyeing_machine_icon,
                 combiner_icon,
-                erda_injector_icon,
                 processing_machine_icon,
                 portal_icon);
             return hotbar;
@@ -96,9 +97,9 @@ namespace Maptory.Factory
         private void Build(
             Sprite conveyor_icon,
             Sprite extractor_icon,
+            Sprite erda_injector_icon,
             Sprite dyeing_machine_icon,
             Sprite combiner_icon,
-            Sprite erda_injector_icon,
             Sprite processing_machine_icon,
             Sprite portal_icon)
         {
@@ -122,23 +123,16 @@ namespace Maptory.Factory
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = false;
 
-            var tools = new[]
-            {
-                FactoryBuildTool.Conveyor,
-                FactoryBuildTool.Extractor,
-                FactoryBuildTool.DyeingMachine,
-                FactoryBuildTool.Combiner,
-                FactoryBuildTool.ErdaInjector,
-                FactoryBuildTool.ProcessingMachine,
-                FactoryBuildTool.Portal
-            };
+            var tools = FactoryContentCatalog.Buildings
+                .Select(building => building.Tool)
+                .ToArray();
             var icons = new[]
             {
                 conveyor_icon,
                 extractor_icon,
+                erda_injector_icon,
                 dyeing_machine_icon,
                 combiner_icon,
-                erda_injector_icon,
                 processing_machine_icon,
                 portal_icon
             };

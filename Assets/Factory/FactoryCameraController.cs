@@ -7,6 +7,8 @@ namespace Maptory.Factory
 {
     public sealed class FactoryCameraController : MonoBehaviour
     {
+        public event Action<float> Panned;
+        public event Action<float> Zoomed;
         [SerializeField] private float movement_speed = 8f;
         [SerializeField] private float zoom_speed = 0.3f;
         [SerializeField] private float minimum_zoom = 3f;
@@ -66,10 +68,13 @@ namespace Maptory.Factory
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
 
             var scroll = Mouse.current.scroll.ReadValue().y;
+            var previous_zoom = controlled_camera.orthographicSize;
             controlled_camera.orthographicSize = Mathf.Clamp(
                 controlled_camera.orthographicSize - scroll * zoom_speed,
                 minimum_zoom,
                 maximum_zoom);
+            var zoom_delta = Mathf.Abs(controlled_camera.orthographicSize - previous_zoom);
+            if (zoom_delta > 0f) Zoomed?.Invoke(zoom_delta);
         }
 
         private void PanCamera()
@@ -99,7 +104,9 @@ namespace Maptory.Factory
             var screen_delta = pointer_position - last_pointer_position;
             last_pointer_position = pointer_position;
             var world_units_per_pixel = controlled_camera.orthographicSize * 2f / Screen.height;
-            transform.position -= new Vector3(screen_delta.x, screen_delta.y) * world_units_per_pixel;
+            var movement = new Vector3(screen_delta.x, screen_delta.y) * world_units_per_pixel;
+            transform.position -= movement;
+            if (movement.sqrMagnitude > 0f) Panned?.Invoke(movement.magnitude);
         }
 
         private void ClampPosition()

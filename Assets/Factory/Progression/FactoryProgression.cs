@@ -16,7 +16,10 @@ namespace Maptory.Factory
         public FactoryContentConfig Config => config;
         public PortalEconomy Economy => economy;
         public bool NeedsSave => needs_save;
+        public FactoryTutorialProgressData Tutorial { get; }
+        public FactoryObjectiveProgressData Objectives { get; }
         public event Action Changed;
+        public event Action<string> HuntingGroundUnlocked;
 
         public FactoryProgression(
             FactoryContentConfig content_config,
@@ -29,6 +32,8 @@ namespace Maptory.Factory
             save_service = service;
             unlocked_stages = new HashSet<string>(progress.unlocked_stages);
             unlocked_hunting_grounds = new HashSet<string>(progress.unlocked_hunting_grounds);
+            Tutorial = progress.tutorial;
+            Objectives = progress.objectives;
             economy.ImportProgress(progress.economy);
             economy.Changed += OnEconomyChanged;
         }
@@ -78,6 +83,7 @@ namespace Maptory.Factory
             if (!purchased) return false;
 
             unlocked_hunting_grounds.Add(hunting_ground_id);
+            HuntingGroundUnlocked?.Invoke(hunting_ground_id);
             Save();
             return true;
         }
@@ -93,13 +99,31 @@ namespace Maptory.Factory
             return false;
         }
 
+        public bool IsMonsterUnlocked(RawMaterialType monster)
+        {
+            foreach (var stage in config.Stages)
+            {
+                if (IsMonsterUnlocked(stage.Id, monster)) return true;
+            }
+
+            return false;
+        }
+
+        public void MarkChanged()
+        {
+            needs_save = true;
+            Changed?.Invoke();
+        }
+
         public void Save()
         {
             save_service.SaveProgress(new FactoryProgressData
             {
                 unlocked_stages = new List<string>(unlocked_stages),
                 unlocked_hunting_grounds = new List<string>(unlocked_hunting_grounds),
-                economy = economy.ExportProgress()
+                economy = economy.ExportProgress(),
+                tutorial = Tutorial,
+                objectives = Objectives
             });
             needs_save = false;
             Changed?.Invoke();

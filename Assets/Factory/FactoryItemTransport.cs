@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -54,6 +55,7 @@ namespace Maptory.Factory
 
     public sealed class FactoryItemTransport
     {
+        public event Action<FactoryItemState> ItemSpawned;
         public const float STEP_DURATION = 0.45f;
         public const float SCALE_ANIMATION_DURATION = 0.12f;
         public const float EXTRACTOR_PRODUCTION_INTERVAL = 1f;
@@ -106,6 +108,7 @@ namespace Maptory.Factory
                 ScaleAnimation = ItemScaleAnimation.Spawning
             };
             items.Add(item);
+            ItemSpawned?.Invoke(item);
             return item;
         }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -30,6 +31,7 @@ namespace Maptory.Factory
 
         public bool IsOpen => blocker != null && blocker.activeSelf;
         public int RowCount => rows.Count;
+        public event Action Opened;
 
         public static PortalSelectionPanel Create(
             Transform parent,
@@ -67,6 +69,7 @@ namespace Maptory.Factory
             portal = target;
             blocker.SetActive(true);
             RefreshRows();
+            Opened?.Invoke();
         }
 
         private void Update()

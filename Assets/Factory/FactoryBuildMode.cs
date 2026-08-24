@@ -20,9 +20,29 @@ namespace Maptory.Factory
     {
         public event Action<FactoryBuildTool> Changed;
         public event Action<bool> DemolitionChanged;
+        public event Action<FactoryBuildTool, GridDirection> Rotated;
 
         public FactoryBuildTool ActiveTool { get; private set; }
         public bool IsDemolitionMode { get; private set; }
+
+        public GridDirection GetDirection(FactoryBuildTool tool)
+        {
+            return tool switch
+            {
+                FactoryBuildTool.Extractor => extractor_direction,
+                FactoryBuildTool.DyeingMachine => dyeing_direction,
+                FactoryBuildTool.Combiner => combiner_direction,
+                FactoryBuildTool.ErdaInjector => erda_injector_direction,
+                FactoryBuildTool.ProcessingMachine => processing_direction,
+                _ => GridDirection.Up
+            };
+        }
+
+        private GridDirection extractor_direction = GridDirection.Up;
+        private GridDirection dyeing_direction = GridDirection.Up;
+        private GridDirection combiner_direction = GridDirection.Up;
+        private GridDirection erda_injector_direction = GridDirection.Up;
+        private GridDirection processing_direction = GridDirection.Up;
 
         public void Toggle(FactoryBuildTool tool)
         {
@@ -62,10 +82,38 @@ namespace Maptory.Factory
             if (Keyboard.current == null) return;
 
             if (Keyboard.current.xKey.wasPressedThisFrame) ToggleDemolitionMode();
+            if (Keyboard.current.rKey.wasPressedThisFrame) RotateActiveTool();
             if (!Keyboard.current.escapeKey.wasPressedThisFrame) return;
 
             SetDemolitionMode(false);
             SetActiveTool(FactoryBuildTool.None);
+        }
+
+        private void RotateActiveTool()
+        {
+            var direction = GetDirection(ActiveTool).RotateCounterClockwise();
+            switch (ActiveTool)
+            {
+                case FactoryBuildTool.Extractor:
+                    extractor_direction = direction;
+                    break;
+                case FactoryBuildTool.DyeingMachine:
+                    dyeing_direction = direction;
+                    break;
+                case FactoryBuildTool.Combiner:
+                    combiner_direction = direction;
+                    break;
+                case FactoryBuildTool.ErdaInjector:
+                    erda_injector_direction = direction;
+                    break;
+                case FactoryBuildTool.ProcessingMachine:
+                    processing_direction = direction;
+                    break;
+                default:
+                    return;
+            }
+
+            Rotated?.Invoke(ActiveTool, direction);
         }
     }
 }

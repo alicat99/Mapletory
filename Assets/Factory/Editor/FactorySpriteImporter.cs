@@ -7,7 +7,8 @@ namespace Maptory.Factory.Editor
     {
         private void OnPreprocessTexture()
         {
-            if (!assetPath.StartsWith("Assets/Factory/Art/"))
+            if (!assetPath.StartsWith("Assets/Factory/Art/")
+                && !assetPath.StartsWith("Assets/Factory/BuildingPorts/"))
             {
                 return;
             }
@@ -20,6 +21,12 @@ namespace Maptory.Factory.Editor
             importer.filterMode = FilterMode.Point;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.alphaIsTransparency = true;
+
+            if (assetPath.StartsWith("Assets/Factory/BuildingPorts/"))
+            {
+                importer.spritePixelsPerUnit = 32f;
+                return;
+            }
 
             if (assetPath.EndsWith("/UI/RoundedRectangle.png"))
             {

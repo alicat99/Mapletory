@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,6 +9,7 @@ namespace Maptory.Factory
 {
     public sealed class ConveyorBuilder : MonoBehaviour
     {
+        public event Action<int> ConveyorsPlaced;
         private Camera main_camera;
         private Grid grid;
         private Transform conveyor_root;
@@ -109,6 +111,9 @@ namespace Maptory.Factory
             {
                 conveyor_network.PlaceLine(drag_start, drag_end);
                 DrawConveyors();
+                var count = Mathf.Abs(drag_end.x - drag_start.x)
+                    + Mathf.Abs(drag_end.y - drag_start.y) + 1;
+                ConveyorsPlaced?.Invoke(count);
             }
 
             is_dragging = false;
