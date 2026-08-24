@@ -12,8 +12,8 @@ namespace Maptory.Factory
     public sealed class FactorySaveService : IFactoryProgressSave
     {
         private const string PROGRESS_KEY = "Maptory.Factory.Progress.v1";
-        private const string SETTINGS_KEY = "Maptory.Factory.Settings.v1";
-        private const string FACTORIES_KEY = "Maptory.Factory.Stages.v1";
+        private const string SETTINGS_KEY = "Maptory.Factory.Settings.v2";
+        private const string FACTORIES_KEY = "Maptory.Factory.Stages.v2";
 
         public FactoryProgressData LoadProgress()
         {

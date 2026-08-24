@@ -44,6 +44,37 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
+        public void StageResourceLayoutsMatchReferenceImages()
+        {
+            var config = LoadConfig();
+            var stage_1 = config.GetStage("stage_1");
+            var stage_2 = config.GetStage("stage_2");
+
+            AssertLayout(stage_1, RawMaterialType.Snail,
+                new(14, 38), new(14, 35), new(14, 32),
+                new(14, 29), new(14, 26), new(14, 23));
+            AssertLayout(stage_1, RawMaterialType.DyeRed,
+                new(36, 44), new(39, 44), new(42, 44));
+            AssertLayout(stage_1, RawMaterialType.DyeBlue,
+                new(44, 28), new(44, 25), new(44, 22));
+            Assert.That(stage_1.Deposits.Count, Is.EqualTo(12));
+
+            AssertLayout(stage_2, RawMaterialType.Mushroom,
+                new(39, 42), new(42, 42), new(45, 42),
+                new(39, 45), new(42, 45), new(45, 45));
+            AssertLayout(stage_2, RawMaterialType.DyeRed,
+                new(27, 38), new(30, 38), new(27, 41), new(30, 41));
+            AssertLayout(stage_2, RawMaterialType.DyeBlue,
+                new(44, 26), new(44, 23), new(44, 20));
+            AssertLayout(stage_2, RawMaterialType.DyeYellow,
+                new(12, 35), new(15, 35), new(18, 35),
+                new(12, 38), new(15, 38), new(18, 38));
+            AssertLayout(stage_2, RawMaterialType.Snail,
+                new(13, 15), new(16, 15), new(19, 15));
+            Assert.That(stage_2.Deposits.Count, Is.EqualTo(22));
+        }
+
+        [Test]
         public void LockedStageChargesOnceAndPersistsUnlock()
         {
             var config = LoadConfig();
@@ -258,6 +289,18 @@ namespace Maptory.Factory.Tests
         {
             return Resources.Load<FactoryContentConfig>(
                 "Factory/Progression/FactoryContentConfig").CreateRuntimeCopy();
+        }
+
+        private static void AssertLayout(
+            FactoryStageDefinition stage,
+            RawMaterialType material,
+            params Vector2Int[] expected)
+        {
+            Assert.That(
+                stage.Deposits
+                    .Where(deposit => deposit.Material == material)
+                    .Select(deposit => deposit.Center),
+                Is.EqualTo(expected));
         }
 
         private static PortalEconomy CreateEconomyWithMeso(long meso)

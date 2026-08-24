@@ -49,12 +49,14 @@ namespace Maptory.Factory
         [SerializeField] private string display_name;
         [SerializeField] private long unlock_meso_cost;
         [SerializeField] private int grass_seed;
+        [SerializeField] private List<FactoryDepositDefinition> deposits = new();
         [SerializeField] private List<HuntingGroundDefinition> hunting_grounds = new();
 
         public string Id => id;
         public string DisplayName => display_name;
         public long UnlockMesoCost => unlock_meso_cost;
         public int GrassSeed => grass_seed;
+        public IReadOnlyList<FactoryDepositDefinition> Deposits => deposits;
         public List<HuntingGroundDefinition> HuntingGrounds => hunting_grounds;
 
         public FactoryStageDefinition(
@@ -74,6 +76,24 @@ namespace Maptory.Factory
         public void SetUnlockMesoCost(long value)
         {
             unlock_meso_cost = Math.Max(0L, value);
+        }
+    }
+
+    [Serializable]
+    public sealed class FactoryDepositDefinition
+    {
+        [SerializeField] private RawMaterialType material;
+        [SerializeField] private int x;
+        [SerializeField] private int y;
+
+        public RawMaterialType Material => material;
+        public Vector2Int Center => new(x, y);
+
+        public FactoryDepositDefinition(RawMaterialType resource, int center_x, int center_y)
+        {
+            material = resource;
+            x = center_x;
+            y = center_y;
         }
     }
 

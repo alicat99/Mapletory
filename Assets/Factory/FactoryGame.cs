@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -556,14 +557,11 @@ namespace Maptory.Factory
         {
             var saved_map = factory_settings.GetMap(stage_id);
             var deposits = saved_map == null
-                ? new[]
-            {
-                new RawMaterialDeposit(RawMaterialType.DyeBlue, new Vector2Int(8, 8)),
-                new RawMaterialDeposit(RawMaterialType.DyeRed, new Vector2Int(41, 8)),
-                new RawMaterialDeposit(RawMaterialType.DyeYellow, new Vector2Int(8, 41)),
-                new RawMaterialDeposit(RawMaterialType.Mushroom, new Vector2Int(41, 41)),
-                new RawMaterialDeposit(RawMaterialType.Snail, new Vector2Int(25, 25))
-            }
+                ? content_config.GetStage(stage_id).Deposits
+                    .Select(deposit => new RawMaterialDeposit(
+                        deposit.Material,
+                        deposit.Center))
+                    .ToArray()
                 : saved_map.deposits.ConvertAll(deposit => new RawMaterialDeposit(
                     deposit.material,
                     new Vector2Int(deposit.x, deposit.y))).ToArray();

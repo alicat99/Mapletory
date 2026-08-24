@@ -16,7 +16,7 @@ Edit Mode의 `ProgressionTests`는 기본 해금, 스테이지·사냥터 구매
 
 ## 2. 기능 사용법
 
-콘텐츠 값은 `Resources/Factory/Progression/FactoryContentConfig`의 `FactoryContentConfig` 에셋에서 편집한다. 각 `FactoryStageDefinition`은 스테이지 ID·표시명·메소 비용·맵 시드를, 각 `HuntingGroundDefinition`은 몬스터·초기 해금 여부·메소 비용을 정의한다. 1스테이지는 달팽이→빨간 달팽이→파란 달팽이, 2스테이지는 파란 버섯→주황 버섯→초록 버섯→주황 뿔버섯→초록 뿔버섯 순서다.
+콘텐츠 값은 `Resources/Factory/Progression/FactoryContentConfig`의 `FactoryContentConfig` 에셋에서 편집한다. 각 `FactoryStageDefinition`은 스테이지 ID·표시명·메소 비용·맵 시드와 기본 원재료 종류·중심 좌표를, 각 `HuntingGroundDefinition`은 몬스터·초기 해금 여부·메소 비용을 정의한다. 1스테이지는 달팽이→빨간 달팽이→파란 달팽이, 2스테이지는 파란 버섯→주황 버섯→초록 버섯→주황 뿔버섯→초록 뿔버섯 순서다.
 
 기본 사냥터 해금 비용은 1스테이지가 `0 / 50 / 300`, 2스테이지가 `0 / 1,000 / 3,000 / 5,000 / 10,000` 메소다. 디버그에서 변경한 비용은 설정 세이브가 우선한다.
 
@@ -43,11 +43,11 @@ if (progression.CanUnlockHuntingGround("lith_harbor_outskirts"))
 
 | 파일 | 책임 |
 |---|---|
-| `FactoryContentConfig.cs` | ScriptableObject 기반 스테이지·사냥터 정의와 런타임 편집 가능한 메소 비용 |
+| `FactoryContentConfig.cs` | ScriptableObject 기반 스테이지·기본 자원·사냥터 정의와 런타임 편집 가능한 메소 비용 |
 | `FactorySaveService.cs` | PlayerPrefs JSON에 진행 데이터, 스테이지별 공장 배치, 디버그 설정 오버라이드를 분리 저장·불러오기 |
 | `FactoryProgression.cs` | 해금 상태, 구매 검증·원자적 소비, 저장 요청과 현재 스테이지 세션 소유 |
 | `FactoryProgressAutosave.cs` | 변경된 진행 데이터를 2초 간격 및 앱 비활성화·종료 시 저장 |
 | `StageSelectionPanel.cs` | 스테이지 목록·잠금·구매 팝업, 입장과 우측 상단 돌아가기 UI |
-| `Resources/Factory/Progression/FactoryContentConfig.asset` | 빌드에서 사용하는 2개 스테이지와 순서화된 사냥터·비용 원본 |
+| `Resources/Factory/Progression/FactoryContentConfig.asset` | 빌드에서 사용하는 2개 스테이지의 기본 자원 좌표와 순서화된 사냥터·비용 원본 |
 
 `FactoryGame`은 저장 설정을 적용한 `PortalEconomy`와 `FactoryProgression`을 먼저 만든 뒤, 스테이지 선택 화면 또는 해당 스테이지의 공장 런타임을 조립한다. 컨베이어, 건물 방향, 레시피, 포탈 선택, 이동 중 아이템과 기계 내부 대기 재료는 스테이지별 플레이 진행으로 저장한다. 현재 보이지 않는 저장 공장은 `FactoryHeadlessRuntime`이 같은 운송 규칙으로 계속 갱신하므로 스테이지 선택 화면과 다른 스테이지에서도 메소 생산이 유지된다.

@@ -15,7 +15,7 @@ Play Mode가 시작되면 스테이지 선택 화면에 2개 스테이지가 표
 7. 출력 방향 바로 앞에 다른 컨베이어가 있으면 대상 컨베이어의 방향과 관계없이 연결된 출력 이미지를 사용한다. 따라서 U 방향 출력이 다른 컨베이어로 이어지면 `ConveyorUX`가 아니라 `ConveyorUU`가 표시된다. 연결되지 않은 끝은 `Conveyor?X`, 한 칸에서 바깥으로 향하는 이웃이 둘 이상이면 `Conveyor?A` 이미지가 표시된다. 현재 칸을 향하는 이웃이 정확히 하나라면 그 입력 방향과 출력 방향을 조합해 `ConveyorUR` 같은 회전 이미지를 사용한다. 여러 이웃이 한 칸으로 들어오는 합류는 도착 컨베이어 이미지를 바꾸지 않는다.
 8. 컨베이어의 화면 방향은 `U=우측 상단`, `R=우측 하단`, `D=좌측 하단`, `L=좌측 상단`이다. 낮은 월드 y좌표의 컨베이어가 높은 y좌표의 컨베이어보다 앞에 그려진다. 같은 y좌표에서는 x좌표로 순서를 고정하므로 설치 순서나 재설치 횟수에 따라 겹침 순서가 바뀌지 않는다.
 9. 건설 모드 여부와 관계없이 우클릭 드래그로 카메라를 패닝한다. `WASD` 또는 방향키로도 이동하며 마우스 휠로 확대/축소할 수 있다. `Esc`를 누르면 건설 모드가 해제된다. 염색기 레시피 모달이 열려 있는 동안에는 키보드 이동, 우클릭 패닝과 휠 줌이 모두 비활성화된다.
-10. 파랑 염료 `(8, 8)`, 빨강 염료 `(41, 8)`, 노랑 염료 `(8, 41)`, 버섯 `(41, 41)`, 달팽이 `(25, 25)` 중심에 원재료 군락이 표시된다. 원재료 Sprite 중심을 가로·세로 3셀 간격으로 3×3 배치해 각 3×3 크기 이미지가 한 셀 간격으로 겹치지 않게 하며 점유·추출 중심 규칙은 유지한다.
+10. Stage1에는 좌측 하단 달팽이 6개, 좌측 상단 빨간 염료 3개, 우측 상단 파란 염료 3개가 표시된다. Stage2에는 상단 버섯 6개, 좌측 상단 빨간 염료 4개, 우측 상단 파란 염료 3개, 좌측 하단 노란 염료 6개, 하단 달팽이 3개가 표시된다. 각 노드는 독립된 3×3 원재료이며 같은 군락 안의 중심 간격은 3셀이다.
 11. 두 번째 슬롯을 클릭하면 채굴기 건설 모드가 된다. 포인터를 이동하면 `ExtractorU`부터 시작하는 반투명 고스트가 셀 중심에 표시되고, 원재료 중심과 정확히 일치할 때만 정상 색으로 표시된다.
 12. 채굴기 건설 모드에서 `R`을 누르면 출력 방향이 `U → L → D → R → U` 순서로 반시계 회전한다. 원재료 중심을 좌클릭하면 해당 방향 채굴기가 설치되며 같은 원재료에는 두 번 설치할 수 없다.
 13. 채굴기는 중심 기준 3×3 셀을 점유한다. 점유 셀에 컨베이어를 드래그하면 미리보기가 붉게 표시되고 선 전체가 설치되지 않는다. 반대로 기존 컨베이어 또는 다른 채굴기의 발자국과 3×3 영역이 한 칸이라도 겹치면 채굴기를 설치할 수 없다.
@@ -61,7 +61,7 @@ Edit Mode 자동 테스트는 Test Runner에서 `Maptory.Factory.Tests` 어셈�
 
 ## 2. 기능 사용법
 
-`FactoryGame`은 맵 표현과 입력/UI 조립을 담당하는 Scene 진입점이다. Main Camera가 `MainCamera` 태그를 가지고 있어야 한다. 모든 런타임 Sprite는 `Art/Resources/Factory` 아래에서 이름으로 로드된다. `FactorySpriteImporter`는 Point 필터와 16 PPU를 적용하고, 컨베이어·건물·아이템에는 `(0.5, 0.25)`, 원재료에는 중앙 피벗을 사용한다. 월드 객체는 `FactorySorting`의 명시적 Y 깊이 순서를 공유한다.
+`FactoryGame`은 맵 표현과 입력/UI 조립을 담당하는 Scene 진입점이다. Main Camera가 `MainCamera` 태그를 가지고 있어야 한다. 스테이지별 기본 원재료 종류와 중심 좌표는 `FactoryContentConfig`에서 읽고, 디버그 맵 저장이 있으면 해당 배치를 사용한다. 모든 런타임 Sprite는 `Art/Resources/Factory` 아래에서 이름으로 로드된다. `FactorySpriteImporter`는 Point 필터와 16 PPU를 적용하고, 컨베이어·건물·아이템에는 `(0.5, 0.25)`, 원재료에는 중앙 피벗을 사용한다. 월드 객체는 `FactorySorting`의 명시적 Y 깊이 순서를 공유한다.
 
 건물·원재료 원본이나 `Art/BuildingProcessing`의 마스크가 변경되면 `BuildingSpriteLayerGenerator`가 각 원본의 `Lower`와 `Upper` PNG를 해당 `Generated` 폴더에 다시 만든다. 64×64 건물과 원재료는 `BuildingLowerMask.png`, 32×64 1×1 건물은 `BuildingLowerMask1x1.png`, 32×32 포탈은 `BuildingLowerMaskPortal.png`를 사용한다. 수동 갱신은 Unity 메뉴 `Tools > Maptory > Regenerate Building Layers`를 사용한다.
 
@@ -208,7 +208,7 @@ if (economy.CanPurchaseProductionUpgrade(RawMaterialType.MonsterSnailRed))
 | `Tutorial/FactoryTutorialSystem.cs` | 실제 조작 이벤트 기반 초반 튜토리얼과 기능 최초 접근 안내 |
 | `BuildingPorts/FactoryBuildingPortOverlay.cs` | 건설 미리보기 중 실제 입출력 포트 표시 |
 | `DebugTools/FactoryDebugPanel.cs` | F2 런타임 디버그 UI, 맵·몬스터·업그레이드·해금 설정과 전체 설정 저장 후 새 게임 재시작 |
-| `Progression/FactoryContentConfig.cs` | ScriptableObject 기반 2개 스테이지·순서화된 사냥터와 메소 비용 정의 |
+| `Progression/FactoryContentConfig.cs` | ScriptableObject 기반 2개 스테이지·기본 자원 배치·순서화된 사냥터와 메소 비용 정의 |
 | `Progression/FactoryProgressAutosave.cs` | 빈번한 생산 이벤트를 모아 주기적으로 진행 데이터를 저장 |
 | `FactoryUiEventSystem.cs` | 스테이지 선택과 공장 UI가 공유하는 Input System UI 입력 초기화 |
 | `Progression/FactorySaveService.cs` | 플레이 진행, 스테이지별 공장 배치와 밸런스·해금·맵 디버그 설정을 분리한 PlayerPrefs JSON 저장 |

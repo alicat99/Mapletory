@@ -17,6 +17,43 @@ MonoBehaviour:
     display_name: "1\uC2A4\uD14C\uC774\uC9C0 \xB7 \uBE45\uD1A0\uB9AC\uC544 \uCD08\uC785"
     unlock_meso_cost: 0
     grass_seed: 74021
+    deposits:
+    - material: 7
+      x: 14
+      y: 38
+    - material: 7
+      x: 14
+      y: 35
+    - material: 7
+      x: 14
+      y: 32
+    - material: 7
+      x: 14
+      y: 29
+    - material: 7
+      x: 14
+      y: 26
+    - material: 7
+      x: 14
+      y: 23
+    - material: 1
+      x: 36
+      y: 44
+    - material: 1
+      x: 39
+      y: 44
+    - material: 1
+      x: 42
+      y: 44
+    - material: 0
+      x: 44
+      y: 28
+    - material: 0
+      x: 44
+      y: 25
+    - material: 0
+      x: 44
+      y: 22
     hunting_grounds:
     - id: lith_harbor_outskirts
       monster: 22
@@ -34,6 +71,73 @@ MonoBehaviour:
     display_name: "2\uC2A4\uD14C\uC774\uC9C0 \xB7 \uD5E4\uB124\uC2DC\uC2A4 \uC678\uACFD"
     unlock_meso_cost: 250
     grass_seed: 91837
+    deposits:
+    - material: 6
+      x: 39
+      y: 42
+    - material: 6
+      x: 42
+      y: 42
+    - material: 6
+      x: 45
+      y: 42
+    - material: 6
+      x: 39
+      y: 45
+    - material: 6
+      x: 42
+      y: 45
+    - material: 6
+      x: 45
+      y: 45
+    - material: 1
+      x: 27
+      y: 38
+    - material: 1
+      x: 30
+      y: 38
+    - material: 1
+      x: 27
+      y: 41
+    - material: 1
+      x: 30
+      y: 41
+    - material: 0
+      x: 44
+      y: 26
+    - material: 0
+      x: 44
+      y: 23
+    - material: 0
+      x: 44
+      y: 20
+    - material: 2
+      x: 12
+      y: 35
+    - material: 2
+      x: 15
+      y: 35
+    - material: 2
+      x: 18
+      y: 35
+    - material: 2
+      x: 12
+      y: 38
+    - material: 2
+      x: 15
+      y: 38
+    - material: 2
+      x: 18
+      y: 38
+    - material: 7
+      x: 13
+      y: 15
+    - material: 7
+      x: 16
+      y: 15
+    - material: 7
+      x: 19
+      y: 15
     hunting_grounds:
     - id: dreaming_trail
       monster: 18
