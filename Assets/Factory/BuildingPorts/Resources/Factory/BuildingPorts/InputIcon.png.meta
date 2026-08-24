@@ -128,8 +128,8 @@ TextureImporter:
       name: InputIconU
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
+        x: 16
+        y: 16
         width: 16
         height: 16
       alignment: 0
@@ -150,8 +150,8 @@ TextureImporter:
       name: InputIconR
       rect:
         serializedVersion: 2
-        x: 0
-        y: 16
+        x: 16
+        y: 0
         width: 16
         height: 16
       alignment: 0
@@ -172,8 +172,8 @@ TextureImporter:
       name: InputIconD
       rect:
         serializedVersion: 2
-        x: 16
-        y: 16
+        x: 0
+        y: 0
         width: 16
         height: 16
       alignment: 0
@@ -194,8 +194,8 @@ TextureImporter:
       name: InputIconL
       rect:
         serializedVersion: 2
-        x: 16
-        y: 0
+        x: 0
+        y: 16
         width: 16
         height: 16
       alignment: 0
