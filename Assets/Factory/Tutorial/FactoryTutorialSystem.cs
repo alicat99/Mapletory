@@ -314,7 +314,7 @@ namespace Maptory.Factory
                 TextAlignmentOptions.MidlineLeft, new Vector2(28f, -20f), new Vector2(544f, 46f));
             modal_body = CreateText(catalog, panel.transform, 20f,
                 TextAlignmentOptions.TopLeft, new Vector2(28f, -86f), new Vector2(544f, 250f));
-            modal_body.enableWordWrapping = true;
+            modal_body.textWrappingMode = TextWrappingModes.Normal;
             var confirm = CreateButton(catalog, panel.transform, "", 20f);
             SetRect(confirm.GetComponent<RectTransform>(), new Vector2(378f, -356f), new Vector2(194f, 52f));
             modal_confirm_label = confirm.GetComponentInChildren<TMP_Text>();

@@ -136,7 +136,7 @@ namespace Maptory.Factory
                 TextAlignmentOptions.MidlineLeft, new Vector2(108f, -18f), new Vector2(330f, 40f));
             selected_process = CreateText("", details.transform, 19f,
                 TextAlignmentOptions.TopLeft, new Vector2(20f, -112f), new Vector2(466f, 210f));
-            selected_process.enableWordWrapping = true;
+            selected_process.textWrappingMode = TextWrappingModes.Normal;
             selected_process.overflowMode = TextOverflowModes.Ellipsis;
 
             ingredient_links = CreateObject("Ingredient Links", details.transform).transform;
