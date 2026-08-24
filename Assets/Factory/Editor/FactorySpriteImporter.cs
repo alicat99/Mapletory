@@ -60,28 +60,28 @@ namespace Maptory.Factory.Editor
                 new SpriteMetaData
                 {
                     name = prefix + "U",
-                    rect = new Rect(16f, 0f, 16f, 16f),
+                    rect = new Rect(0f, 0f, 16f, 16f),
                     alignment = (int)SpriteAlignment.Center,
                     pivot = new Vector2(0.5f, 0.5f)
                 },
                 new SpriteMetaData
                 {
                     name = prefix + "R",
-                    rect = new Rect(16f, 16f, 16f, 16f),
-                    alignment = (int)SpriteAlignment.Center,
-                    pivot = new Vector2(0.5f, 0.5f)
-                },
-                new SpriteMetaData
-                {
-                    name = prefix + "D",
                     rect = new Rect(0f, 16f, 16f, 16f),
                     alignment = (int)SpriteAlignment.Center,
                     pivot = new Vector2(0.5f, 0.5f)
                 },
                 new SpriteMetaData
                 {
+                    name = prefix + "D",
+                    rect = new Rect(16f, 16f, 16f, 16f),
+                    alignment = (int)SpriteAlignment.Center,
+                    pivot = new Vector2(0.5f, 0.5f)
+                },
+                new SpriteMetaData
+                {
                     name = prefix + "L",
-                    rect = new Rect(0f, 0f, 16f, 16f),
+                    rect = new Rect(16f, 0f, 16f, 16f),
                     alignment = (int)SpriteAlignment.Center,
                     pivot = new Vector2(0.5f, 0.5f)
                 }

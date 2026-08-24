@@ -128,7 +128,7 @@ TextureImporter:
       name: OutputIconU
       rect:
         serializedVersion: 2
-        x: 16
+        x: 0
         y: 0
         width: 16
         height: 16
@@ -150,7 +150,7 @@ TextureImporter:
       name: OutputIconR
       rect:
         serializedVersion: 2
-        x: 16
+        x: 0
         y: 16
         width: 16
         height: 16
@@ -172,7 +172,7 @@ TextureImporter:
       name: OutputIconD
       rect:
         serializedVersion: 2
-        x: 0
+        x: 16
         y: 16
         width: 16
         height: 16
@@ -194,7 +194,7 @@ TextureImporter:
       name: OutputIconL
       rect:
         serializedVersion: 2
-        x: 0
+        x: 16
         y: 0
         width: 16
         height: 16

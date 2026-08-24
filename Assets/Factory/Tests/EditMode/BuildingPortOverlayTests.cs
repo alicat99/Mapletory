@@ -18,13 +18,13 @@ namespace Maptory.Factory.Tests
             var sprites = Resources.LoadAll<Sprite>(path);
             Assert.That(sprites, Has.Length.EqualTo(4));
             Assert.That(sprites.Single(sprite => sprite.name == prefix + "U").rect,
-                Is.EqualTo(new Rect(16f, 0f, 16f, 16f)));
-            Assert.That(sprites.Single(sprite => sprite.name == prefix + "R").rect,
-                Is.EqualTo(new Rect(16f, 16f, 16f, 16f)));
-            Assert.That(sprites.Single(sprite => sprite.name == prefix + "D").rect,
-                Is.EqualTo(new Rect(0f, 16f, 16f, 16f)));
-            Assert.That(sprites.Single(sprite => sprite.name == prefix + "L").rect,
                 Is.EqualTo(new Rect(0f, 0f, 16f, 16f)));
+            Assert.That(sprites.Single(sprite => sprite.name == prefix + "R").rect,
+                Is.EqualTo(new Rect(0f, 16f, 16f, 16f)));
+            Assert.That(sprites.Single(sprite => sprite.name == prefix + "D").rect,
+                Is.EqualTo(new Rect(16f, 16f, 16f, 16f)));
+            Assert.That(sprites.Single(sprite => sprite.name == prefix + "L").rect,
+                Is.EqualTo(new Rect(16f, 0f, 16f, 16f)));
         }
     }
 }
