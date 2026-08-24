@@ -10,6 +10,7 @@ namespace Maptory.Factory
     public sealed class ConveyorBuilder : MonoBehaviour
     {
         public event Action<int> ConveyorsPlaced;
+        public event Action<Vector2Int, Vector2Int, bool> PreviewChanged;
         private Camera main_camera;
         private Grid grid;
         private Transform conveyor_root;
@@ -118,6 +119,7 @@ namespace Maptory.Factory
 
             is_dragging = false;
             preview_tilemap.ClearAllTiles();
+            PreviewChanged?.Invoke(default, default, false);
         }
 
         private void DrawPreview()
@@ -137,6 +139,8 @@ namespace Maptory.Factory
                 var position = drag_start + offset * index;
                 preview_tilemap.SetTile((Vector3Int)position, tile_catalog.GetConveyorTile(sprite_name));
             }
+
+            PreviewChanged?.Invoke(drag_start, drag_end, true);
         }
 
         private bool LineIntersectsBuilding()
@@ -224,6 +228,7 @@ namespace Maptory.Factory
 
             is_dragging = false;
             preview_tilemap.ClearAllTiles();
+            PreviewChanged?.Invoke(default, default, false);
         }
     }
 }

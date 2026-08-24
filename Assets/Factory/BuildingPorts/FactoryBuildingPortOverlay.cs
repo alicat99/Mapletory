@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Maptory.Factory
@@ -23,6 +24,7 @@ namespace Maptory.Factory
             Grid map_grid,
             Transform world_root,
             FactoryBuildMode mode,
+            ConveyorBuilder conveyors,
             ExtractionNetwork extraction)
         {
             main_camera = camera;
@@ -35,17 +37,21 @@ namespace Maptory.Factory
             output_icon = Resources.Load<Sprite>("Factory/BuildingPorts/OutputIcon");
             build_mode.Changed += _ => RefreshPreview(true);
             build_mode.Rotated += (_, _) => RefreshPreview(true);
+            conveyors.PreviewChanged += ShowConveyorPreview;
         }
 
         private void Update()
         {
             if (Mouse.current == null) return;
 
-            if (build_mode.ActiveTool == FactoryBuildTool.None)
+            if (build_mode.ActiveTool == FactoryBuildTool.None
+                || EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             {
                 Clear();
                 return;
             }
+
+            if (build_mode.ActiveTool == FactoryBuildTool.Conveyor) return;
 
             RefreshPreview(false);
         }
@@ -94,6 +100,16 @@ namespace Maptory.Factory
                     ShowPortal(new PortalState(cell, extraction_network.PortalEconomy));
                     break;
             }
+        }
+
+        private void ShowConveyorPreview(Vector2Int start, Vector2Int end, bool visible)
+        {
+            Clear();
+            if (!visible || build_mode.ActiveTool != FactoryBuildTool.Conveyor) return;
+
+            var direction = GridDirectionExtensions.FromDelta(end - start);
+            ShowMarker(start, input_icon, direction, -0.22f);
+            ShowMarker(end, output_icon, direction, 0.22f);
         }
 
         private void ShowRecipeMachine(IRecipeMachine machine)
@@ -145,7 +161,7 @@ namespace Maptory.Factory
                 0f,
                 0f,
                 Mathf.Atan2(flow.y, flow.x) * Mathf.Rad2Deg - 26.565f);
-            marker.transform.localScale = Vector3.one * 0.7f;
+            marker.transform.localScale = Vector3.one * 2.2f;
             marker.sprite = sprite;
             marker.sortingLayerName = FactorySorting.ITEM_SORTING_LAYER;
             marker.sortingOrder = 31000;
