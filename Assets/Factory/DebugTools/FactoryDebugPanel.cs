@@ -109,6 +109,12 @@ namespace Maptory.Factory
 
         private void Update()
         {
+            if (Keyboard.current != null && Keyboard.current.f3Key.wasPressedThisFrame)
+            {
+                SaveSettingsAndRestart();
+                return;
+            }
+
             if (Keyboard.current != null && Keyboard.current.f2Key.wasPressedThisFrame)
             {
                 Toggle();
@@ -533,7 +539,7 @@ namespace Maptory.Factory
             save_service.SaveSettings(settings);
             save_service.ResetProgress();
             FactoryStageSession.Clear();
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            SceneManager.LoadScene(0);
         }
 
         private void SelectMonster(int offset)
