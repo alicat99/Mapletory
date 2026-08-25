@@ -11,55 +11,64 @@ namespace Maptory.Factory
 
     public sealed class FactorySaveService : IFactoryProgressSave
     {
-        private const string PROGRESS_KEY = "Maptory.Factory.Progress.v1";
-        private const string SETTINGS_KEY = "Maptory.Factory.Settings.v2";
-        private const string FACTORIES_KEY = "Maptory.Factory.Stages.v2";
+        private static FactoryProgressData session_progress;
+        private static FactorySettingsData session_settings;
+        private static FactoryStageCollectionData session_factories;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        public static void ClearSession()
+        {
+            session_progress = null;
+            session_settings = null;
+            session_factories = null;
+            FactoryStageSession.Clear();
+        }
 
         public FactoryProgressData LoadProgress()
         {
-            return PlayerPrefs.HasKey(PROGRESS_KEY)
-                ? JsonUtility.FromJson<FactoryProgressData>(PlayerPrefs.GetString(PROGRESS_KEY))
-                : new FactoryProgressData();
+            return session_progress == null
+                ? new FactoryProgressData()
+                : Copy(session_progress);
         }
 
         public FactorySettingsData LoadSettings()
         {
-            return PlayerPrefs.HasKey(SETTINGS_KEY)
-                ? JsonUtility.FromJson<FactorySettingsData>(PlayerPrefs.GetString(SETTINGS_KEY))
-                : new FactorySettingsData();
+            return session_settings == null
+                ? new FactorySettingsData()
+                : Copy(session_settings);
         }
 
         public void SaveProgress(FactoryProgressData progress)
         {
-            PlayerPrefs.SetString(PROGRESS_KEY, JsonUtility.ToJson(progress));
-            PlayerPrefs.Save();
+            session_progress = Copy(progress);
         }
 
         public void SaveSettings(FactorySettingsData settings)
         {
-            PlayerPrefs.SetString(SETTINGS_KEY, JsonUtility.ToJson(settings));
-            PlayerPrefs.Save();
+            session_settings = Copy(settings);
         }
 
         public FactoryStageCollectionData LoadFactories()
         {
-            return PlayerPrefs.HasKey(FACTORIES_KEY)
-                ? JsonUtility.FromJson<FactoryStageCollectionData>(
-                    PlayerPrefs.GetString(FACTORIES_KEY))
-                : new FactoryStageCollectionData();
+            return session_factories == null
+                ? new FactoryStageCollectionData()
+                : Copy(session_factories);
         }
 
         public void SaveFactories(FactoryStageCollectionData factories)
         {
-            PlayerPrefs.SetString(FACTORIES_KEY, JsonUtility.ToJson(factories));
-            PlayerPrefs.Save();
+            session_factories = Copy(factories);
         }
 
         public void ResetProgress()
         {
-            PlayerPrefs.DeleteKey(PROGRESS_KEY);
-            PlayerPrefs.DeleteKey(FACTORIES_KEY);
-            PlayerPrefs.Save();
+            session_progress = null;
+            session_factories = null;
+        }
+
+        private static T Copy<T>(T data)
+        {
+            return JsonUtility.FromJson<T>(JsonUtility.ToJson(data));
         }
     }
 

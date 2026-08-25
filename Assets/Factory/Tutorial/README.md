@@ -8,7 +8,7 @@
 
 ## 2. 기능 사용법
 
-런타임 구성은 `FactoryGame`이 담당하므로 Inspector 연결이 필요 없다. 진행 상태는 `FactoryProgression.Tutorial`에 있으며 일반 진행 저장과 함께 자동 저장된다.
+런타임 구성은 `FactoryGame`이 담당하므로 Inspector 연결이 필요 없다. 진행 상태는 `FactoryProgression.Tutorial`에 있으며 현재 실행 세션에만 유지된다.
 
 ```csharp
 var seen = progression.Tutorial.HasSeen("codex");
@@ -20,7 +20,7 @@ progression.MarkChanged();
 
 | 파일 | 책임 |
 |---|---|
-| `FactoryTutorialProgressData.cs` | 완료 단계와 최초 접근 안내 이력 저장 |
+| `FactoryTutorialProgressData.cs` | 현재 실행 중 완료 단계와 최초 접근 안내 이력 소유 |
 | `FactoryTutorialTracker.cs` | 행동 순서와 단계 완료 조건 판정 |
 | `FactoryTutorialSystem.cs` | 게임 이벤트 구독, 안내 UI, 건너뛰기와 다시보기 |
 

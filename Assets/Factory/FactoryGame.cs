@@ -40,7 +40,6 @@ namespace Maptory.Factory
         private FactoryDebugMapEditor debug_map_editor;
         private FactoryItemTransport item_transport;
         private readonly List<FactoryHeadlessRuntime> background_factories = new();
-        private float next_factory_save_time;
 
         private void Awake()
         {
@@ -78,10 +77,6 @@ namespace Maptory.Factory
                 factory.Update(Time.deltaTime);
             }
 
-            if (Time.unscaledTime < next_factory_save_time) return;
-
-            next_factory_save_time = Time.unscaledTime + 2f;
-            SaveFactoryStates();
         }
 
         private void InitializeProgression()
@@ -99,7 +94,6 @@ namespace Maptory.Factory
                 economy,
                 save_service,
                 save_service.LoadProgress());
-            gameObject.AddComponent<FactoryProgressAutosave>().Initialize(progression);
         }
 
         private void EnterStage(string stage_id)
@@ -418,8 +412,6 @@ namespace Maptory.Factory
                     material => progression.IsMonsterUnlocked(stage_id, material));
                 background_factories.Add(runtime);
             }
-
-            next_factory_save_time = Time.unscaledTime + 2f;
         }
 
         private void SaveFactoryStates()
@@ -439,21 +431,6 @@ namespace Maptory.Factory
             }
 
             save_service.SaveFactories(factory_stages);
-        }
-
-        private void OnApplicationPause(bool paused)
-        {
-            if (paused) SaveFactoryStates();
-        }
-
-        private void OnApplicationFocus(bool focused)
-        {
-            if (!focused) SaveFactoryStates();
-        }
-
-        private void OnApplicationQuit()
-        {
-            SaveFactoryStates();
         }
 
         private void OnExtractorPlaced(ExtractorState extractor)

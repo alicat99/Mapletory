@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -241,7 +242,7 @@ namespace Maptory.Factory.Tests
         }
 
         [Test]
-        public void EconomyChangesWaitForAutosaveInsteadOfWritingImmediately()
+        public void EconomyChangesAreCapturedForSceneTransitions()
         {
             var save = new MemorySave();
             var economy = new PortalEconomy();
@@ -257,6 +258,53 @@ namespace Maptory.Factory.Tests
             Assert.That(save.LastProgress.economy.monsters.Single(
                 monster => monster.material == RawMaterialType.MonsterSnailRed)
                 .lifetime_production, Is.EqualTo(1L));
+        }
+
+        [Test]
+        public void SessionStoreIsClearedWhenANewApplicationSessionBegins()
+        {
+            FactorySaveService.ClearSession();
+            try
+            {
+                var save = new FactorySaveService();
+                save.SaveProgress(new FactoryProgressData
+                {
+                    unlocked_stages = new List<string> { "stage_2" }
+                });
+                save.SaveSettings(new FactorySettingsData
+                {
+                    stages = new List<StageSettingsData>
+                    {
+                        new() { id = "stage_2", unlock_meso_cost = 123L }
+                    }
+                });
+                save.SaveFactories(new FactoryStageCollectionData
+                {
+                    stages = new List<FactoryStageStateData>
+                    {
+                        new() { stage_id = "stage_2" }
+                    }
+                });
+                FactoryStageSession.Select("stage_2");
+
+                Assert.That(new FactorySaveService().LoadProgress().unlocked_stages,
+                    Is.EqualTo(new[] { "stage_2" }));
+                Assert.That(new FactorySaveService().LoadSettings().stages[0].unlock_meso_cost,
+                    Is.EqualTo(123L));
+                Assert.That(new FactorySaveService().LoadFactories().stages[0].stage_id,
+                    Is.EqualTo("stage_2"));
+
+                FactorySaveService.ClearSession();
+
+                Assert.That(save.LoadProgress().unlocked_stages, Is.Empty);
+                Assert.That(save.LoadSettings().stages, Is.Empty);
+                Assert.That(save.LoadFactories().stages, Is.Empty);
+                Assert.That(FactoryStageSession.SelectedStageId, Is.Null);
+            }
+            finally
+            {
+                FactorySaveService.ClearSession();
+            }
         }
 
         [Test]
